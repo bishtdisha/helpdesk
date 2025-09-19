@@ -16,51 +16,59 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Eye, Edit, Mail, Phone, MapPin } from "lucide-react"
+import { Plus, Search, Eye, Edit, Mail, Phone, MapPin, Users, Building, UserCheck, Clock } from "lucide-react"
 
-const mockCustomers = [
+const mockTeams = [
   {
-    id: "CUST-001",
-    name: "John Doe",
-    email: "john.doe@example.com",
+    id: "TEAM-001",
+    name: "Development Team",
+    lead: "John Doe",
+    email: "dev-team@company.com",
     phone: "+1 (555) 123-4567",
-    company: "Acme Corp",
+    department: "Engineering",
     status: "Active",
-    tickets: 3,
-    lastContact: "2024-01-15",
+    members: 8,
+    tickets: 15,
+    lastActivity: "2024-01-15",
     location: "New York, NY",
   },
   {
-    id: "CUST-002",
-    name: "Jane Smith",
-    email: "jane.smith@techco.com",
+    id: "TEAM-002",
+    name: "Support Team",
+    lead: "Jane Smith",
+    email: "support@company.com",
     phone: "+1 (555) 987-6543",
-    company: "TechCo Inc",
+    department: "Customer Success",
     status: "Active",
-    tickets: 7,
-    lastContact: "2024-01-14",
+    members: 12,
+    tickets: 23,
+    lastActivity: "2024-01-14",
     location: "San Francisco, CA",
   },
   {
-    id: "CUST-003",
-    name: "Bob Johnson",
-    email: "bob.johnson@startup.io",
+    id: "TEAM-003",
+    name: "Marketing Team",
+    lead: "Bob Johnson",
+    email: "marketing@company.com",
     phone: "+1 (555) 456-7890",
-    company: "Startup.io",
-    status: "Inactive",
-    tickets: 1,
-    lastContact: "2024-01-10",
+    department: "Marketing",
+    status: "Active",
+    members: 6,
+    tickets: 5,
+    lastActivity: "2024-01-10",
     location: "Austin, TX",
   },
   {
-    id: "CUST-004",
-    name: "Alice Brown",
-    email: "alice.brown@enterprise.com",
+    id: "TEAM-004",
+    name: "Sales Team",
+    lead: "Alice Brown",
+    email: "sales@company.com",
     phone: "+1 (555) 321-0987",
-    company: "Enterprise Solutions",
+    department: "Sales",
     status: "Active",
-    tickets: 12,
-    lastContact: "2024-01-16",
+    members: 10,
+    tickets: 8,
+    lastActivity: "2024-01-16",
     location: "Chicago, IL",
   },
 ]
@@ -74,17 +82,70 @@ const mockInteractions = [
 
 export function Customers() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+  const [selectedTeam, setSelectedTeam] = useState<any>(null)
 
-  const filteredCustomers = mockCustomers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.company.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredTeams = mockTeams.filter(
+    (team) =>
+      team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      team.lead.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      team.department.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  const totalTeams = mockTeams.length
+  const activeTeams = mockTeams.filter((team) => team.status === "Active").length
+  const totalMembers = mockTeams.reduce((sum, team) => sum + team.members, 0)
+  const totalTickets = mockTeams.reduce((sum, team) => sum + team.tickets, 0)
 
   return (
     <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Teams</h1>
+        <p className="text-muted-foreground">Manage your teams, members, and track their support activities.</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Teams</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalTeams}</div>
+            <p className="text-xs text-muted-foreground">Across all departments</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Teams</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeTeams}</div>
+            <p className="text-xs text-muted-foreground">Currently operational</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <Building className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalMembers}</div>
+            <p className="text-xs text-muted-foreground">Across all teams</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalTickets}</div>
+            <p className="text-xs text-muted-foreground">Assigned to teams</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex gap-2">
@@ -92,28 +153,32 @@ export function Customers() {
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                New Customer
+                New Team
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle>Add New Customer</DialogTitle>
-                <DialogDescription>Enter customer information to create a new profile.</DialogDescription>
+                <DialogTitle>Add New Team</DialogTitle>
+                <DialogDescription>Create a new team and assign a team lead.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                <div>
+                  <Label htmlFor="teamName">Team Name</Label>
+                  <Input id="teamName" placeholder="Development Team" />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="John" />
+                    <Label htmlFor="teamLead">Team Lead</Label>
+                    <Input id="teamLead" placeholder="John Doe" />
                   </div>
                   <div>
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Doe" />
+                    <Label htmlFor="department">Department</Label>
+                    <Input id="department" placeholder="Engineering" />
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="john.doe@example.com" />
+                  <Label htmlFor="email">Team Email</Label>
+                  <Input id="email" type="email" placeholder="team@company.com" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -121,18 +186,14 @@ export function Customers() {
                     <Input id="phone" placeholder="+1 (555) 123-4567" />
                   </div>
                   <div>
-                    <Label htmlFor="company">Company</Label>
-                    <Input id="company" placeholder="Acme Corp" />
+                    <Label htmlFor="location">Location</Label>
+                    <Input id="location" placeholder="New York, NY" />
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="location">Location</Label>
-                  <Input id="location" placeholder="New York, NY" />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline">Cancel</Button>
-                <Button>Create Customer</Button>
+                <Button>Create Team</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -144,7 +205,7 @@ export function Customers() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search customers..."
+              placeholder="Search teams..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -153,56 +214,58 @@ export function Customers() {
         </div>
       </div>
 
-      {/* Customers Table */}
+      {/* Teams Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Customer Directory</CardTitle>
-          <CardDescription>Manage customer profiles and interaction history</CardDescription>
+          <CardTitle>Team Directory</CardTitle>
+          <CardDescription>Manage team information and track their activities</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Team ID</TableHead>
+                <TableHead>Team Name</TableHead>
+                <TableHead>Team Lead</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Members</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Tickets</TableHead>
-                <TableHead>Last Contact</TableHead>
+                <TableHead>Last Activity</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.id}</TableCell>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell>{customer.company}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
+              {filteredTeams.map((team) => (
+                <TableRow key={team.id}>
+                  <TableCell className="font-medium">{team.id}</TableCell>
+                  <TableCell className="font-medium">{team.name}</TableCell>
+                  <TableCell>{team.lead}</TableCell>
+                  <TableCell>{team.department}</TableCell>
+                  <TableCell>{team.members}</TableCell>
                   <TableCell>
-                    <Badge variant={customer.status === "Active" ? "default" : "secondary"}>{customer.status}</Badge>
+                    <Badge variant={team.status === "Active" ? "default" : "secondary"}>{team.status}</Badge>
                   </TableCell>
-                  <TableCell>{customer.tickets}</TableCell>
-                  <TableCell>{customer.lastContact}</TableCell>
+                  <TableCell>{team.tickets}</TableCell>
+                  <TableCell>{team.lastActivity}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(customer)}>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedTeam(team)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[800px]">
                           <DialogHeader>
-                            <DialogTitle>Customer Profile: {customer.name}</DialogTitle>
-                            <DialogDescription>Complete customer information and interaction history</DialogDescription>
+                            <DialogTitle>Team Profile: {team.name}</DialogTitle>
+                            <DialogDescription>Complete team information and activity history</DialogDescription>
                           </DialogHeader>
                           <Tabs defaultValue="profile" className="w-full">
                             <TabsList className="grid w-full grid-cols-3">
                               <TabsTrigger value="profile">Profile</TabsTrigger>
-                              <TabsTrigger value="tickets">Tickets</TabsTrigger>
-                              <TabsTrigger value="interactions">Interactions</TabsTrigger>
+                              <TabsTrigger value="members">Members</TabsTrigger>
+                              <TabsTrigger value="activity">Activity</TabsTrigger>
                             </TabsList>
                             <TabsContent value="profile" className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
@@ -213,60 +276,64 @@ export function Customers() {
                                   <CardContent className="space-y-3">
                                     <div className="flex items-center gap-2">
                                       <Mail className="h-4 w-4 text-muted-foreground" />
-                                      <span>{customer.email}</span>
+                                      <span>{team.email}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <Phone className="h-4 w-4 text-muted-foreground" />
-                                      <span>{customer.phone}</span>
+                                      <span>{team.phone}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                                      <span>{customer.location}</span>
+                                      <span>{team.location}</span>
                                     </div>
                                   </CardContent>
                                 </Card>
                                 <Card>
                                   <CardHeader>
-                                    <CardTitle className="text-lg">Account Details</CardTitle>
+                                    <CardTitle className="text-lg">Team Details</CardTitle>
                                   </CardHeader>
                                   <CardContent className="space-y-3">
                                     <div>
-                                      <span className="text-sm text-muted-foreground">Company:</span>
-                                      <p className="font-medium">{customer.company}</p>
+                                      <span className="text-sm text-muted-foreground">Team Lead:</span>
+                                      <p className="font-medium">{team.lead}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-sm text-muted-foreground">Department:</span>
+                                      <p className="font-medium">{team.department}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-sm text-muted-foreground">Members:</span>
+                                      <p className="font-medium">{team.members}</p>
                                     </div>
                                     <div>
                                       <span className="text-sm text-muted-foreground">Status:</span>
                                       <Badge
                                         className="ml-2"
-                                        variant={customer.status === "Active" ? "default" : "secondary"}
+                                        variant={team.status === "Active" ? "default" : "secondary"}
                                       >
-                                        {customer.status}
+                                        {team.status}
                                       </Badge>
-                                    </div>
-                                    <div>
-                                      <span className="text-sm text-muted-foreground">Total Tickets:</span>
-                                      <p className="font-medium">{customer.tickets}</p>
                                     </div>
                                   </CardContent>
                                 </Card>
                               </div>
                             </TabsContent>
-                            <TabsContent value="tickets">
+                            <TabsContent value="members">
                               <Card>
                                 <CardHeader>
-                                  <CardTitle>Customer Tickets</CardTitle>
+                                  <CardTitle>Team Members</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                   <p className="text-muted-foreground">
-                                    Ticket history for this customer would be displayed here.
+                                    Team member list and roles would be displayed here.
                                   </p>
                                 </CardContent>
                               </Card>
                             </TabsContent>
-                            <TabsContent value="interactions">
+                            <TabsContent value="activity">
                               <Card>
                                 <CardHeader>
-                                  <CardTitle>Interaction History</CardTitle>
+                                  <CardTitle>Recent Activity</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                   <div className="space-y-3">
