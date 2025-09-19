@@ -19,7 +19,7 @@ export default function HelpdeskApp() {
         return <Dashboard />
       case "tickets":
         return <Tickets />
-      case "customers":
+      case "teams":
         return <Customers />
       case "reports":
         return <Reports />

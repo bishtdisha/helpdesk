@@ -11,7 +11,7 @@ interface SidebarProps {
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "tickets", label: "Tickets", icon: Ticket },
-  { id: "customers", label: "Customers", icon: Users },
+  { id: "teams", label: "Teams", icon: Users },
   { id: "reports", label: "Reports", icon: BarChart3 },
   { id: "knowledge-base", label: "Knowledge Base", icon: BookOpen },
   { id: "settings", label: "Settings", icon: Settings },
