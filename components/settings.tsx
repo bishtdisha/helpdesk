@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Users, Bell, Clock, Zap, Plus, Edit, Trash2 } from "lucide-react"
+import { Users, Bell, Clock, Plus, Edit, Trash2 } from "lucide-react"
 
 const mockUsers = [
   {
@@ -91,12 +91,11 @@ export function Settings() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="sla">SLA Rules</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -435,60 +434,6 @@ export function Settings() {
               </div>
               <div className="flex justify-end">
                 <Button>Save Notification Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="integrations" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5" />
-                Integrations
-              </CardTitle>
-              <CardDescription>Connect with external services and tools</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  {
-                    name: "Slack",
-                    description: "Send notifications to Slack channels",
-                    status: "Connected",
-                    icon: "💬",
-                  },
-                  {
-                    name: "Microsoft Teams",
-                    description: "Integrate with Teams for collaboration",
-                    status: "Available",
-                    icon: "👥",
-                  },
-                  { name: "Jira", description: "Create Jira issues from tickets", status: "Available", icon: "🎯" },
-                  {
-                    name: "Salesforce",
-                    description: "Sync customer data with Salesforce",
-                    status: "Connected",
-                    icon: "☁️",
-                  },
-                  { name: "Zendesk", description: "Import tickets from Zendesk", status: "Available", icon: "📧" },
-                  { name: "GitHub", description: "Link tickets to GitHub issues", status: "Available", icon: "🐙" },
-                ].map((integration, index) => (
-                  <Card key={index}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{integration.icon}</span>
-                        <CardTitle className="text-lg">{integration.name}</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground mb-4">{integration.description}</p>
-                      <Button variant={integration.status === "Connected" ? "outline" : "default"} className="w-full">
-                        {integration.status === "Connected" ? "Configure" : "Connect"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
               </div>
             </CardContent>
           </Card>

@@ -1,8 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { Plus, AlertCircle, CheckCircle, Clock, Users } from "lucide-react"
+import { AlertCircle, CheckCircle, Clock, Users } from "lucide-react"
 
 const ticketData = [
   { name: "Mon", open: 12, resolved: 8 },
@@ -24,16 +23,6 @@ const statusData = [
 export function Dashboard() {
   return (
     <div className="space-y-6">
-      {/* Quick Actions */}
-      <div className="flex gap-4">
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Ticket
-        </Button>
-        <Button variant="outline">View All Tickets</Button>
-        <Button variant="outline">Customer Portal</Button>
-      </div>
-
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
