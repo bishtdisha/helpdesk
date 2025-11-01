@@ -1,0 +1,292 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core User Management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  roleId    String?  // Direct role assignment for simplified RBAC
+  teamId    String?  // Team assignment
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  role         Role?        @relation("UserRole", fields: [roleId], references: [id], onDelete: SetNull)
+  team         Team?        @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull)
+  userRoles    UserRole[]   // Keep existing many-to-many for complex scenarios
+  userSessions UserSession[]
+  auditLogs    AuditLog[]
+  tickets      Ticket[]
+  comments     Comment[]
+  teamLeaderships TeamLeader[] // Teams this user leads
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions Json?    // Store permissions as JSON for flexibility
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  users           User[]         @relation("UserRole")
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  resource    String   // 'tickets', 'users', 'knowledge_base', etc.
+  action      String   // 'read', 'write', 'delete', 'manage'
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relationships
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// Team Management
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  members     User[]       @relation("TeamMembers")
+  teamLeaders TeamLeader[]
+
+  @@map("teams")
+}
+
+model TeamLeader {
+  id         String   @id @default(cuid())
+  userId     String
+  teamId     String
+  assignedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@map("team_leaders")
+}
+
+// Session Management
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// Audit Logging
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  action       String   // Action performed (create, read, update, delete, assign_role, etc.)
+  resourceType String   // Type of resource (user, team, role, etc.)
+  resourceId   String?  // ID of the affected resource
+  success      Boolean  @default(true) // Whether the action was successful
+  details      Json?    // Additional details about the action
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+
+  // Relationships
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// Customer Support System
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  company   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  tickets Ticket[]
+
+  @@map("customers")
+}
+
+model Ticket {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  status      TicketStatus  @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  customerId  String
+  assignedTo  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relationships
+  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignedUser User?       @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
+  comments    Comment[]
+  ticketTags  TicketTag[]
+
+  @@map("tickets")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  ticketId  String
+  authorId  String
+  isInternal Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Tag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  color       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  ticketTags TicketTag[]
+
+  @@map("tags")
+}
+
+model TicketTag {
+  id       String @id @default(cuid())
+  ticketId String
+  tagId    String
+
+  // Relationships
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, tagId])
+  @@map("ticket_tags")
+}
+
+// Knowledge Base
+model KnowledgeBaseArticle {
+  id          String              @id @default(cuid())
+  title       String
+  content     String
+  summary     String?
+  accessLevel KnowledgeAccessLevel @default(PUBLIC)
+  isPublished Boolean             @default(false)
+  authorId    String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@map("knowledge_base_articles")
+}
+
+// System Settings
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  type      String   @default("string") // string, number, boolean, json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// Enums
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum KnowledgeAccessLevel {
+  PUBLIC
+  INTERNAL
+  RESTRICTED
+}
