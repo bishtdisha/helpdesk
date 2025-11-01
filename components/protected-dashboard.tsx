@@ -136,7 +136,7 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
                         <p><strong>Email:</strong> {user.email}</p>
                         <div className="flex items-center gap-2">
                           <strong>Role:</strong> 
-                          <UserRoleBadge roleId={user.roleId} />
+                          <UserRoleBadge roleName={user.role?.name} />
                         </div>
                         <p><strong>Status:</strong> {user.isActive ? 'Active' : 'Inactive'}</p>
                         <p><strong>Member since:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>

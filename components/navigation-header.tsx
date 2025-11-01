@@ -42,7 +42,16 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
   }
 
   const handleLogout = async () => {
-    await logout()
+    try {
+      await logout()
+      // The logout function in useAuth should handle the redirect
+      // but we can add a fallback redirect here
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Force redirect even if logout fails
+      window.location.href = '/login'
+    }
   }
 
   return (
@@ -63,62 +72,38 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
           // Authenticated user
           <>
             <div className="flex items-center gap-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-3 h-auto p-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-sm">
-                        {getUserInitials(user.name, user.email)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="hidden sm:block text-left">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{user.name || 'User'}</p>
-                        <UserRoleBadge roleId={user.roleId} />
+              {/* User initials and role badge - matching the design */}
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-0 h-auto p-1 hover:bg-accent rounded-full">
+                      <Avatar className="h-8 w-8 cursor-pointer">
+                        <AvatarFallback className="text-sm font-semibold bg-primary text-primary-foreground">
+                          {getUserInitials(user.name, user.email)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel className="pb-2">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Profile Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  {/* User Management - Only show if user has permission */}
-                  <ActionButton
-                    action={PERMISSION_ACTIONS.READ}
-                    resource={RESOURCE_TYPES.USERS}
-                    variant="ghost"
-                    className="w-full justify-start h-auto p-0"
-                  >
-                    <DropdownMenuItem asChild>
-                      <Link href="/users" className="flex items-center gap-2">
-                        <UserCog className="h-4 w-4" />
-                        User Management
-                      </Link>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600 focus:text-red-600 cursor-pointer">
+                      <LogOut className="h-4 w-4" />
+                      Logout
                     </DropdownMenuItem>
-                  </ActionButton>
-
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                {/* Role badge displayed next to initials */}
+                <UserRoleBadge roleName={user.role?.name} />
+              </div>
             </div>
 
             <ThemeToggle />

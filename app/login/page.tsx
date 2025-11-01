@@ -92,8 +92,11 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // Redirect to intended destination or dashboard on successful login
-        router.push(redirectTo)
+        // Redirect to dashboard after successful login
+        const dashboardUrl = redirectTo === "/" ? "/dashboard" : redirectTo
+        router.push(dashboardUrl)
+        // Force a page refresh to ensure auth state is updated
+        window.location.href = dashboardUrl
       } else {
         // Handle API authentication errors
         if (data.details) {
@@ -114,10 +117,17 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+          <CardTitle className="text-2xl font-bold">Sign In to Odoo Helpdesk</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account
+            Enter your credentials to access your dashboard
           </CardDescription>
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <strong>Demo Admin Account:</strong><br />
+              Email: disha.bisht@cimconautomation.com<br />
+              Password: cimcon@123
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
