@@ -229,20 +229,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // Log the profile update
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'update_own_profile',
-        resourceType: 'user',
-        resourceId: user.id,
-        success: true,
-        details: {
-          updatedFields: Object.keys(updateData).filter(field => field !== 'password'),
-          passwordChanged: password !== undefined,
-        },
-      },
-    });
+
 
     // Remove password from response
     const { password: _, ...safeUser } = updatedUser;

@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { PermissionGate } from "./permission-gate"
 import { PERMISSION_ACTIONS, RESOURCE_TYPES, ROLE_TYPES } from "@/lib/rbac/permissions"
+import type { RoleType } from "@/lib/types/rbac"
 
 interface RoleBasedNavigationProps {
   activeModule: string
@@ -31,18 +32,25 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>
   action?: string
   resource?: string
-  requireRole?: string
+  requireRole?: RoleType
+  excludeRoles?: RoleType[]
   public?: boolean
 }
 
+/**
+ * Menu items configuration with role-based visibility
+ * Requirements: 18.1, 18.2, 18.3
+ */
 const menuItems: MenuItem[] = [
-  // Public items (available to all users)
+  // Dashboard - available to all authenticated users
   { 
     id: "dashboard", 
     label: "Dashboard", 
     icon: LayoutDashboard,
     public: true
   },
+  
+  // Tickets - available to all roles (with different access levels)
   { 
     id: "tickets", 
     label: "Tickets", 
@@ -50,6 +58,8 @@ const menuItems: MenuItem[] = [
     action: PERMISSION_ACTIONS.READ,
     resource: RESOURCE_TYPES.TICKETS
   },
+  
+  // Knowledge Base - available to all roles (read-only for User/Employee)
   { 
     id: "knowledge-base", 
     label: "Knowledge Base", 
@@ -58,7 +68,17 @@ const menuItems: MenuItem[] = [
     resource: RESOURCE_TYPES.KNOWLEDGE_BASE
   },
   
-  // User Management - Admin/Manager ONLY
+  // Analytics - Admin and Team Leader only (Requirement 18.2, 18.3)
+  { 
+    id: "analytics", 
+    label: "Analytics", 
+    icon: BarChart3,
+    action: PERMISSION_ACTIONS.READ,
+    resource: RESOURCE_TYPES.ANALYTICS,
+    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
+  },
+  
+  // User Management - Admin/Manager ONLY (Requirement 18.2)
   { 
     id: "users", 
     label: "User Management", 
@@ -66,31 +86,14 @@ const menuItems: MenuItem[] = [
     requireRole: ROLE_TYPES.ADMIN_MANAGER
   },
   
-  // Team Management - Admin/Manager access
+  // Team Management - Admin/Manager and Team Leader (Requirement 18.3)
   { 
     id: "teams", 
     label: "Team Management", 
     icon: Users,
     action: PERMISSION_ACTIONS.READ,
-    resource: RESOURCE_TYPES.TEAMS
-  },
-  
-  // Reports/Analytics - Role-based access
-  { 
-    id: "reports", 
-    label: "Reports", 
-    icon: BarChart3,
-    action: PERMISSION_ACTIONS.READ,
-    resource: RESOURCE_TYPES.ANALYTICS
-  },
-  
-  // Admin-only features
-  { 
-    id: "audit-logs", 
-    label: "Audit Logs", 
-    icon: Shield,
-    action: PERMISSION_ACTIONS.READ,
-    resource: RESOURCE_TYPES.AUDIT_LOGS
+    resource: RESOURCE_TYPES.TEAMS,
+    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
   },
   
   // Settings - available to all authenticated users
@@ -107,8 +110,40 @@ const publicMenuItems = [
   { id: "knowledge-base", label: "Knowledge Base", icon: BookOpen },
 ]
 
+/**
+ * Helper function to check if user should see a menu item
+ * Requirements: 18.1, 18.2, 18.3
+ */
+function shouldShowMenuItem(item: MenuItem, userRole: RoleType | null): boolean {
+  // Public items are always shown
+  if (item.public) return true
+  
+  // If no user role, don't show protected items
+  if (!userRole) return false
+  
+  // Check if role is explicitly excluded
+  if (item.excludeRoles && item.excludeRoles.includes(userRole)) {
+    return false
+  }
+  
+  // Check if specific role is required
+  if (item.requireRole && userRole !== item.requireRole) {
+    return false
+  }
+  
+  return true
+}
+
+/**
+ * Get user role from auth context
+ */
+function getUserRole(user: any): RoleType | null {
+  if (!user?.role?.name) return null
+  return user.role.name as RoleType
+}
+
 export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedNavigationProps) {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated, isLoading } = useAuth()
 
   // Show loading state
   if (isLoading) {
@@ -128,8 +163,16 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
     )
   }
 
+  // Get user role for filtering
+  const userRole = isAuthenticated ? getUserRole(user) : null
+  
   // Choose menu items based on authentication state
   const itemsToRender = isAuthenticated ? menuItems : publicMenuItems
+  
+  // Filter items based on user role (Requirements: 18.1, 18.2, 18.3)
+  const visibleItems = itemsToRender.filter(item => 
+    !isAuthenticated || shouldShowMenuItem(item, userRole)
+  )
 
   return (
     <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
@@ -139,7 +182,7 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
       
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
-          {itemsToRender.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon
             
             // For public items or when not authenticated, render directly
@@ -162,13 +205,13 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
               )
             }
 
-            // For protected items, use PermissionGate
+            // For protected items, use PermissionGate for additional validation
             return (
               <PermissionGate
                 key={item.id}
                 action={item.action || 'read'}
                 resource={item.resource || 'default'}
-                requireRole={item.requireRole as any}
+                requireRole={item.requireRole}
               >
                 <li>
                   <button

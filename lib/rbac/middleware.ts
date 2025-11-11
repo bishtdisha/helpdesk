@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { AuthService } from '../auth-service';
 import { permissionEngine } from './permission-engine';
 import { roleService } from './role-service';
-import { auditLogger } from './audit-logger';
+
 import { prisma } from '../db';
 import {
   PermissionError,
@@ -15,7 +15,7 @@ import {
 import {
   UserWithRole,
   SafeUserWithRole,
-  AuditLogData,
+
 } from '../types/rbac';
 
 // Extended request interface with RBAC context
@@ -42,8 +42,7 @@ export interface MiddlewareConfig {
     resource: string;
   };
   allowedRoles?: string[];
-  auditAction?: string;
-  skipAudit?: boolean;
+
 }
 
 /**
@@ -211,15 +210,7 @@ export async function withPermission(
           'unknown';
         const userAgent = request.headers.get('user-agent') || 'unknown';
 
-        await auditLogger.logPermissionViolation(
-          request.user.id,
-          action,
-          resource,
-          undefined,
-          `User lacks required permission: ${resource}:${action}`,
-          ipAddress,
-          userAgent
-        );
+
 
         return {
           request,
@@ -375,86 +366,11 @@ export async function withScopeFiltering(
   }
 }
 
-/**
- * Audit logging middleware for tracking permission-sensitive actions
- * This middleware logs user actions for security and compliance purposes
- */
-export async function withAuditLogging(
-  request: RBACRequest,
-  config: MiddlewareConfig,
-  resourceId?: string,
-  success: boolean = true,
-  details?: Record<string, any>
-): Promise<void> {
-  // Skip audit logging if explicitly disabled
-  if (config.skipAudit) {
-    return;
-  }
 
-  try {
-    // Only log if user is authenticated and audit action is specified
-    if (!request.user || !config.auditAction) {
-      return;
-    }
-
-    // Extract request information
-    const ipAddress = request.ip || 
-      request.headers.get('x-forwarded-for') || 
-      request.headers.get('x-real-ip') || 
-      'unknown';
-    
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-
-    // Determine resource type from audit action or config
-    let resourceType = 'unknown';
-    if (config.requiredPermission) {
-      resourceType = config.requiredPermission.resource;
-    } else if (config.auditAction.includes('user')) {
-      resourceType = 'user';
-    } else if (config.auditAction.includes('team')) {
-      resourceType = 'team';
-    } else if (config.auditAction.includes('role')) {
-      resourceType = 'role';
-    }
-
-    // Create audit log entry
-    const auditData: AuditLogData = {
-      userId: request.user.id,
-      action: config.auditAction,
-      resourceType,
-      resourceId,
-      success,
-      details: {
-        ...details,
-        method: request.method,
-        url: request.url,
-        userRole: request.user.role?.name,
-        userTeam: request.user.team?.name,
-      },
-      ipAddress,
-      userAgent,
-    };
-
-    // Use the audit logger service
-    await auditLogger.logAction(
-      auditData.userId!,
-      auditData.action,
-      auditData.resourceType,
-      auditData.resourceId,
-      auditData.success,
-      auditData.details,
-      auditData.ipAddress,
-      auditData.userAgent
-    );
-  } catch (error) {
-    // Log audit failures but don't throw - we don't want audit logging to break the main operation
-    console.error('Audit logging middleware error:', error);
-  }
-}
 
 /**
  * Combined middleware function that applies all RBAC protections
- * This is a convenience function that combines authentication, permission checking, and audit logging
+ * This is a convenience function that combines authentication and permission checking
  */
 export async function withRBAC(
   request: NextRequest,
@@ -505,28 +421,3 @@ export function extractTeamIdFromPath(pathname: string): string | undefined {
   return teamIdMatch ? teamIdMatch[1] : undefined;
 }
 
-// Helper function to determine audit action from HTTP method and path
-export function getAuditAction(method: string, pathname: string): string {
-  const isUserPath = pathname.includes('/users');
-  const isTeamPath = pathname.includes('/teams');
-  const isRolePath = pathname.includes('/roles');
-
-  let resource = 'unknown';
-  if (isUserPath) resource = 'user';
-  else if (isTeamPath) resource = 'team';
-  else if (isRolePath) resource = 'role';
-
-  switch (method) {
-    case 'GET':
-      return `read_${resource}`;
-    case 'POST':
-      return `create_${resource}`;
-    case 'PUT':
-    case 'PATCH':
-      return `update_${resource}`;
-    case 'DELETE':
-      return `delete_${resource}`;
-    default:
-      return `access_${resource}`;
-  }
-}

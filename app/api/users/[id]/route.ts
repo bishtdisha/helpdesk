@@ -333,24 +333,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    // Log the user update
-    await prisma.auditLog.create({
-      data: {
-        userId: currentUser.id,
-        action: 'update_user',
-        resourceType: 'user',
-        resourceId: targetUserId,
-        success: true,
-        details: {
-          updatedFields: Object.keys(updateData),
-          previousRoleId: targetUser.roleId,
-          newRoleId: roleId,
-          previousTeamId: targetUser.teamId,
-          newTeamId: teamId,
-          isSelfUpdate,
-        },
-      },
-    });
+
 
     // Remove password from response
     const { password: _, ...safeUser } = updatedUser;
@@ -474,22 +457,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id: targetUserId },
     });
 
-    // Log the user deletion
-    await prisma.auditLog.create({
-      data: {
-        userId: currentUser.id,
-        action: 'delete_user',
-        resourceType: 'user',
-        resourceId: targetUserId,
-        success: true,
-        details: {
-          deletedUserEmail: targetUser.email,
-          deletedUserName: targetUser.name,
-          deletedUserRole: targetUser.role?.name,
-          deletedUserTeam: targetUser.team?.name,
-        },
-      },
-    });
+
 
     return NextResponse.json({
       message: 'User deleted successfully',

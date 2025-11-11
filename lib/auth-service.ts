@@ -1,6 +1,6 @@
 import { prisma } from './db';
 import { PasswordUtils, SessionUtils } from './auth';
-import { activityTracker } from './rbac/activity-tracker';
+import { userCache } from './cache/user-cache';
 import type {
   UserRegistrationData,
   UserLoginData,
@@ -77,15 +77,6 @@ export class AuthService {
       });
 
       if (!user) {
-        // Track failed login attempt
-        await activityTracker.trackLogin(
-          null,
-          false,
-          sessionOptions?.ipAddress,
-          sessionOptions?.userAgent,
-          { reason: 'user_not_found', email: data.email }
-        );
-        
         return {
           success: false,
           error: 'Invalid email or password',
@@ -94,15 +85,6 @@ export class AuthService {
 
       // Check if user is active
       if (!user.isActive) {
-        // Track failed login attempt for inactive account
-        await activityTracker.trackLogin(
-          user.id,
-          false,
-          sessionOptions?.ipAddress,
-          sessionOptions?.userAgent,
-          { reason: 'account_inactive', email: data.email }
-        );
-        
         return {
           success: false,
           error: 'Account is deactivated. Please contact support.',
@@ -116,15 +98,6 @@ export class AuthService {
       );
 
       if (!isValidPassword) {
-        // Track failed login attempt for invalid password
-        await activityTracker.trackLogin(
-          user.id,
-          false,
-          sessionOptions?.ipAddress,
-          sessionOptions?.userAgent,
-          { reason: 'invalid_password', email: data.email }
-        );
-        
         return {
           success: false,
           error: 'Invalid email or password',
@@ -151,14 +124,7 @@ export class AuthService {
         updatedAt: user.updatedAt,
       };
 
-      // Track successful login
-      await activityTracker.trackLogin(
-        user.id,
-        true,
-        sessionOptions?.ipAddress,
-        sessionOptions?.userAgent,
-        { email: data.email, sessionId: session.token }
-      );
+
 
       return {
         success: true,
@@ -178,26 +144,12 @@ export class AuthService {
    * Logout a user by invalidating their session
    */
   static async logout(token: string, ipAddress?: string, userAgent?: string): Promise<boolean> {
-    // Get session info before invalidating for audit logging
-    const sessionValidation = await SessionUtils.validateSession(token);
-    
     const result = await SessionUtils.invalidateSession(token);
-    
-    // Track logout if session was valid
-    if (result && sessionValidation?.user) {
-      await activityTracker.trackLogout(
-        sessionValidation.user.id,
-        ipAddress,
-        userAgent,
-        { sessionId: token }
-      );
-    }
-    
     return result;
   }
 
   /**
-   * Validate a session token
+   * Validate a session token (optimized with full user data)
    */
   static async validateSession(token: string): Promise<SessionValidationResult> {
     const result = await SessionUtils.validateSession(token);
@@ -210,6 +162,25 @@ export class AuthService {
       valid: true,
       user: result.user,
       session: result.session,
+    };
+  }
+
+  /**
+   * Lightweight session validation - only checks if session is valid
+   * Use this for simple authentication checks where you don't need full user data
+   * This is ~3x faster than full validation
+   */
+  static async validateSessionLightweight(token: string): Promise<{ valid: boolean; userId?: string; sessionId?: string }> {
+    const result = await SessionUtils.validateSessionLightweight(token);
+
+    if (!result) {
+      return { valid: false };
+    }
+
+    return {
+      valid: true,
+      userId: result.userId,
+      sessionId: result.sessionId,
     };
   }
 
@@ -270,6 +241,9 @@ export class AuthService {
         },
       });
 
+      // Invalidate cache when user data changes
+      userCache.invalidateUser(id);
+
       return user;
     } catch (error) {
       console.error('Update user error:', error);
@@ -304,14 +278,6 @@ export class AuthService {
       );
 
       if (!isValidPassword) {
-        // Track failed password change attempt
-        await activityTracker.trackPasswordChange(
-          userId,
-          false,
-          ipAddress,
-          userAgent,
-          { reason: 'invalid_current_password' }
-        );
         return false;
       }
 
@@ -327,28 +293,9 @@ export class AuthService {
       // Invalidate all existing sessions for security
       await SessionUtils.invalidateUserSessions(userId);
 
-      // Track successful password change
-      await activityTracker.trackPasswordChange(
-        userId,
-        true,
-        ipAddress,
-        userAgent,
-        { sessionsInvalidated: true }
-      );
-
       return true;
     } catch (error) {
       console.error('Change password error:', error);
-      
-      // Track failed password change attempt
-      await activityTracker.trackPasswordChange(
-        userId,
-        false,
-        ipAddress,
-        userAgent,
-        { reason: 'system_error', error: error instanceof Error ? error.message : 'Unknown error' }
-      );
-      
       return false;
     }
   }

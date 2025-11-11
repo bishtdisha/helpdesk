@@ -260,20 +260,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Log the team creation
-    await prisma.auditLog.create({
-      data: {
-        userId: currentUser.id,
-        action: 'create_team',
-        resourceType: 'team',
-        resourceId: newTeam.id,
-        success: true,
-        details: {
-          teamName: name,
-          teamDescription: description,
-        },
-      },
-    });
+
 
     return NextResponse.json(
       {

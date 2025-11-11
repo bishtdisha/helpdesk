@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth-service';
 import { validateLoginData } from '@/lib/validation';
-import { prisma } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,20 +39,6 @@ export async function POST(request: NextRequest) {
     );
 
     if (!result.success) {
-      // Log failed login attempt
-      await prisma.auditLog.create({
-        data: {
-          action: 'LOGIN_FAILED',
-          resourceType: 'user',
-          details: {
-            email: email.toLowerCase().trim(),
-            reason: result.error,
-          },
-          ipAddress,
-          userAgent,
-        },
-      });
-
       return NextResponse.json(
         {
           error: 'Authentication failed',
@@ -62,22 +47,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    // Log successful login
-    await prisma.auditLog.create({
-      data: {
-        userId: result.user?.id,
-        action: 'LOGIN_SUCCESS',
-        resourceType: 'user',
-        resourceId: result.user?.id,
-        details: {
-          email: result.user?.email,
-          sessionId: result.session?.id,
-        },
-        ipAddress,
-        userAgent,
-      },
-    });
 
     // Create response with secure cookie
     const response = NextResponse.json(
@@ -107,23 +76,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Login API error:', error);
-    
-    // Log system error
-    try {
-      await prisma.auditLog.create({
-        data: {
-          action: 'LOGIN_ERROR',
-          resourceType: 'system',
-          details: {
-            error: error instanceof Error ? error.message : 'Unknown error',
-          },
-          ipAddress: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'unknown',
-        },
-      });
-    } catch (auditError) {
-      console.error('Failed to log audit entry:', auditError);
-    }
     
     return NextResponse.json(
       {

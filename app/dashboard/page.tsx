@@ -2,15 +2,18 @@
 
 import { useState } from "react"
 import { Sidebar } from "@/components/sidebar"
-import { Dashboard } from "@/components/dashboard"
+import { DashboardRouter } from "@/components/dashboard-router"
 import { Tickets } from "@/components/tickets"
 import { Customers } from "@/components/customers"
 import { Reports } from "@/components/reports"
 import { KnowledgeBase } from "@/components/knowledge-base"
 import { Settings } from "@/components/settings"
 import { NavigationHeader } from "@/components/navigation-header"
+import { AnalyticsPage } from "@/components/analytics/analytics-page"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { Loader2 } from "lucide-react"
+import { UserManagementPage } from "@/components/user-management/user-management-page"
+import { TeamManagement } from "@/components/team-management"
 
 export default function DashboardPage() {
   const [activeModule, setActiveModule] = useState("dashboard")
@@ -23,7 +26,11 @@ export default function DashboardPage() {
       case "tickets":
         return "Tickets"
       case "teams":
-        return "Teams"
+        return "Team Management"
+      case "users":
+        return "User Management"
+      case "analytics":
+        return "Analytics"
       case "reports":
         return "Reports"
       case "knowledge-base":
@@ -38,11 +45,16 @@ export default function DashboardPage() {
   const renderActiveModule = () => {
     switch (activeModule) {
       case "dashboard":
-        return <Dashboard />
+        // Use role-specific dashboard router (Requirement 18.5)
+        return <DashboardRouter />
       case "tickets":
         return <Tickets />
+      case "users":
+        return <UserManagementPage />
       case "teams":
-        return <Customers />
+        return <TeamManagement />
+      case "analytics":
+        return <AnalyticsPage />
       case "reports":
         return <Reports />
       case "knowledge-base":
@@ -50,7 +62,7 @@ export default function DashboardPage() {
       case "settings":
         return <Settings />
       default:
-        return <Dashboard />
+        return <DashboardRouter />
     }
   }
 

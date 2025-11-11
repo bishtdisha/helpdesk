@@ -1,0 +1,848 @@
+import { prisma } from '../db';
+import { Ticket, TicketStatus, TicketPriority, Prisma } from '@prisma/client';
+import { ticketAccessControl } from '../rbac/ticket-access-control';
+import { PermissionError } from '../rbac/errors';
+import { notificationService } from './notification-service';
+import { slaService } from './sla-service';
+
+// Types for ticket operations
+export interface CreateTicketData {
+  title: string;
+  description: string;
+  priority: TicketPriority;
+  category?: string;
+  customerId: string;
+  teamId?: string;
+}
+
+export interface UpdateTicketData {
+  title?: string;
+  description?: string;
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  category?: string;
+  assignedTo?: string;
+  teamId?: string;
+}
+
+export interface TicketFilters {
+  status?: TicketStatus[];
+  priority?: TicketPriority[];
+  teamId?: string;
+  assignedTo?: string;
+  createdBy?: string;
+  customerId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedTickets {
+  data: Ticket[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// Custom errors
+export class TicketNotFoundError extends PermissionError {
+  constructor(ticketId: string) {
+    super(
+      `Ticket not found: ${ticketId}`,
+      'TICKET_NOT_FOUND',
+      'tickets:read',
+      404
+    );
+  }
+}
+
+export class TicketAccessDeniedError extends PermissionError {
+  constructor(ticketId: string, userId: string) {
+    super(
+      `Access denied to ticket ${ticketId} for user ${userId}`,
+      'TICKET_ACCESS_DENIED',
+      'tickets:read',
+      403
+    );
+  }
+}
+
+export class TicketAssignmentDeniedError extends PermissionError {
+  constructor(ticketId: string, reason: string) {
+    super(
+      `Cannot assign ticket ${ticketId}: ${reason}`,
+      'TICKET_ASSIGNMENT_DENIED',
+      'tickets:assign',
+      403
+    );
+  }
+}
+
+export class InvalidTicketStatusTransitionError extends Error {
+  constructor(from: TicketStatus, to: TicketStatus) {
+    super(`Invalid status transition from ${from} to ${to}`);
+    this.name = 'InvalidTicketStatusTransitionError';
+  }
+}
+
+/**
+ * Ticket Service
+ * Handles all ticket management operations with role-based access control
+ */
+export class TicketService {
+  /**
+   * Create a new ticket
+   */
+  async createTicket(data: CreateTicketData, userId: string): Promise<Ticket> {
+    // Calculate SLA due date based on priority
+    const tempTicket = {
+      priority: data.priority,
+      createdAt: new Date(),
+    } as Ticket;
+    const slaDueAt = await slaService.calculateSLADueDate(tempTicket);
+
+    // Create the ticket
+    const ticket = await prisma.ticket.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        category: data.category,
+        customerId: data.customerId,
+        createdBy: userId,
+        teamId: data.teamId,
+        status: TicketStatus.OPEN,
+        slaDueAt: slaDueAt,
+      },
+      include: {
+        customer: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        team: true,
+      },
+    });
+
+    // Create history entry
+    await this.createHistoryEntry(ticket.id, userId, 'created', null, null, null);
+
+    // Send notification
+    await notificationService.sendTicketCreatedNotification(ticket);
+
+    return ticket;
+  }
+
+  /**
+   * Get a ticket by ID with access control
+   */
+  async getTicket(ticketId: string, userId: string): Promise<Ticket> {
+    // Check if user can access this ticket
+    const canAccess = await ticketAccessControl.canAccessTicket(userId, ticketId);
+    
+    if (!canAccess) {
+      throw new TicketAccessDeniedError(ticketId, userId);
+    }
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        customer: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        team: true,
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+        attachments: {
+          include: {
+            uploader: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        followers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        history: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 50, // Limit history to last 50 entries
+        },
+      },
+    });
+
+    if (!ticket) {
+      throw new TicketNotFoundError(ticketId);
+    }
+
+    return ticket;
+  }
+
+  /**
+   * Update a ticket with role-based restrictions
+   */
+  async updateTicket(
+    ticketId: string,
+    data: UpdateTicketData,
+    userId: string
+  ): Promise<Ticket> {
+    // Check if user can update this ticket
+    const canUpdate = await ticketAccessControl.canPerformAction(userId, ticketId, 'update');
+    
+    if (!canUpdate) {
+      throw new TicketAccessDeniedError(ticketId, userId);
+    }
+
+    // Get current ticket for history tracking
+    const currentTicket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+
+    if (!currentTicket) {
+      throw new TicketNotFoundError(ticketId);
+    }
+
+    // Validate status transition if status is being changed
+    if (data.status && data.status !== currentTicket.status) {
+      const isValidTransition = ticketAccessControl.validateStatusTransition(
+        currentTicket.status,
+        data.status
+      );
+      
+      if (!isValidTransition) {
+        throw new InvalidTicketStatusTransitionError(currentTicket.status, data.status);
+      }
+    }
+
+    // Track changes for history
+    const changes: Array<{ field: string; oldValue: string; newValue: string }> = [];
+    
+    if (data.title && data.title !== currentTicket.title) {
+      changes.push({ field: 'title', oldValue: currentTicket.title, newValue: data.title });
+    }
+    if (data.description && data.description !== currentTicket.description) {
+      changes.push({ field: 'description', oldValue: currentTicket.description, newValue: data.description });
+    }
+    if (data.status && data.status !== currentTicket.status) {
+      changes.push({ field: 'status', oldValue: currentTicket.status, newValue: data.status });
+    }
+    if (data.priority && data.priority !== currentTicket.priority) {
+      changes.push({ field: 'priority', oldValue: currentTicket.priority, newValue: data.priority });
+    }
+    if (data.category !== undefined && data.category !== currentTicket.category) {
+      changes.push({ 
+        field: 'category', 
+        oldValue: currentTicket.category || '', 
+        newValue: data.category || '' 
+      });
+    }
+
+    // Update the ticket
+    const updateData: Prisma.TicketUpdateInput = {
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      priority: data.priority,
+      category: data.category,
+    };
+
+    // Handle status-specific timestamps
+    if (data.status === TicketStatus.RESOLVED && currentTicket.status !== TicketStatus.RESOLVED) {
+      updateData.resolvedAt = new Date();
+    }
+    if (data.status === TicketStatus.CLOSED && currentTicket.status !== TicketStatus.CLOSED) {
+      updateData.closedAt = new Date();
+    }
+
+    // Recalculate SLA due date if priority changed
+    if (data.priority && data.priority !== currentTicket.priority) {
+      const updatedTicket = { ...currentTicket, priority: data.priority };
+      const newSlaDueAt = await slaService.calculateSLADueDate(updatedTicket as Ticket);
+      updateData.slaDueAt = newSlaDueAt;
+    }
+
+    const ticket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: updateData,
+      include: {
+        customer: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        team: true,
+      },
+    });
+
+    // Create history entries for all changes
+    for (const change of changes) {
+      await this.createHistoryEntry(
+        ticketId,
+        userId,
+        'updated',
+        change.field,
+        change.oldValue,
+        change.newValue
+      );
+    }
+
+    // Send notification if status changed
+    if (data.status && data.status !== currentTicket.status) {
+      await notificationService.sendTicketStatusChangedNotification(ticket, currentTicket.status);
+      
+      // Send resolved notification if ticket was resolved
+      if (data.status === TicketStatus.RESOLVED) {
+        await notificationService.sendTicketResolvedNotification(ticket);
+      }
+    }
+
+    return ticket;
+  }
+
+  /**
+   * Delete a ticket (Admin only)
+   */
+  async deleteTicket(ticketId: string, userId: string): Promise<void> {
+    // Check if user can delete this ticket
+    const canDelete = await ticketAccessControl.canPerformAction(userId, ticketId, 'delete');
+    
+    if (!canDelete) {
+      throw new TicketAccessDeniedError(ticketId, userId);
+    }
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+
+    if (!ticket) {
+      throw new TicketNotFoundError(ticketId);
+    }
+
+    // Create history entry before deletion
+    await this.createHistoryEntry(ticketId, userId, 'deleted', null, null, null);
+
+    // Delete the ticket (cascade will handle related records)
+    await prisma.ticket.delete({
+      where: { id: ticketId },
+    });
+  }
+
+  /**
+   * Close a ticket with permission validation
+   */
+  async closeTicket(ticketId: string, userId: string): Promise<Ticket> {
+    // Check if user can close this ticket
+    const canClose = await ticketAccessControl.canPerformAction(userId, ticketId, 'close');
+    
+    if (!canClose) {
+      throw new TicketAccessDeniedError(ticketId, userId);
+    }
+
+    // Get current ticket
+    const currentTicket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+
+    if (!currentTicket) {
+      throw new TicketNotFoundError(ticketId);
+    }
+
+    // Validate status transition to CLOSED
+    const isValidTransition = ticketAccessControl.validateStatusTransition(
+      currentTicket.status,
+      TicketStatus.CLOSED
+    );
+
+    if (!isValidTransition) {
+      throw new InvalidTicketStatusTransitionError(currentTicket.status, TicketStatus.CLOSED);
+    }
+
+    // Update ticket to closed
+    const ticket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        status: TicketStatus.CLOSED,
+        closedAt: new Date(),
+      },
+      include: {
+        customer: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        team: true,
+      },
+    });
+
+    // Create history entry
+    await this.createHistoryEntry(
+      ticketId,
+      userId,
+      'closed',
+      'status',
+      currentTicket.status,
+      TicketStatus.CLOSED
+    );
+
+    // Send notification
+    await notificationService.sendTicketStatusChangedNotification(ticket, currentTicket.status);
+
+    return ticket;
+  }
+
+  /**
+   * Update ticket status with validation
+   */
+  async updateTicketStatus(
+    ticketId: string,
+    newStatus: TicketStatus,
+    userId: string
+  ): Promise<Ticket> {
+    // Check if user can update this ticket
+    const canUpdate = await ticketAccessControl.canPerformAction(userId, ticketId, 'update');
+    
+    if (!canUpdate) {
+      throw new TicketAccessDeniedError(ticketId, userId);
+    }
+
+    // Get current ticket
+    const currentTicket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+
+    if (!currentTicket) {
+      throw new TicketNotFoundError(ticketId);
+    }
+
+    // Validate status transition
+    const isValidTransition = ticketAccessControl.validateStatusTransition(
+      currentTicket.status,
+      newStatus
+    );
+
+    if (!isValidTransition) {
+      throw new InvalidTicketStatusTransitionError(currentTicket.status, newStatus);
+    }
+
+    // Prepare update data
+    const updateData: Prisma.TicketUpdateInput = {
+      status: newStatus,
+    };
+
+    // Set timestamps based on status
+    if (newStatus === TicketStatus.RESOLVED && currentTicket.status !== TicketStatus.RESOLVED) {
+      updateData.resolvedAt = new Date();
+    }
+    if (newStatus === TicketStatus.CLOSED && currentTicket.status !== TicketStatus.CLOSED) {
+      updateData.closedAt = new Date();
+    }
+
+    // Update ticket
+    const ticket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: updateData,
+      include: {
+        customer: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        team: true,
+      },
+    });
+
+    // Create history entry
+    await this.createHistoryEntry(
+      ticketId,
+      userId,
+      'status_changed',
+      'status',
+      currentTicket.status,
+      newStatus
+    );
+
+    // Send notification
+    await notificationService.sendTicketStatusChangedNotification(ticket, currentTicket.status);
+    
+    // Send resolved notification if ticket was resolved
+    if (newStatus === TicketStatus.RESOLVED) {
+      await notificationService.sendTicketResolvedNotification(ticket);
+    }
+
+    return ticket;
+  }
+
+  /**
+   * Assign a ticket to a user
+   */
+  async assignTicket(
+    ticketId: string,
+    assigneeId: string,
+    userId: string
+  ): Promise<Ticket> {
+    // Check if user can assign this ticket
+    const canAssign = await ticketAccessControl.canPerformAction(userId, ticketId, 'assign');
+    
+    if (!canAssign) {
+      throw new TicketAccessDeniedError(ticketId, userId);
+    }
+
+    // Check if user can assign to the specific assignee
+    const canAssignToUser = await ticketAccessControl.canAssignToUser(
+      userId,
+      ticketId,
+      assigneeId
+    );
+
+    if (!canAssignToUser) {
+      throw new TicketAssignmentDeniedError(
+        ticketId,
+        'You do not have permission to assign this ticket to the specified user'
+      );
+    }
+
+    // Get current ticket for history
+    const currentTicket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+
+    if (!currentTicket) {
+      throw new TicketNotFoundError(ticketId);
+    }
+
+    // Verify assignee exists
+    const assignee = await prisma.user.findUnique({
+      where: { id: assigneeId },
+    });
+
+    if (!assignee) {
+      throw new TicketAssignmentDeniedError(ticketId, 'Assignee user not found');
+    }
+
+    // Update ticket assignment
+    const ticket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        assignedTo: assigneeId,
+        // If ticket is still OPEN, move it to IN_PROGRESS
+        status: currentTicket.status === TicketStatus.OPEN 
+          ? TicketStatus.IN_PROGRESS 
+          : currentTicket.status,
+      },
+      include: {
+        customer: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        team: true,
+      },
+    });
+
+    // Create history entry
+    await this.createHistoryEntry(
+      ticketId,
+      userId,
+      'assigned',
+      'assignedTo',
+      currentTicket.assignedTo || 'unassigned',
+      assigneeId
+    );
+
+    // If status changed, log that too
+    if (currentTicket.status === TicketStatus.OPEN && ticket.status === TicketStatus.IN_PROGRESS) {
+      await this.createHistoryEntry(
+        ticketId,
+        userId,
+        'status_changed',
+        'status',
+        TicketStatus.OPEN,
+        TicketStatus.IN_PROGRESS
+      );
+    }
+
+    // Send assignment notification
+    await notificationService.sendTicketAssignedNotification(ticket, assignee);
+
+    return ticket;
+  }
+
+  /**
+   * List tickets with pagination and role-based filtering
+   */
+  async listTickets(filters: TicketFilters, userId: string): Promise<PaginatedTickets> {
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+    const skip = (page - 1) * limit;
+
+    // Get role-based filters
+    const roleFilters = await ticketAccessControl.getTicketFilters(userId);
+
+    // Build where clause
+    const where: Prisma.TicketWhereInput = {
+      AND: [
+        roleFilters, // Apply role-based access control
+      ],
+    };
+
+    // Apply additional filters
+    if (filters.status && filters.status.length > 0) {
+      where.AND!.push({ status: { in: filters.status } });
+    }
+
+    if (filters.priority && filters.priority.length > 0) {
+      where.AND!.push({ priority: { in: filters.priority } });
+    }
+
+    if (filters.teamId) {
+      where.AND!.push({ teamId: filters.teamId });
+    }
+
+    if (filters.assignedTo) {
+      where.AND!.push({ assignedTo: filters.assignedTo });
+    }
+
+    if (filters.createdBy) {
+      where.AND!.push({ createdBy: filters.createdBy });
+    }
+
+    if (filters.customerId) {
+      where.AND!.push({ customerId: filters.customerId });
+    }
+
+    // Search across title and description
+    if (filters.search) {
+      where.AND!.push({
+        OR: [
+          { title: { contains: filters.search, mode: 'insensitive' } },
+          { description: { contains: filters.search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    // Get total count
+    const total = await prisma.ticket.count({ where });
+
+    // Get tickets
+    const tickets = await prisma.ticket.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+            attachments: true,
+            followers: true,
+          },
+        },
+      },
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: tickets,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  /**
+   * Check SLA compliance for a ticket and send notifications if at risk
+   */
+  async checkSLACompliance(ticketId: string): Promise<void> {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        customer: true,
+        creator: true,
+        assignedUser: true,
+        team: true,
+      },
+    });
+
+    if (!ticket) {
+      throw new TicketNotFoundError(ticketId);
+    }
+
+    // Check SLA compliance
+    const compliance = await slaService.checkSLACompliance(ticket);
+
+    // Send notification if breach risk is high
+    if (compliance.breachRisk === 'high' && compliance.remainingTime < 0) {
+      await notificationService.sendSLABreachNotification(ticket);
+    }
+  }
+
+  /**
+   * Get ticket with SLA information
+   */
+  async getTicketWithSLA(ticketId: string, userId: string): Promise<Ticket & { slaCompliance?: any }> {
+    const ticket = await this.getTicket(ticketId, userId);
+    
+    // Add SLA compliance information
+    const slaCompliance = await slaService.checkSLACompliance(ticket);
+    
+    return {
+      ...ticket,
+      slaCompliance,
+    };
+  }
+
+  /**
+   * Create a history entry for ticket changes
+   */
+  private async createHistoryEntry(
+    ticketId: string,
+    userId: string,
+    action: string,
+    fieldName: string | null,
+    oldValue: string | null,
+    newValue: string | null
+  ): Promise<void> {
+    await prisma.ticketHistory.create({
+      data: {
+        ticketId,
+        userId,
+        action,
+        fieldName,
+        oldValue,
+        newValue,
+      },
+    });
+  }
+}
+
+// Export singleton instance
+export const ticketService = new TicketService();

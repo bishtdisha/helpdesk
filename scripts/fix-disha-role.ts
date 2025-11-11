@@ -41,7 +41,7 @@ async function fixDishaRole() {
             roles: ['create', 'read', 'update', 'delete', 'assign'],
             tickets: ['create', 'read', 'update', 'delete', 'assign'],
             analytics: ['read'],
-            audit_logs: ['read'],
+
             knowledge_base: ['create', 'read', 'update', 'delete']
           }
         }

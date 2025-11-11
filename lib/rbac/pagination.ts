@@ -181,58 +181,7 @@ export function buildTeamFilterWhere(filters: Omit<FilterOptions, 'roleId'>) {
   return where;
 }
 
-/**
- * Build audit log filter where clause
- */
-export function buildAuditLogFilterWhere(filters: FilterOptions & { 
-  action?: string; 
-  resourceType?: string; 
-  success?: boolean;
-  userId?: string;
-}) {
-  const where: any = {};
 
-  if (filters.search) {
-    where.OR = [
-      { action: { contains: filters.search, mode: 'insensitive' } },
-      { resourceType: { contains: filters.search, mode: 'insensitive' } },
-      { user: { 
-        OR: [
-          { name: { contains: filters.search, mode: 'insensitive' } },
-          { email: { contains: filters.search, mode: 'insensitive' } },
-        ]
-      }},
-    ];
-  }
-
-  if (filters.action) {
-    where.action = filters.action;
-  }
-
-  if (filters.resourceType) {
-    where.resourceType = filters.resourceType;
-  }
-
-  if (typeof filters.success === 'boolean') {
-    where.success = filters.success;
-  }
-
-  if (filters.userId) {
-    where.userId = filters.userId;
-  }
-
-  if (filters.createdAfter || filters.createdBefore) {
-    where.timestamp = {};
-    if (filters.createdAfter) {
-      where.timestamp.gte = filters.createdAfter;
-    }
-    if (filters.createdBefore) {
-      where.timestamp.lte = filters.createdBefore;
-    }
-  }
-
-  return where;
-}
 
 /**
  * Generic paginated query executor
@@ -289,5 +238,5 @@ export const ALLOWED_SORT_FIELDS = {
   users: ['name', 'email', 'created', 'updated', 'role', 'team', 'lastLogin'] as string[],
   teams: ['name', 'created', 'updated', 'memberCount'] as string[],
   roles: ['name', 'created', 'updated', 'userCount'] as string[],
-  auditLogs: ['timestamp', 'action', 'resourceType', 'success'] as string[],
+
 };

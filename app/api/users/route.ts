@@ -330,22 +330,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Log the user creation
-    await prisma.auditLog.create({
-      data: {
-        userId: currentUser.id,
-        action: 'create_user',
-        resourceType: 'user',
-        resourceId: newUser.id,
-        success: true,
-        details: {
-          createdUserEmail: email,
-          createdUserName: name,
-          assignedRoleId: roleId,
-          assignedTeamId: teamId,
-        },
-      },
-    });
+
 
     // Remove password from response
     const { password: _, ...safeUser } = newUser;

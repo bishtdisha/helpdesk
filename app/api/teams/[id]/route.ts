@@ -171,23 +171,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    // Log the team update
-    await prisma.auditLog.create({
-      data: {
-        userId: currentUser.id,
-        action: 'update_team',
-        resourceType: 'team',
-        resourceId: teamId,
-        success: true,
-        details: {
-          updatedFields: Object.keys(updateData),
-          previousName: currentTeam.name,
-          newName: name,
-          previousDescription: currentTeam.description,
-          newDescription: description,
-        },
-      },
-    });
+
 
     return NextResponse.json({
       message: 'Team updated successfully',
@@ -300,22 +284,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id: teamId },
     });
 
-    // Log the team deletion
-    await prisma.auditLog.create({
-      data: {
-        userId: currentUser.id,
-        action: 'delete_team',
-        resourceType: 'team',
-        resourceId: teamId,
-        success: true,
-        details: {
-          deletedTeamName: currentTeam.name,
-          deletedTeamDescription: currentTeam.description,
-          memberCount: currentTeam.members.length,
-          leaderCount: currentTeam.teamLeaders.length,
-        },
-      },
-    });
+
 
     return NextResponse.json({
       message: 'Team deleted successfully',

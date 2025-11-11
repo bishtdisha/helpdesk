@@ -17,7 +17,7 @@ import {
   InsufficientPermissionsError,
 } from './errors';
 import { permissionEngine } from './permission-engine';
-import { auditLogger } from './audit-logger';
+
 import {
   PERMISSION_ACTIONS,
   RESOURCE_TYPES,
@@ -29,7 +29,7 @@ import { rbacCache } from './cache';
  * Role Management Service - Handles role and team assignment operations
  * 
  * This service provides methods for managing user roles and team assignments
- * with proper permission validation and audit logging.
+ * with proper permission validation.
  */
 export class RoleService {
   /**
@@ -78,17 +78,7 @@ export class RoleService {
     // Invalidate user cache since role changed
     await rbacCache.invalidateUserCache(userId);
 
-    // Log the role assignment
-    await auditLogger.logRoleAssignment(
-      assignerId,
-      userId,
-      'assign_role',
-      {
-        previousRoleId: user.roleId,
-        newRoleId: roleId,
-        roleName: role.name,
-      }
-    );
+
   }
 
   /**
@@ -147,17 +137,7 @@ export class RoleService {
       await rbacCache.invalidateTeamCache(user.teamId);
     }
 
-    // Log the team assignment
-    await auditLogger.logRoleAssignment(
-      assignerId,
-      userId,
-      'assign_team',
-      {
-        previousTeamId: user.teamId,
-        newTeamId: teamId,
-        teamName: team.name,
-      }
-    );
+
   }
 
   /**
@@ -225,16 +205,7 @@ export class RoleService {
     await rbacCache.invalidateUserCache(userId);
     await rbacCache.invalidateTeamCache(teamId);
 
-    // Log the team removal
-    await auditLogger.logRoleAssignment(
-      removerId,
-      userId,
-      'remove_from_team',
-      {
-        removedFromTeamId: teamId,
-        teamName: team.name,
-      }
-    );
+
   }
 
   /**
@@ -402,17 +373,7 @@ export class RoleService {
       },
     });
 
-    // Log the team leadership assignment
-    await auditLogger.logRoleAssignment(
-      assignerId,
-      userId,
-      'assign_team_leadership',
-      {
-        leaderId: userId,
-        teamName: team.name,
-        teamId: teamId,
-      }
-    );
+
   }
 
   /**
@@ -459,17 +420,7 @@ export class RoleService {
       },
     });
 
-    // Log the team leadership removal
-    await auditLogger.logRoleAssignment(
-      removerId,
-      userId,
-      'remove_team_leadership',
-      {
-        removedLeaderId: userId,
-        teamName: team.name,
-        teamId: teamId,
-      }
-    );
+
   }
 
   /**

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { NotificationBadge } from "@/components/notifications/notification-badge"
 import { LogOut, User, LogIn, UserPlus, Settings, UserCog } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { UserRoleBadge } from "@/components/rbac/user-role-badge"
@@ -43,14 +44,30 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
 
   const handleLogout = async () => {
     try {
+      // Call the logout function from useAuth hook
       await logout()
-      // The logout function in useAuth should handle the redirect
-      // but we can add a fallback redirect here
-      window.location.href = '/login'
+      
+      // Clear any local storage or session storage if needed
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
+      
+      // The logout function should handle the redirect, but add fallback
+      setTimeout(() => {
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+      }, 100)
     } catch (error) {
       console.error('Logout error:', error)
+      
       // Force redirect even if logout fails
-      window.location.href = '/login'
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+        window.location.href = '/login'
+      }
     }
   }
 
@@ -71,39 +88,58 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
         ) : isAuthenticated && user ? (
           // Authenticated user
           <>
+            <NotificationBadge />
+            
             <div className="flex items-center gap-3">
-              {/* User initials and role badge - matching the design */}
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-0 h-auto p-1 hover:bg-accent rounded-full">
-                      <Avatar className="h-8 w-8 cursor-pointer">
-                        <AvatarFallback className="text-sm font-semibold bg-primary text-primary-foreground">
-                          {getUserInitials(user.name, user.email)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64">
-                    <DropdownMenuLabel className="pb-2">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600 focus:text-red-600 cursor-pointer">
+              {/* Profile button with initials and role - Clean Layout */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button 
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50 rounded-lg transition-all duration-200 cursor-pointer border border-transparent hover:border-border/30"
+                  >
+                    {/* User initials circle */}
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-600 text-white font-semibold text-sm shadow-sm">
+                      {getUserInitials(user.name, user.email)}
+                    </div>
+                    
+                    {/* Role text with proper spacing */}
+                    <span className="text-base font-medium text-foreground tracking-wide">
+                      {user.role?.name === 'Admin/Manager' ? 'Admin' : 
+                       user.role?.name === 'Team Leader' ? 'Leader' : 
+                       user.role?.name === 'User/Employee' ? 'Employee' : 
+                       user.role?.name || 'User'}
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="w-72 shadow-xl bg-white dark:bg-slate-800 border border-border/50 rounded-lg p-2"
+                  sideOffset={8}
+                >
+                  {/* User Info Section */}
+                  <div className="px-3 py-4 border-b border-border/30">
+                    <div className="flex flex-col space-y-2">
+                      <p className="text-base font-semibold text-foreground leading-none">
+                        {user.name || 'User'}
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-none">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Logout Section */}
+                  <div className="pt-2">
+                    <DropdownMenuItem 
+                      onClick={handleLogout} 
+                      className="flex items-center gap-3 px-3 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer rounded-md transition-colors"
+                    >
                       <LogOut className="h-4 w-4" />
-                      Logout
+                      <span className="font-medium">Log out</span>
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                {/* Role badge displayed next to initials */}
-                <UserRoleBadge roleName={user.role?.name} />
-              </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <ThemeToggle />

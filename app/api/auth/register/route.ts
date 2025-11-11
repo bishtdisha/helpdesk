@@ -55,21 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log the registration action
-    await prisma.auditLog.create({
-      data: {
-        userId: result.user?.id,
-        action: 'USER_REGISTERED',
-        resourceType: 'user',
-        resourceId: result.user?.id,
-        details: {
-          email: result.user?.email,
-          name: result.user?.name,
-        },
-        ipAddress: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
-    });
+
 
     // Return success response (without sensitive data)
     return NextResponse.json(

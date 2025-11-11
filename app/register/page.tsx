@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { validateRegistrationData } from "@/lib/validation"
+import { Eye, EyeOff, Check, X } from "lucide-react"
+import { validateRegistrationData, validatePassword } from "@/lib/validation"
 
 interface FormData {
   name: string
@@ -35,6 +36,17 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  
+  // Password requirements validation state
+  const passwordRequirements = {
+    minLength: formData.password.length >= 8,
+    hasLowercase: /[a-z]/.test(formData.password),
+    hasUppercase: /[A-Z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password),
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -195,16 +207,89 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Create a password"
-                aria-invalid={!!errors.password}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Create a password"
+                  aria-invalid={!!errors.password}
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              
+              {/* Password Requirements Indicator */}
+              <div className="mt-2 p-3 bg-muted/50 rounded-md border">
+                <p className="text-xs font-medium mb-2">Password must contain:</p>
+                <ul className="space-y-1">
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordRequirements.minLength ? (
+                      <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <X className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className={passwordRequirements.minLength ? "text-green-600" : "text-muted-foreground"}>
+                      At least 8 characters
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordRequirements.hasLowercase ? (
+                      <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <X className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className={passwordRequirements.hasLowercase ? "text-green-600" : "text-muted-foreground"}>
+                      One lowercase letter (a-z)
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordRequirements.hasUppercase ? (
+                      <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <X className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className={passwordRequirements.hasUppercase ? "text-green-600" : "text-muted-foreground"}>
+                      One uppercase letter (A-Z)
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordRequirements.hasNumber ? (
+                      <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <X className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className={passwordRequirements.hasNumber ? "text-green-600" : "text-muted-foreground"}>
+                      One number (0-9)
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordRequirements.hasSpecialChar ? (
+                      <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <X className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className={passwordRequirements.hasSpecialChar ? "text-green-600" : "text-muted-foreground"}>
+                      One special character (!@#$...)
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              
               {errors.password && (
                 <div className="text-destructive text-sm">
                   {errors.password.map((error, index) => (
@@ -216,16 +301,31 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                placeholder="Confirm your password"
-                aria-invalid={!!errors.confirmPassword}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Confirm your password"
+                  aria-invalid={!!errors.confirmPassword}
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <div className="text-destructive text-sm">
                   {errors.confirmPassword.map((error, index) => (

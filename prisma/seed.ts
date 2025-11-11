@@ -21,7 +21,7 @@ async function main() {
         roles: ['create', 'read', 'update', 'delete', 'assign'],
         tickets: ['create', 'read', 'update', 'delete', 'assign'],
         analytics: ['read'],
-        audit_logs: ['read'],
+
         knowledge_base: ['create', 'read', 'update', 'delete']
       }
     }
@@ -130,7 +130,7 @@ async function main() {
     { resource: 'tickets', action: 'assign', description: 'Assign tickets to users' },
     
     { resource: 'analytics', action: 'read', description: 'View analytics and reports' },
-    { resource: 'audit_logs', action: 'read', description: 'View audit logs' },
+
     { resource: 'knowledge_base', action: 'create', description: 'Create knowledge base articles' },
     { resource: 'knowledge_base', action: 'read', description: 'Read knowledge base articles' },
     { resource: 'knowledge_base', action: 'update', description: 'Update knowledge base articles' },

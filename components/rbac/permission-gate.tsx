@@ -12,11 +12,13 @@ interface PermissionGateProps {
   scope?: PermissionScope;
   fallback?: ReactNode;
   requireRole?: RoleType;
+  excludeRoles?: RoleType[];
 }
 
 /**
  * PermissionGate component for conditional UI rendering based on user permissions
  * Only renders children if the user has the required permission
+ * This is a simpler version of PermissionGuard without fallback messages
  */
 export function PermissionGate({
   children,
@@ -25,6 +27,7 @@ export function PermissionGate({
   scope,
   fallback = null,
   requireRole,
+  excludeRoles,
 }: PermissionGateProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -41,6 +44,11 @@ export function PermissionGate({
   // Get user's role
   const userRole = getUserRole(user);
   if (!userRole) {
+    return <>{fallback}</>;
+  }
+
+  // Check if role is explicitly excluded
+  if (excludeRoles && excludeRoles.includes(userRole)) {
     return <>{fallback}</>;
   }
 

@@ -23,14 +23,20 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  role         Role?        @relation("UserRole", fields: [roleId], references: [id], onDelete: SetNull)
-  team         Team?        @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull)
-  userRoles    UserRole[]   // Keep existing many-to-many for complex scenarios
-  userSessions UserSession[]
-  auditLogs    AuditLog[]
-  tickets      Ticket[]
-  comments     Comment[]
-  teamLeaderships TeamLeader[] // Teams this user leads
+  role                Role?              @relation("UserRole", fields: [roleId], references: [id], onDelete: SetNull)
+  team                Team?              @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull)
+  userRoles           UserRole[]         // Keep existing many-to-many for complex scenarios
+  userSessions        UserSession[]
+  auditLogs           AuditLog[]
+  assignedTickets     Ticket[]           @relation("AssignedTickets")
+  createdTickets      Ticket[]           @relation("CreatedTickets")
+  comments            Comment[]
+  teamLeaderships     TeamLeader[]       // Teams this user leads
+  ticketFollowers     TicketFollower[]
+  uploadedAttachments    TicketAttachment[]
+  ticketHistory          TicketHistory[]
+  notifications          Notification[]
+  notificationPreference NotificationPreferences?
 
   @@map("users")
 }
@@ -105,8 +111,10 @@ model Team {
   updatedAt   DateTime @updatedAt
 
   // Relationships
-  members     User[]       @relation("TeamMembers")
-  teamLeaders TeamLeader[]
+  members            User[]                   @relation("TeamMembers")
+  teamLeaders        TeamLeader[]
+  tickets            Ticket[]                 @relation("TeamTickets")
+  knowledgeArticles  KnowledgeBaseArticle[]   @relation("TeamArticles")
 
   @@map("teams")
 }
@@ -174,28 +182,46 @@ model Customer {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  tickets Ticket[]
+  tickets  Ticket[]
+  feedback TicketFeedback[]
 
   @@map("customers")
 }
 
 model Ticket {
-  id          String        @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   description String
-  status      TicketStatus  @default(OPEN)
+  status      TicketStatus   @default(OPEN)
   priority    TicketPriority @default(MEDIUM)
+  category    String?
   customerId  String
   assignedTo  String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  teamId      String?
+  createdBy   String
+  slaDueAt    DateTime?
+  resolvedAt  DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   // Relationships
-  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  assignedUser User?       @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
-  comments    Comment[]
-  ticketTags  TicketTag[]
+  customer       Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignedUser   User?              @relation("AssignedTickets", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator        User               @relation("CreatedTickets", fields: [createdBy], references: [id], onDelete: Cascade)
+  team           Team?              @relation("TeamTickets", fields: [teamId], references: [id], onDelete: SetNull)
+  comments       Comment[]
+  ticketTags     TicketTag[]
+  followers      TicketFollower[]
+  attachments    TicketAttachment[]
+  history        TicketHistory[]
+  feedback       TicketFeedback?
 
+  @@index([teamId])
+  @@index([createdBy])
+  @@index([status])
+  @@index([priority])
+  @@index([slaDueAt])
   @@map("tickets")
 }
 
@@ -242,19 +268,202 @@ model TicketTag {
   @@map("ticket_tags")
 }
 
+model TicketFollower {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  addedBy   String?
+  addedAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, userId])
+  @@index([userId])
+  @@index([ticketId])
+  @@map("ticket_followers")
+}
+
+model TicketAttachment {
+  id         String   @id @default(cuid())
+  ticketId   String
+  uploadedBy String
+  fileName   String
+  filePath   String
+  fileSize   Int
+  mimeType   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relationships
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploader User   @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@map("ticket_attachments")
+}
+
+model TicketHistory {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  action    String
+  fieldName String?
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+
+  // Relationships
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([userId])
+  @@map("ticket_history")
+}
+
+model SLAPolicy {
+  id                   String         @id @default(cuid())
+  name                 String
+  description          String?
+  priority             TicketPriority
+  responseTimeHours    Int
+  resolutionTimeHours  Int
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@map("sla_policies")
+}
+
+model EscalationRule {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  conditionType  String
+  conditionValue Json
+  actionType     String
+  actionConfig   Json
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("escalation_rules")
+}
+
+model TicketFeedback {
+  id         String   @id @default(cuid())
+  ticketId   String   @unique
+  customerId String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relationships
+  ticket   Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_feedback")
+}
+
 // Knowledge Base
 model KnowledgeBaseArticle {
-  id          String              @id @default(cuid())
-  title       String
-  content     String
-  summary     String?
-  accessLevel KnowledgeAccessLevel @default(PUBLIC)
-  isPublished Boolean             @default(false)
-  authorId    String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id           String               @id @default(cuid())
+  title        String
+  content      String
+  summary      String?
+  accessLevel  KnowledgeAccessLevel @default(PUBLIC)
+  isPublished  Boolean              @default(false)
+  authorId     String?
+  teamId       String?
+  category     String?
+  viewCount    Int                  @default(0)
+  helpfulCount Int                  @default(0)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
+  // Relationships
+  team              Team?                 @relation("TeamArticles", fields: [teamId], references: [id], onDelete: SetNull)
+  articleCategories KBArticleCategory[]
+
+  @@index([teamId])
+  @@index([category])
+  @@index([accessLevel])
   @@map("knowledge_base_articles")
+}
+
+model KBCategory {
+  id          String               @id @default(cuid())
+  name        String
+  description String?
+  parentId    String?
+  accessLevel KnowledgeAccessLevel @default(PUBLIC)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  // Relationships
+  parent            KBCategory?         @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children          KBCategory[]        @relation("CategoryHierarchy")
+  articleCategories KBArticleCategory[]
+
+  @@map("kb_categories")
+}
+
+model KBArticleCategory {
+  id         String   @id @default(cuid())
+  articleId  String
+  categoryId String
+
+  // Relationships
+  article  KnowledgeBaseArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  category KBCategory           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, categoryId])
+  @@map("kb_article_categories")
+}
+
+// Notification System
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  ticketId  String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreferences {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  emailEnabled           Boolean  @default(true)
+  inAppEnabled           Boolean  @default(true)
+  notifyOnCreation       Boolean  @default(true)
+  notifyOnAssignment     Boolean  @default(true)
+  notifyOnStatusChange   Boolean  @default(true)
+  notifyOnComment        Boolean  @default(true)
+  notifyOnResolution     Boolean  @default(true)
+  notifyOnSLABreach      Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }
 
 // System Settings
@@ -289,4 +498,14 @@ enum KnowledgeAccessLevel {
   PUBLIC
   INTERNAL
   RESTRICTED
+}
+
+enum NotificationType {
+  TICKET_CREATED
+  TICKET_ASSIGNED
+  TICKET_STATUS_CHANGED
+  TICKET_COMMENT
+  TICKET_RESOLVED
+  SLA_BREACH
+  ESCALATION
 }

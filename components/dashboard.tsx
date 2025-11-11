@@ -1,10 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { AlertCircle, CheckCircle, Clock, Users, User, Settings, Ticket, BookOpen } from "lucide-react"
+import { AlertCircle, CheckCircle, Clock, Users, User } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
-import { UserRoleBadge } from "@/components/rbac/user-role-badge"
 
 const ticketData = [
   { name: "Mon", open: 12, resolved: 10 },
@@ -29,74 +27,21 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Message for Admin */}
+      {/* Welcome Message */}
       {user && (
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
-              <User className="h-5 w-5" />
-              Welcome back, {user.name || 'Admin'}!
+        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-100/20 to-transparent dark:via-slate-700/20"></div>
+          <CardHeader className="relative">
+            <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+              <div className="p-2 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 shadow-sm">
+                <User className="h-6 w-6 text-slate-600 dark:text-slate-300" />
+              </div>
+              Welcome back, {user.name || 'User'}!
             </CardTitle>
-            <CardDescription className="text-blue-700 dark:text-blue-300">
-              You're logged in as {user.email}. Here's your comprehensive dashboard overview.
+            <CardDescription className="text-base text-muted-foreground mt-2">
+              Ready to tackle today's challenges? Here's your dashboard overview.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Account Information</h4>
-                <div className="space-y-1 text-sm text-blue-700 dark:text-blue-300">
-                  <p><strong>Name:</strong> {user.name || 'Not set'}</p>
-                  <p><strong>Email:</strong> {user.email}</p>
-                  <div className="flex items-center gap-2">
-                    <strong>Role:</strong> 
-                    <UserRoleBadge roleName={user.role?.name} />
-                  </div>
-                  <p><strong>Status:</strong> {user.isActive ? 'Active' : 'Inactive'}</p>
-                  <p><strong>Member since:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">System Overview</h4>
-                <div className="space-y-1 text-sm text-blue-700 dark:text-blue-300">
-                  <p><strong>Total Tickets:</strong> 311</p>
-                  <p><strong>Active Users:</strong> 1,234</p>
-                  <p><strong>Teams:</strong> 8</p>
-                  <p><strong>Response Rate:</strong> 98.5%</p>
-                  <p><strong>System Status:</strong> <span className="text-green-600 font-medium">Operational</span></p>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Quick Actions</h4>
-                <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start bg-white/50 hover:bg-white/80 border-blue-300"
-                  >
-                    <Ticket className="h-4 w-4 mr-2" />
-                    View All Tickets
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start bg-white/50 hover:bg-white/80 border-blue-300"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Manage Users
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start bg-white/50 hover:bg-white/80 border-blue-300"
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    System Settings
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
         </Card>
       )}
 
@@ -110,7 +55,7 @@ export function Dashboard() {
           <CardContent>
             <div className="text-3xl font-bold text-gray-900">45</div>
             <p className="text-xs text-red-500 flex items-center gap-1">
-              <span>-12% from last week</span>
+              <span>-12%  from last week</span>
             </p>
           </CardContent>
         </Card>
@@ -166,20 +111,20 @@ export function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={ticketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="name" 
+                <XAxis
+                  dataKey="name"
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                 />
-                <YAxis 
+                <YAxis
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
@@ -213,9 +158,9 @@ export function Dashboard() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
@@ -254,10 +199,9 @@ export function Dashboard() {
               ].map((activity, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.type === 'ticket' ? 'bg-blue-500' : 
+                    <div className={`w-2 h-2 rounded-full ${activity.type === 'ticket' ? 'bg-blue-500' :
                       activity.type === 'admin' ? 'bg-purple-500' : 'bg-green-500'
-                    }`} />
+                      }`} />
                     <div>
                       <p className="font-medium text-gray-900">{activity.action}</p>
                       <p className="text-sm text-gray-600">

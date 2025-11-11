@@ -21,7 +21,7 @@ import {
   buildUserFilterWhere,
   buildSortOrder,
   buildTeamFilterWhere,
-  buildAuditLogFilterWhere,
+
   executePaginatedQuery,
   generateCacheKey,
   validateSortField,
@@ -349,17 +349,8 @@ export class OptimizedUserService {
         });
       }),
       
-      // Recent activity (last 24 hours)
-      prisma.auditLog.count({
-        where: {
-          timestamp: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          },
-          ...(accessScope.organizationWide ? {} : {
-            user: { teamId: { in: accessScope.teamIds } }
-          }),
-        },
-      }),
+      // Recent activity (last 24 hours) - removed audit log functionality
+      Promise.resolve(0),
     ]);
 
     return {
@@ -399,7 +390,7 @@ export class OptimizedUserService {
   }
 
   /**
-   * Get user activity summary
+   * Get user activity summary (audit logs removed)
    */
   async getUserActivity(
     requesterId: string,
@@ -416,36 +407,17 @@ export class OptimizedUserService {
       );
     }
 
-    // Get audit logs for the user
-    const { page, limit, sortBy, sortOrder } = normalizePaginationOptions(options);
-
-    return await executePaginatedQuery(
-      // Count query
-      async () => {
-        return await prisma.auditLog.count({
-          where: { userId },
-        });
+    // Return empty result since audit logs have been removed
+    return {
+      data: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalCount: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
       },
-      // Data query
-      async (skip: number, take: number) => {
-        return await prisma.auditLog.findMany({
-          where: { userId },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
-          orderBy: { timestamp: 'desc' },
-          skip,
-          take,
-        });
-      },
-      options
-    );
+    };
   }
 
   /**

@@ -27,3 +27,6 @@ yarn-error.log*
 next-env.d.ts
 .myenv
 /lib/generated/prisma
+
+# uploads
+/uploads

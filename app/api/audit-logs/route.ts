@@ -1,72 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withRBAC } from '@/lib/rbac/middleware';
-import { auditLogger } from '@/lib/rbac/audit-logger';
-import { PERMISSION_ACTIONS, RESOURCE_TYPES } from '@/lib/rbac/permissions';
-import { AuditLogFilter } from '@/lib/types/rbac';
+import { getServerSession } from '@/lib/server-auth';
+import { auditService } from '@/lib/services';
+import { hasPermission } from '@/lib/rbac/permissions';
 
 /**
  * GET /api/audit-logs
- * Get audit logs with filtering and pagination (Admin only)
+ * Get audit logs with filtering (Admin only)
  */
 export async function GET(request: NextRequest) {
   try {
-    // Apply RBAC middleware - only admins can view audit logs
-    const rbacResult = await withRBAC(request, {
-      requireAuth: true,
-      requiredPermission: {
-        action: PERMISSION_ACTIONS.READ,
-        resource: RESOURCE_TYPES.AUDIT_LOGS,
-      },
-      auditAction: 'view_audit_logs',
-    });
+    const session = await getServerSession();
 
-    if (rbacResult.response) {
-      return rbacResult.response;
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
-    const { searchParams } = new URL(request.url);
+    // Check if user is Admin
+    const isAdmin = await hasPermission(session.user.id, 'audit_logs', 'read');
+    
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: Only administrators can view audit logs' },
+        { status: 403 }
+      );
+    }
 
     // Parse query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const userId = searchParams.get('userId') || undefined;
+    const action = searchParams.get('action') || undefined;
+    const resourceType = searchParams.get('resourceType') || undefined;
+    const resourceId = searchParams.get('resourceId') || undefined;
+    const successParam = searchParams.get('success');
+    const success = successParam ? successParam === 'true' : undefined;
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100); // Max 100 per page
+    const limit = parseInt(searchParams.get('limit') || '50');
 
-    // Build filter from query parameters
-    const filter: AuditLogFilter = {};
-
-    if (searchParams.get('userId')) {
-      filter.userId = searchParams.get('userId')!;
-    }
-
-    if (searchParams.get('action')) {
-      filter.action = searchParams.get('action')!;
-    }
-
-    if (searchParams.get('resourceType')) {
-      filter.resourceType = searchParams.get('resourceType')!;
-    }
-
-    if (searchParams.get('resourceId')) {
-      filter.resourceId = searchParams.get('resourceId')!;
-    }
-
-    if (searchParams.get('success')) {
-      filter.success = searchParams.get('success') === 'true';
-    }
-
-    if (searchParams.get('startDate')) {
-      filter.startDate = new Date(searchParams.get('startDate')!);
-    }
-
-    if (searchParams.get('endDate')) {
-      filter.endDate = new Date(searchParams.get('endDate')!);
-    }
-
-    if (searchParams.get('ipAddress')) {
-      filter.ipAddress = searchParams.get('ipAddress')!;
-    }
+    const startDate = startDateParam ? new Date(startDateParam) : undefined;
+    const endDate = endDateParam ? new Date(endDateParam) : undefined;
 
     // Get audit logs
-    const result = await auditLogger.getAuditLogs(filter, page, limit);
+    const result = await auditService.getAuditLogs({
+      userId,
+      action,
+      resourceType,
+      resourceId,
+      success,
+      startDate,
+      endDate,
+      page,
+      limit,
+    });
 
     return NextResponse.json(result);
   } catch (error) {

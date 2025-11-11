@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   withRBAC,
-  withAuditLogging,
+
   RBACRequest,
   MiddlewareConfig,
   extractUserIdFromPath,
   extractTeamIdFromPath,
-  getAuditAction,
+
 } from './middleware';
 import { handlePermissionError, PermissionError } from './errors';
 
@@ -29,7 +29,7 @@ export type ProtectedAPIRouteHandler = (
 
 /**
  * Higher-order function to create protected API routes with RBAC
- * This function wraps API route handlers with authentication, authorization, and audit logging
+ * This function wraps API route handlers with authentication and authorization
  */
 export function createProtectedRoute(
   handler: ProtectedAPIRouteHandler,
@@ -37,14 +37,13 @@ export function createProtectedRoute(
 ): APIRouteHandler {
   return async (request: NextRequest, context?: { params?: any }) => {
     const rbacRequest = request as RBACRequest;
-    let auditSuccess = true;
-    let auditDetails: Record<string, any> = {};
+
 
     try {
       // Set default configuration
       const finalConfig: MiddlewareConfig = {
         requireAuth: true,
-        auditAction: getAuditAction(request.method, new URL(request.url).pathname),
+
         ...config,
       };
 
@@ -52,17 +51,9 @@ export function createProtectedRoute(
       const rbacResult = await withRBAC(rbacRequest, finalConfig);
       
       if (rbacResult.response) {
-        // RBAC check failed, log the failure and return error response
-        auditSuccess = false;
-        auditDetails = { error: 'RBAC check failed' };
+        // RBAC check failed, return error response
         
-        await withAuditLogging(
-          rbacResult.request,
-          finalConfig,
-          extractResourceId(request),
-          auditSuccess,
-          auditDetails
-        );
+
         
         return rbacResult.response;
       }
@@ -80,33 +71,15 @@ export function createProtectedRoute(
         accessScope: rbacResult.request.accessScope,
       });
 
-      // Log successful action
-      await withAuditLogging(
-        rbacResult.request,
-        finalConfig,
-        extractResourceId(request),
-        auditSuccess,
-        auditDetails
-      );
+
 
       return response;
     } catch (error) {
       console.error('Protected route error:', error);
       
-      // Log failed action
-      auditSuccess = false;
-      auditDetails = { 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-      };
+
       
-      await withAuditLogging(
-        rbacRequest,
-        config,
-        extractResourceId(request),
-        auditSuccess,
-        auditDetails
-      );
+
 
       // Return appropriate error response
       if (error instanceof PermissionError) {
@@ -182,7 +155,7 @@ export function createUserManagementRoute(
       action,
       resource: 'users',
     },
-    auditAction: `${action}_user`,
+
   };
 
   // Special handling for user creation and deletion (Admin only)

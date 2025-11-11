@@ -1,7 +1,7 @@
-import { User, Role, Team, Permission, UserRole, RolePermission, TeamLeader, AuditLog } from '@prisma/client';
+import { User, Role, Team, Permission, UserRole, RolePermission, TeamLeader } from '@prisma/client';
 
 // Re-export Prisma types
-export type { User, Role, Team, Permission, UserRole, RolePermission, TeamLeader, AuditLog } from '@prisma/client';
+export type { User, Role, Team, Permission, UserRole, RolePermission, TeamLeader } from '@prisma/client';
 
 // Extended types with relationships
 export interface UserWithRole extends User {
@@ -116,77 +116,7 @@ export interface UserPermissions {
   teamIds: string[];
 }
 
-// Audit logging interfaces
-export interface AuditLogData {
-  userId?: string;
-  action: string;
-  resourceType: string;
-  resourceId?: string;
-  success: boolean;
-  details?: Record<string, any>;
-  ipAddress?: string;
-  userAgent?: string;
-}
 
-export interface AuditLogEntry {
-  id: string;
-  userId: string | null;
-  user?: {
-    id: string;
-    name: string | null;
-    email: string;
-    role?: {
-      name: string;
-    } | null;
-  } | null;
-  action: string;
-  resourceType: string;
-  resourceId: string | null;
-  success: boolean;
-  details: Record<string, any> | null;
-  ipAddress: string | null;
-  userAgent: string | null;
-  timestamp: Date;
-}
-
-export interface AuditLogFilter {
-  userId?: string;
-  action?: string;
-  resourceType?: string;
-  resourceId?: string;
-  success?: boolean;
-  startDate?: Date;
-  endDate?: Date;
-  ipAddress?: string;
-}
-
-export interface AuditLogResult {
-  logs: AuditLogEntry[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalCount: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
-}
-
-export interface AuditLogStats {
-  totalActions: number;
-  successfulActions: number;
-  failedActions: number;
-  permissionViolations: number;
-  uniqueUsers: number;
-  topActions: Array<{ action: string; count: number }>;
-  topResources: Array<{ resourceType: string; count: number }>;
-  recentViolations: Array<{
-    userId: string;
-    action: string;
-    resourceType: string;
-    timestamp: Date;
-    user?: { name: string; email: string };
-  }>;
-}
 
 // API response interfaces
 export interface UserListResponse {
