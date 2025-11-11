@@ -2,6 +2,12 @@
 
 # dependencies
 /node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+*.test.js.snap
 
 # next.js
 /.next/
@@ -9,15 +15,21 @@
 
 # production
 /build
+/dist
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files
-.env*
+# env files (keep .env.example)
+.env
+.env*.local
+.env.development
+.env.production
+.env.test
 
 # vercel
 .vercel
@@ -28,5 +40,95 @@ next-env.d.ts
 .myenv
 /lib/generated/prisma
 
-# uploads
+# uploads and attachments
 /uploads
+/public/uploads
+/tmp
+
+# IDE and editor files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Cache directories
+.npm
+.eslintcache
+.node_repl_history
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# Redis dump
+dump.rdb
+
+# Documentation build
+/docs/_build
+/docs/.doctrees
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Performance and monitoring
+/performance-reports
+/monitoring-data
+
+# Backup files
+*.bak
+*.backup
+*~
