@@ -11,7 +11,6 @@ All subtasks have been successfully implemented and verified.
 ## Subtask 1.1: Update Prisma schema with ticket extensions
 
 **Status**: ✅ COMPLETED
-
 ### Ticket Model Extensions
 The Ticket model has been extended with the following fields:
 - ✅ `teamId` - Links tickets to teams

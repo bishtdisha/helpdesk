@@ -37,6 +37,7 @@ model User {
   ticketHistory          TicketHistory[]
   notifications          Notification[]
   notificationPreference NotificationPreferences?
+  createdTemplates       TicketTemplate[]
 
   @@map("users")
 }
@@ -464,6 +465,29 @@ model NotificationPreferences {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+// Ticket Templates
+model TicketTemplate {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  title       String?
+  content     String?
+  priority    TicketPriority @default(MEDIUM)
+  isGlobal    Boolean        @default(false) // Global templates (Admin_Manager only) vs personal templates
+  createdBy   String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relationships
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([createdBy])
+  @@index([category])
+  @@index([isGlobal])
+  @@map("ticket_templates")
 }
 
 // System Settings

@@ -1,0 +1,274 @@
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding: 0 1rem;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+.ProseMirror code {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.ProseMirror pre {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+  color: inherit;
+}
+
+.ProseMirror a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  text-decoration: none;
+}
+
+.ProseMirror blockquote {
+  padding-left: 1rem;
+  border-left: 2px solid hsl(var(--border));
+  margin: 0.5rem 0;
+}
+
+.ProseMirror hr {
+  border: none;
+  border-top: 2px solid hsl(var(--border));
+  margin: 1rem 0;
+}
+
+/* Mention Styles */
+.ProseMirror .mention {
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ProseMirror .mention:hover {
+  background-color: hsl(var(--primary) / 0.2);
+}
+
+/* Syntax Highlighting for Code Blocks */
+.ProseMirror pre code .hljs-comment,
+.ProseMirror pre code .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.ProseMirror pre code .hljs-keyword,
+.ProseMirror pre code .hljs-selector-tag,
+.ProseMirror pre code .hljs-subst {
+  color: #d73a49;
+  font-weight: bold;
+}
+
+.ProseMirror pre code .hljs-number,
+.ProseMirror pre code .hljs-literal,
+.ProseMirror pre code .hljs-variable,
+.ProseMirror pre code .hljs-template-variable,
+.ProseMirror pre code .hljs-tag .hljs-attr {
+  color: #005cc5;
+}
+
+.ProseMirror pre code .hljs-string,
+.ProseMirror pre code .hljs-doctag {
+  color: #032f62;
+}
+
+.ProseMirror pre code .hljs-title,
+.ProseMirror pre code .hljs-section,
+.ProseMirror pre code .hljs-selector-id {
+  color: #6f42c1;
+  font-weight: bold;
+}
+
+.ProseMirror pre code .hljs-type,
+.ProseMirror pre code .hljs-class .hljs-title {
+  color: #6f42c1;
+}
+
+.ProseMirror pre code .hljs-tag,
+.ProseMirror pre code .hljs-name,
+.ProseMirror pre code .hljs-attribute {
+  color: #22863a;
+  font-weight: normal;
+}
+
+.ProseMirror pre code .hljs-regexp,
+.ProseMirror pre code .hljs-link {
+  color: #032f62;
+}
+
+.ProseMirror pre code .hljs-symbol,
+.ProseMirror pre code .hljs-bullet {
+  color: #e36209;
+}
+
+.ProseMirror pre code .hljs-built_in,
+.ProseMirror pre code .hljs-builtin-name {
+  color: #005cc5;
+}
+
+.ProseMirror pre code .hljs-meta {
+  color: #6a737d;
+}
+
+.ProseMirror pre code .hljs-deletion {
+  background-color: #ffeef0;
+}
+
+.ProseMirror pre code .hljs-addition {
+  background-color: #e6ffed;
+}
+
+.ProseMirror pre code .hljs-emphasis {
+  font-style: italic;
+}
+
+.ProseMirror pre code .hljs-strong {
+  font-weight: bold;
+}
+
+/* Dark mode syntax highlighting */
+@media (prefers-color-scheme: dark) {
+  .ProseMirror pre code .hljs-comment,
+  .ProseMirror pre code .hljs-quote {
+    color: #8b949e;
+  }
+
+  .ProseMirror pre code .hljs-keyword,
+  .ProseMirror pre code .hljs-selector-tag,
+  .ProseMirror pre code .hljs-subst {
+    color: #ff7b72;
+  }
+
+  .ProseMirror pre code .hljs-number,
+  .ProseMirror pre code .hljs-literal,
+  .ProseMirror pre code .hljs-variable,
+  .ProseMirror pre code .hljs-template-variable,
+  .ProseMirror pre code .hljs-tag .hljs-attr {
+    color: #79c0ff;
+  }
+
+  .ProseMirror pre code .hljs-string,
+  .ProseMirror pre code .hljs-doctag {
+    color: #a5d6ff;
+  }
+
+  .ProseMirror pre code .hljs-title,
+  .ProseMirror pre code .hljs-section,
+  .ProseMirror pre code .hljs-selector-id {
+    color: #d2a8ff;
+  }
+
+  .ProseMirror pre code .hljs-type,
+  .ProseMirror pre code .hljs-class .hljs-title {
+    color: #d2a8ff;
+  }
+
+  .ProseMirror pre code .hljs-tag,
+  .ProseMirror pre code .hljs-name,
+  .ProseMirror pre code .hljs-attribute {
+    color: #7ee787;
+  }
+
+  .ProseMirror pre code .hljs-regexp,
+  .ProseMirror pre code .hljs-link {
+    color: #a5d6ff;
+  }
+
+  .ProseMirror pre code .hljs-symbol,
+  .ProseMirror pre code .hljs-bullet {
+    color: #ffa657;
+  }
+
+  .ProseMirror pre code .hljs-built_in,
+  .ProseMirror pre code .hljs-builtin-name {
+    color: #79c0ff;
+  }
+
+  .ProseMirror pre code .hljs-meta {
+    color: #8b949e;
+  }
+}
+
+/* Rendered comment styles (outside editor) */
+.prose .mention {
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.prose .mention:hover {
+  background-color: hsl(var(--primary) / 0.2);
+}
+
+.prose pre {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: 0.875rem;
+}
+
+.prose code {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}

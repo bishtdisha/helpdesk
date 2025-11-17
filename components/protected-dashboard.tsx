@@ -10,6 +10,7 @@ import { KnowledgeBase } from "@/components/knowledge-base"
 import { Settings } from "@/components/settings"
 import { NavigationHeader } from "@/components/navigation-header"
 import { UserManagementPage } from "@/components/user-management/user-management-page"
+import { SLAManagement } from "@/components/sla-management"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

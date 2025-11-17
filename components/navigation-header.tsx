@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationBadge } from "@/components/notifications/notification-badge"
-import { LogOut, User, LogIn, UserPlus, Settings, UserCog } from "lucide-react"
+import { HelpSidebar } from "@/components/help-sidebar"
+import { LogOut, User, LogIn, UserPlus, Settings, UserCog, HelpCircle } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { UserRoleBadge } from "@/components/rbac/user-role-badge"
 import { ActionButton } from "@/components/rbac/action-button"
@@ -72,7 +73,7 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
   }
 
   return (
-    <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+    <header id="navigation" className="bg-card border-b border-border px-6 py-4 flex items-center justify-between" role="banner">
       <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
       
       <div className="flex items-center gap-4">
@@ -90,12 +91,26 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
           <>
             <NotificationBadge />
             
+            <HelpSidebar>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2" 
+                data-tour="help-button"
+                aria-label="Open help documentation"
+              >
+                <HelpCircle className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Help</span>
+              </Button>
+            </HelpSidebar>
+            
             <div className="flex items-center gap-3">
               {/* Profile button with initials and role - Clean Layout */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button 
                     className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50 rounded-lg transition-all duration-200 cursor-pointer border border-transparent hover:border-border/30"
+                    aria-label={`User menu for ${user.name || user.email} (${user.role?.name || 'User'})`}
                   >
                     {/* User initials circle */}
                     <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-600 text-white font-semibold text-sm shadow-sm">
@@ -133,8 +148,9 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
                     <DropdownMenuItem 
                       onClick={handleLogout} 
                       className="flex items-center gap-3 px-3 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer rounded-md transition-colors"
+                      aria-label="Sign out of your account"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
                       <span className="font-medium">Log out</span>
                     </DropdownMenuItem>
                   </div>

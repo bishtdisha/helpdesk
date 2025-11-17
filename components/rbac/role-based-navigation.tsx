@@ -13,7 +13,8 @@ import {
   UserPlus, 
   Home,
   UserCog,
-  Shield
+  Shield,
+  Clock
 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { Button } from "@/components/ui/button"
@@ -94,6 +95,14 @@ const menuItems: MenuItem[] = [
     action: PERMISSION_ACTIONS.READ,
     resource: RESOURCE_TYPES.TEAMS,
     excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
+  },
+  
+  // SLA Management - Admin/Manager ONLY
+  { 
+    id: "sla", 
+    label: "SLA Management", 
+    icon: Clock,
+    requireRole: ROLE_TYPES.ADMIN_MANAGER
   },
   
   // Settings - available to all authenticated users

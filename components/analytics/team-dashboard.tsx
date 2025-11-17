@@ -10,9 +10,12 @@ import {
   PieChart, Pie, Cell 
 } from "recharts";
 import { 
-  Clock, CheckCircle, AlertCircle, Users, Download, TrendingUp 
+  Clock, CheckCircle, AlertCircle, Users, Download, TrendingUp, RefreshCw 
 } from "lucide-react";
 import { TeamMetrics } from '@/lib/services/analytics-service';
+import { useAuth } from '@/lib/contexts/auth-context';
+import { usePermissions } from '@/lib/hooks/use-permissions';
+import { DateRangePicker } from './date-range-picker';
 
 interface TeamDashboardProps {
   teamId: string;
@@ -24,12 +27,29 @@ interface TeamDashboardProps {
 }
 
 export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDashboardProps) {
+  const { user, role } = useAuth();
+  const { canViewTeamAnalytics } = usePermissions();
   const [metrics, setMetrics] = useState<TeamMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Permission check - Team_Leader or Admin_Manager only
+  const hasPermission = canViewTeamAnalytics();
+
+  // Validate team ID against user's assigned teams for Team_Leader
+  const isValidTeamAccess = () => {
+    if (role === 'Admin_Manager') {
+      return true; // Admin can access any team
+    }
+    if (role === 'Team_Leader') {
+      // Team Leader can only access their own team
+      return user?.teamId === teamId;
+    }
+    return false;
+  };
+
   useEffect(() => {
-    if (teamId) {
+    if (teamId && hasPermission && isValidTeamAccess()) {
       fetchMetrics();
     }
   }, [teamId, dateRange]);
@@ -48,6 +68,15 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
       
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle specific error cases
+        if (response.status === 403) {
+          throw new Error(errorData.message || 'Access denied. You do not have permission to view this team\'s analytics.');
+        }
+        if (response.status === 404) {
+          throw new Error(errorData.message || 'Team not found.');
+        }
+        
         throw new Error(errorData.message || 'Failed to fetch team metrics');
       }
 
@@ -90,6 +119,38 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
     }
   };
 
+  const handleRefresh = () => {
+    fetchMetrics();
+  };
+
+  // Permission check - must have team analytics permission
+  if (!hasPermission) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-5 w-5" />
+            <p>Access denied. Only Team_Leader and Admin_Manager can view team analytics.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Validate team access for Team_Leader
+  if (!isValidTeamAccess()) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-5 w-5" />
+            <p>Access denied. You do not have permission to view this team's analytics.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -128,19 +189,37 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
 
   return (
     <div className="space-y-6">
-      {/* Header with Team Name and Export Button */}
-      <div className="flex items-center justify-between">
+      {/* Header with Team Name and Action Buttons */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">{metrics.teamName} Dashboard</h2>
           <p className="text-muted-foreground">
             Team-specific performance metrics and analytics
           </p>
         </div>
-        <Button onClick={handleExport} variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          Export Report
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+          <Button onClick={handleExport} variant="outline" size="sm" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
+
+      {/* Date Range Display */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Clock className="h-4 w-4" />
+            <span>
+              Showing data from {dateRange.startDate.toLocaleDateString()} to {dateRange.endDate.toLocaleDateString()}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -291,7 +370,7 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
         <CardHeader>
           <CardTitle className="text-gray-700">Agent Performance Details</CardTitle>
           <CardDescription className="text-gray-500">
-            Detailed metrics for each team member
+            Detailed metrics for each team member (sorted by resolved tickets)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -300,9 +379,15 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Agent</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Assigned</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Resolved</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Avg Resolution Time</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                    Assigned
+                  </th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                    Resolved
+                  </th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                    Avg Resolution Time
+                  </th>
                   <th className="text-right py-3 px-4 font-medium text-gray-700">Resolution Rate</th>
                 </tr>
               </thead>
@@ -315,7 +400,7 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
                       : 0;
                     
                     return (
-                      <tr key={agent.agentId} className="border-b hover:bg-gray-50">
+                      <tr key={agent.agentId} className="border-b hover:bg-gray-50 transition-colors">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             {index < 3 && (
@@ -327,9 +412,9 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
                             <span className="font-medium">{agent.agentName}</span>
                           </div>
                         </td>
-                        <td className="text-right py-3 px-4">{agent.assignedTickets}</td>
-                        <td className="text-right py-3 px-4">{agent.resolvedTickets}</td>
-                        <td className="text-right py-3 px-4">
+                        <td className="text-right py-3 px-4 text-gray-700">{agent.assignedTickets}</td>
+                        <td className="text-right py-3 px-4 text-gray-700 font-medium">{agent.resolvedTickets}</td>
+                        <td className="text-right py-3 px-4 text-gray-700">
                           {agent.averageResolutionTime.toFixed(1)}h
                         </td>
                         <td className="text-right py-3 px-4">
@@ -349,6 +434,11 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
               </tbody>
             </table>
           </div>
+          {metrics.agentPerformance.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No agent performance data available for this period.
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -367,18 +457,27 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
               .map((agent) => {
                 const maxWorkload = Math.max(...metrics.workloadDistribution.map(a => a.totalAssigned));
                 const workloadPercentage = maxWorkload > 0 ? (agent.totalAssigned / maxWorkload) * 100 : 0;
+                const isOverloaded = workloadPercentage > 80;
                 
                 return (
                   <div key={agent.agentId} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">{agent.agentName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">{agent.agentName}</span>
+                        {isOverloaded && (
+                          <Badge variant="destructive" className="text-xs">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Overloaded
+                          </Badge>
+                        )}
+                      </div>
                       <span className="text-sm text-gray-600">
                         {agent.totalAssigned} tickets
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
-                        className={`h-2 rounded-full ${
+                        className={`h-2 rounded-full transition-all ${
                           workloadPercentage > 80 ? 'bg-red-500' :
                           workloadPercentage > 60 ? 'bg-orange-500' :
                           'bg-green-500'
@@ -387,13 +486,24 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
                       />
                     </div>
                     <div className="flex gap-4 text-xs text-gray-600">
-                      <span>Open: {agent.openTickets}</span>
-                      <span>In Progress: {agent.inProgressTickets}</span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                        Open: {agent.openTickets}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                        In Progress: {agent.inProgressTickets}
+                      </span>
                     </div>
                   </div>
                 );
               })}
           </div>
+          {metrics.workloadDistribution.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No workload data available for this period.
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

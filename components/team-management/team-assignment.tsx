@@ -254,11 +254,15 @@ export function TeamAssignment({ user, isOpen, onClose, onSuccess }: TeamAssignm
                 
                 <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
                   {isRemoving && (
-                    <strong>Action:</strong> Remove user from {currentTeam?.name}
+                    <>
+                      <strong>Action:</strong> Remove user from {currentTeam?.name}
+                    </>
                   )}
                   {isAssigning && (
-                    <strong>Action:</strong> {currentTeam ? 'Move' : 'Assign'} user 
-                    {currentTeam && ` from ${currentTeam.name}`} to {selectedTeam?.name}
+                    <>
+                      <strong>Action:</strong> {currentTeam ? 'Move' : 'Assign'} user 
+                      {currentTeam && ` from ${currentTeam.name}`} to {selectedTeam?.name}
+                    </>
                   )}
                 </div>
               </CardContent>

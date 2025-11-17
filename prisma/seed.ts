@@ -1,30 +1,28 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('Starting database seed...\n');
 
-  // Create roles first
-  console.log('📝 Creating roles...');
-  
+  // Create Roles
+  console.log('Creating roles...');
   const adminRole = await prisma.role.upsert({
     where: { name: 'Admin/Manager' },
     update: {},
     create: {
       name: 'Admin/Manager',
-      description: 'Full system administrator with complete access to all features and user management',
+      description: 'Full system access with all permissions',
       permissions: {
-        users: ['create', 'read', 'update', 'delete', 'assign'],
-        teams: ['create', 'read', 'update', 'delete', 'manage'],
-        roles: ['create', 'read', 'update', 'delete', 'assign'],
-        tickets: ['create', 'read', 'update', 'delete', 'assign'],
-        analytics: ['read'],
-
-        knowledge_base: ['create', 'read', 'update', 'delete']
-      }
-    }
+        tickets: ['read', 'write', 'delete', 'assign', 'manage'],
+        users: ['read', 'write', 'delete', 'manage'],
+        teams: ['read', 'write', 'delete', 'manage'],
+        analytics: ['read', 'export', 'comparative'],
+        knowledge_base: ['read', 'write', 'delete', 'manage'],
+        settings: ['read', 'write', 'manage'],
+      },
+    },
   });
 
   const teamLeaderRole = await prisma.role.upsert({
@@ -32,162 +30,362 @@ async function main() {
     update: {},
     create: {
       name: 'Team Leader',
-      description: 'Team leader with access to manage team members and team-specific resources',
+      description: 'Team management and ticket assignment',
       permissions: {
-        users: ['read', 'update'], // Team scope only
-        teams: ['read'], // Team scope only
-        tickets: ['create', 'read', 'update', 'assign'], // Team scope
-        analytics: ['read'], // Team scope
-        knowledge_base: ['create', 'read', 'update']
-      }
-    }
+        tickets: ['read', 'write', 'assign'],
+        users: ['read'],
+        teams: ['read'],
+        analytics: ['read', 'export'],
+        knowledge_base: ['read', 'write'],
+      },
+    },
   });
 
-  const userRole = await prisma.role.upsert({
+  const employeeRole = await prisma.role.upsert({
     where: { name: 'User/Employee' },
     update: {},
     create: {
       name: 'User/Employee',
-      description: 'Regular user with access to own profile and assigned tickets',
+      description: 'Basic user with limited access',
       permissions: {
-        users: ['read', 'update'], // Own scope only
-        teams: ['read'], // Own team only
-        tickets: ['create', 'read', 'update'], // Own tickets only
-        knowledge_base: ['read']
-      }
-    }
+        tickets: ['read', 'write'],
+        knowledge_base: ['read'],
+      },
+    },
   });
 
-  console.log('✅ Roles created successfully');
+  console.log('✓ Roles created\n');
 
-  // Create default team
-  console.log('🏢 Creating default team...');
-  
-  const defaultTeam = await prisma.team.upsert({
-    where: { name: 'Administration' },
+  // Create Teams
+  console.log('Creating teams...');
+  const supportTeam = await prisma.team.upsert({
+    where: { name: 'Customer Support' },
     update: {},
     create: {
-      name: 'Administration',
-      description: 'Default administrative team for system administrators'
-    }
+      name: 'Customer Support',
+      description: 'Handles customer inquiries and support tickets',
+    },
   });
 
-  console.log('✅ Default team created successfully');
+  const technicalTeam = await prisma.team.upsert({
+    where: { name: 'Technical Support' },
+    update: {},
+    create: {
+      name: 'Technical Support',
+      description: 'Handles technical issues and bug reports',
+    },
+  });
 
-  // Hash the password
-  console.log('🔐 Hashing password...');
-  const hashedPassword = await bcrypt.hash('cimcon@123', 12);
+  const salesTeam = await prisma.team.upsert({
+    where: { name: 'Sales Team' },
+    update: {},
+    create: {
+      name: 'Sales Team',
+      description: 'Handles sales inquiries and pre-sales support',
+    },
+  });
 
-  // Create admin user
-  console.log('👤 Creating admin user...');
-  
+  console.log('✓ Teams created\n');
+
+  // Create Users
+  console.log('Creating users...');
+  const employeePassword = await bcrypt.hash('password123', 10);
+  const adminPassword = await bcrypt.hash('cimcon@123', 10);
+
   const adminUser = await prisma.user.upsert({
     where: { email: 'disha.bisht@cimconautomation.com' },
-    update: {
-      name: 'Disha Bisht',
-      roleId: adminRole.id,
-      teamId: defaultTeam.id,
-      isActive: true
-    },
+    update: {},
     create: {
       email: 'disha.bisht@cimconautomation.com',
-      name: 'Disha Bisht',
-      password: hashedPassword,
+      name: 'Disha',
+      password: adminPassword,
       roleId: adminRole.id,
-      teamId: defaultTeam.id,
-      isActive: true
-    }
+      isActive: true,
+    },
   });
 
-  console.log('✅ Admin user created successfully');
+  const teamLead1 = await prisma.user.upsert({
+    where: { email: 'teamlead1@example.com' },
+    update: {},
+    create: {
+      email: 'teamlead1@example.com',
+      name: 'John Smith',
+      password: employeePassword,
+      roleId: teamLeaderRole.id,
+      teamId: supportTeam.id,
+      isActive: true,
+    },
+  });
 
-  // Create some sample permissions for reference
-  console.log('🔑 Creating permission definitions...');
-  
-  const permissions = [
-    { resource: 'users', action: 'create', description: 'Create new users' },
-    { resource: 'users', action: 'read', description: 'View user information' },
-    { resource: 'users', action: 'update', description: 'Update user information' },
-    { resource: 'users', action: 'delete', description: 'Delete users' },
-    { resource: 'users', action: 'assign', description: 'Assign roles to users' },
-    
-    { resource: 'teams', action: 'create', description: 'Create new teams' },
-    { resource: 'teams', action: 'read', description: 'View team information' },
-    { resource: 'teams', action: 'update', description: 'Update team information' },
-    { resource: 'teams', action: 'delete', description: 'Delete teams' },
-    { resource: 'teams', action: 'manage', description: 'Manage team assignments' },
-    
-    { resource: 'roles', action: 'create', description: 'Create new roles' },
-    { resource: 'roles', action: 'read', description: 'View role information' },
-    { resource: 'roles', action: 'update', description: 'Update role information' },
-    { resource: 'roles', action: 'delete', description: 'Delete roles' },
-    { resource: 'roles', action: 'assign', description: 'Assign roles to users' },
-    
-    { resource: 'tickets', action: 'create', description: 'Create new tickets' },
-    { resource: 'tickets', action: 'read', description: 'View tickets' },
-    { resource: 'tickets', action: 'update', description: 'Update tickets' },
-    { resource: 'tickets', action: 'delete', description: 'Delete tickets' },
-    { resource: 'tickets', action: 'assign', description: 'Assign tickets to users' },
-    
-    { resource: 'analytics', action: 'read', description: 'View analytics and reports' },
+  const teamLead2 = await prisma.user.upsert({
+    where: { email: 'teamlead2@example.com' },
+    update: {},
+    create: {
+      email: 'teamlead2@example.com',
+      name: 'Sarah Johnson',
+      password: employeePassword,
+      roleId: teamLeaderRole.id,
+      teamId: technicalTeam.id,
+      isActive: true,
+    },
+  });
 
-    { resource: 'knowledge_base', action: 'create', description: 'Create knowledge base articles' },
-    { resource: 'knowledge_base', action: 'read', description: 'Read knowledge base articles' },
-    { resource: 'knowledge_base', action: 'update', description: 'Update knowledge base articles' },
-    { resource: 'knowledge_base', action: 'delete', description: 'Delete knowledge base articles' },
-  ];
+  const employee1 = await prisma.user.upsert({
+    where: { email: 'employee1@example.com' },
+    update: {},
+    create: {
+      email: 'employee1@example.com',
+      name: 'Mike Davis',
+      password: employeePassword,
+      roleId: employeeRole.id,
+      teamId: supportTeam.id,
+      isActive: true,
+    },
+  });
 
-  for (const perm of permissions) {
-    await prisma.permission.upsert({
-      where: {
-        resource_action: {
-          resource: perm.resource,
-          action: perm.action
-        }
+  const employee2 = await prisma.user.upsert({
+    where: { email: 'employee2@example.com' },
+    update: {},
+    create: {
+      email: 'employee2@example.com',
+      name: 'Emily Brown',
+      password: employeePassword,
+      roleId: employeeRole.id,
+      teamId: technicalTeam.id,
+      isActive: true,
+    },
+  });
+
+  console.log('✓ Users created\n');
+
+  // Assign Team Leaders
+  console.log('Assigning team leaders...');
+  await prisma.teamLeader.upsert({
+    where: {
+      userId_teamId: {
+        userId: teamLead1.id,
+        teamId: supportTeam.id,
       },
-      update: {},
-      create: perm
-    });
-  }
+    },
+    update: {},
+    create: {
+      userId: teamLead1.id,
+      teamId: supportTeam.id,
+    },
+  });
 
-  console.log('✅ Permissions created successfully');
-
-  // Create role-permission associations for Admin
-  console.log('🔗 Creating role-permission associations...');
-  
-  const adminPermissions = await prisma.permission.findMany();
-  
-  for (const permission of adminPermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: adminRole.id,
-          permissionId: permission.id
-        }
+  await prisma.teamLeader.upsert({
+    where: {
+      userId_teamId: {
+        userId: teamLead2.id,
+        teamId: technicalTeam.id,
       },
-      update: {},
-      create: {
-        roleId: adminRole.id,
-        permissionId: permission.id
-      }
-    });
-  }
+    },
+    update: {},
+    create: {
+      userId: teamLead2.id,
+      teamId: technicalTeam.id,
+    },
+  });
 
-  console.log('✅ Role-permission associations created successfully');
+  console.log('✓ Team leaders assigned\n');
 
-  // Log summary
-  console.log('\n🎉 Database seeding completed successfully!');
-  console.log('\n📋 Summary:');
-  console.log(`👤 Admin User: ${adminUser.email}`);
-  console.log(`🔑 Password: cimcon@123`);
-  console.log(`👑 Role: ${adminRole.name}`);
-  console.log(`🏢 Team: ${defaultTeam.name}`);
-  console.log('\n🚀 You can now log in with the admin credentials!');
+  // Create Customers
+  console.log('Creating customers...');
+  const customer1 = await prisma.customer.upsert({
+    where: { email: 'customer1@example.com' },
+    update: {},
+    create: {
+      name: 'Acme Corporation',
+      email: 'customer1@example.com',
+      phone: '+1-555-0101',
+      company: 'Acme Corp',
+    },
+  });
+
+  const customer2 = await prisma.customer.upsert({
+    where: { email: 'customer2@example.com' },
+    update: {},
+    create: {
+      name: 'Tech Solutions Inc',
+      email: 'customer2@example.com',
+      phone: '+1-555-0102',
+      company: 'Tech Solutions',
+    },
+  });
+
+  console.log('✓ Customers created\n');
+
+  // Create Sample Tickets
+  console.log('Creating sample tickets...');
+  const ticket1 = await prisma.ticket.create({
+    data: {
+      title: 'Login Issue - Cannot access account',
+      description: 'Customer is unable to login to their account. Password reset not working.',
+      status: 'OPEN',
+      priority: 'HIGH',
+      customerId: customer1.id,
+      createdBy: employee1.id,
+      assignedTo: teamLead1.id,
+      teamId: supportTeam.id,
+    },
+  });
+
+  const ticket2 = await prisma.ticket.create({
+    data: {
+      title: 'Bug Report - Application crashes on startup',
+      description: 'Application crashes immediately after launching. Error code: 0x8007000E',
+      status: 'IN_PROGRESS',
+      priority: 'URGENT',
+      customerId: customer2.id,
+      createdBy: employee2.id,
+      assignedTo: teamLead2.id,
+      teamId: technicalTeam.id,
+    },
+  });
+
+  const ticket3 = await prisma.ticket.create({
+    data: {
+      title: 'Feature Request - Dark mode support',
+      description: 'Customer requesting dark mode theme for better usability',
+      status: 'OPEN',
+      priority: 'LOW',
+      customerId: customer1.id,
+      createdBy: employee1.id,
+    },
+  });
+
+  console.log('✓ Sample tickets created\n');
+
+  // Create Comments
+  console.log('Creating comments...');
+  await prisma.comment.create({
+    data: {
+      content: 'I have started investigating this issue. Will update soon.',
+      ticketId: ticket1.id,
+      authorId: teamLead1.id,
+      isInternal: false,
+    },
+  });
+
+  await prisma.comment.create({
+    data: {
+      content: 'This appears to be a memory allocation issue. Working on a fix.',
+      ticketId: ticket2.id,
+      authorId: teamLead2.id,
+      isInternal: true,
+    },
+  });
+
+  console.log('✓ Comments created\n');
+
+  // Create SLA Policies
+  console.log('Creating SLA policies...');
+  await prisma.sLAPolicy.upsert({
+    where: { id: 'sla-urgent' },
+    update: {},
+    create: {
+      id: 'sla-urgent',
+      name: 'Urgent Priority SLA',
+      description: 'SLA for urgent priority tickets',
+      priority: 'URGENT',
+      responseTimeHours: 1,
+      resolutionTimeHours: 4,
+      isActive: true,
+    },
+  });
+
+  await prisma.sLAPolicy.upsert({
+    where: { id: 'sla-high' },
+    update: {},
+    create: {
+      id: 'sla-high',
+      name: 'High Priority SLA',
+      description: 'SLA for high priority tickets',
+      priority: 'HIGH',
+      responseTimeHours: 4,
+      resolutionTimeHours: 24,
+      isActive: true,
+    },
+  });
+
+  await prisma.sLAPolicy.upsert({
+    where: { id: 'sla-medium' },
+    update: {},
+    create: {
+      id: 'sla-medium',
+      name: 'Medium Priority SLA',
+      description: 'SLA for medium priority tickets',
+      priority: 'MEDIUM',
+      responseTimeHours: 8,
+      resolutionTimeHours: 48,
+      isActive: true,
+    },
+  });
+
+  await prisma.sLAPolicy.upsert({
+    where: { id: 'sla-low' },
+    update: {},
+    create: {
+      id: 'sla-low',
+      name: 'Low Priority SLA',
+      description: 'SLA for low priority tickets',
+      priority: 'LOW',
+      responseTimeHours: 24,
+      resolutionTimeHours: 120,
+      isActive: true,
+    },
+  });
+
+  console.log('✓ SLA policies created\n');
+
+  // Create Knowledge Base Articles
+  console.log('Creating knowledge base articles...');
+  await prisma.knowledgeBaseArticle.create({
+    data: {
+      title: 'How to Reset Your Password',
+      content: 'To reset your password:\n1. Click on "Forgot Password"\n2. Enter your email\n3. Check your email for reset link\n4. Follow the instructions',
+      summary: 'Step-by-step guide for password reset',
+      accessLevel: 'PUBLIC',
+      isPublished: true,
+    },
+  });
+
+  await prisma.knowledgeBaseArticle.create({
+    data: {
+      title: 'Troubleshooting Common Login Issues',
+      content: 'Common login issues and solutions:\n- Clear browser cache\n- Check internet connection\n- Verify credentials\n- Try incognito mode',
+      summary: 'Solutions for common login problems',
+      accessLevel: 'PUBLIC',
+      isPublished: true,
+    },
+  });
+
+  await prisma.knowledgeBaseArticle.create({
+    data: {
+      title: 'Internal: Escalation Procedures',
+      content: 'Internal escalation procedures for critical issues...',
+      summary: 'Internal guide for escalating critical tickets',
+      accessLevel: 'INTERNAL',
+      isPublished: true,
+      teamId: supportTeam.id,
+    },
+  });
+
+  console.log('✓ Knowledge base articles created\n');
+
+  console.log('✅ Database seeding completed successfully!\n');
+  console.log('Login credentials:');
+  console.log('  Admin: disha.bisht@cimconautomation.com / cimcon@123');
+  console.log('  Team Lead 1: teamlead1@example.com / password123');
+  console.log('  Team Lead 2: teamlead2@example.com / password123');
+  console.log('  Employee 1: employee1@example.com / password123');
+  console.log('  Employee 2: employee2@example.com / password123');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e);
+    console.error('Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/server-auth';
 import { prisma } from '@/lib/db';
 
 /**
@@ -8,9 +8,9 @@ import { prisma } from '@/lib/db';
  */
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession();
+    const user = await getCurrentUser();
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest) {
     // Mark all unread notifications as read
     const result = await prisma.notification.updateMany({
       where: {
-        userId: session.user.id,
+        userId: user.id,
         isRead: false,
       },
       data: {

@@ -1,36 +1,18 @@
-// Main authentication service
-export { AuthService } from '../auth-service';
+/**
+ * Authentication and Authorization Infrastructure
+ * 
+ * This module provides the core authentication and authorization functionality
+ * for the ticket system frontend.
+ */
 
-// Utility classes
-export { PasswordUtils, SessionUtils } from '../auth';
+// Context and hooks
+export { AuthProvider, useAuth } from '../contexts/auth-context';
+export type { User, UserRole } from '../contexts/auth-context';
 
-// Validation utilities
-export {
-  isValidEmail,
-  validatePassword,
-  validateRegistrationData,
-  validateLoginData,
-} from '../validation';
+// Permissions
+export { usePermissions } from '../hooks/use-permissions';
+export type { UsePermissionsReturn, Ticket } from '../hooks/use-permissions';
 
-// Types
-export type {
-  User,
-  UserSession,
-  SafeUser,
-  UserRegistrationData,
-  UserLoginData,
-  AuthResult,
-  SessionValidationResult,
-  AuthenticatedRequest,
-  SessionOptions,
-  SessionWithUser,
-} from '../types/auth';
-
-export type {
-  PasswordValidation,
-  RegistrationValidation,
-  LoginValidation,
-} from '../validation';
-
-// Database connection
-export { prisma, connectDB, disconnectDB } from '../db';
+// Components
+export { PermissionGuard, withPermission } from '../components/permission-guard';
+export type { Permission, PermissionGuardProps } from '../components/permission-guard';

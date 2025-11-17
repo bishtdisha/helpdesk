@@ -85,7 +85,7 @@ export async function POST(
 
     // Parse request body
     const body = await request.json();
-    const { content } = body;
+    const { content, isInternal } = body;
 
     // Validate required fields
     if (!content) {
@@ -125,6 +125,7 @@ export async function POST(
 
     const commentData: CreateCommentData = {
       content: content.trim(),
+      isInternal: isInternal || false,
     };
 
     // Add comment

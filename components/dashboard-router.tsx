@@ -2,19 +2,24 @@
 
 import { useAuth } from "@/lib/hooks/use-auth"
 import { ROLE_TYPES } from "@/lib/rbac/permissions"
-import { Dashboard } from "@/components/dashboard"
-import { AnalyticsPage } from "@/components/analytics/analytics-page"
-import { Tickets } from "@/components/tickets"
+import { 
+  UserDashboardWithSuspense,
+  OrganizationDashboardWithSuspense,
+  TeamDashboardWithSuspense,
+  DashboardSkeleton
+} from "@/lib/performance/lazy-components"
+import { CustomizableDashboard } from "@/components/dashboard/customizable-dashboard"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { Suspense } from "react"
 
 /**
  * DashboardRouter component that routes users to role-specific dashboards
- * Requirements: 18.5
+ * Requirements: 18.5, 24.1, 24.3
  * 
  * - Admin/Manager: Organization Dashboard (Analytics)
  * - Team Leader: Team Dashboard (Analytics)
- * - User/Employee: Ticket List (Own Tickets)
+ * - User/Employee: User Dashboard (Personal Stats & Tickets)
  */
 export function DashboardRouter() {
   const { user, isAuthenticated, isLoading } = useAuth()
@@ -47,23 +52,36 @@ export function DashboardRouter() {
   // Get user role
   const userRole = user.role?.name
 
-  // Route based on role (Requirement 18.5)
+  // Route based on role (Requirement 18.5, 24.1, 24.3)
   switch (userRole) {
-    case ROLE_TYPES.ADMIN_MANAGER:
-      // Admin users see organization-wide analytics dashboard
-      return <AnalyticsPage />
-
-    case ROLE_TYPES.TEAM_LEADER:
-      // Team Leaders see team-specific analytics dashboard
-      return <AnalyticsPage />
-
     case ROLE_TYPES.USER_EMPLOYEE:
-      // User/Employee sees their own tickets
-      return <Tickets />
-
+      // User_Employee sees their personal dashboard
+      return (
+        <Suspense fallback={<DashboardSkeleton />}>
+          <UserDashboardWithSuspense />
+        </Suspense>
+      )
+    case ROLE_TYPES.ADMIN_MANAGER:
+      // Admin_Manager sees customizable dashboard with widgets
+      return (
+        <Suspense fallback={<DashboardSkeleton />}>
+          <CustomizableDashboard />
+        </Suspense>
+      )
+    case ROLE_TYPES.TEAM_LEADER:
+      // Team_Leader sees customizable dashboard (same as admin for now)
+      return (
+        <Suspense fallback={<DashboardSkeleton />}>
+          <CustomizableDashboard />
+        </Suspense>
+      )
     default:
-      // Fallback to generic dashboard for unknown roles
-      return <Dashboard />
+      // Fallback to user dashboard
+      return (
+        <Suspense fallback={<DashboardSkeleton />}>
+          <UserDashboardWithSuspense />
+        </Suspense>
+      )
   }
 }
 

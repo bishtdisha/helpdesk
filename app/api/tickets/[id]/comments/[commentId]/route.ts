@@ -8,9 +8,6 @@ import {
 
 /**
  * PUT /api/tickets/:id/comments/:commentId - Update a comment
- * 
- * Request body:
- * - content: Updated comment content (required)
  */
 export async function PUT(
   request: NextRequest,
@@ -67,14 +64,14 @@ export async function PUT(
       );
     }
 
-    const updateData: UpdateCommentData = {
+    const commentData: UpdateCommentData = {
       content: content.trim(),
     };
 
     // Update comment
     const comment = await commentService.updateComment(
       commentId,
-      updateData,
+      commentData,
       currentUser.id
     );
 

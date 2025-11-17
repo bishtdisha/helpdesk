@@ -27,9 +27,10 @@ export interface UploadedFile {
   id: string;
   file: File;
   progress: number;
-  status: 'pending' | 'uploading' | 'success' | 'error';
+  status: 'pending' | 'uploading' | 'success' | 'error' | 'cancelled';
   error?: string;
   uploadedData?: any;
+  xhr?: XMLHttpRequest; // Store XHR for cancellation
 }
 
 interface FileUploadProps {
@@ -72,12 +73,17 @@ export function FileUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): string | null => {
+    // Validate file size (max 10MB per file as per requirements)
     if (file.size > maxSize) {
-      return `File size exceeds ${formatFileSize(maxSize)}`;
+      return `File size ${formatFileSize(file.size)} exceeds maximum ${formatFileSize(maxSize)}`;
     }
+    
+    // Validate file type (documents and images as per requirements)
     if (acceptedTypes.length > 0 && !acceptedTypes.includes(file.type)) {
-      return 'File type not allowed';
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+      return `File type .${fileExtension} is not allowed. Accepted types: images and documents`;
     }
+    
     return null;
   };
 
@@ -93,10 +99,12 @@ export function FileUpload({
 
     // Validate and prepare files
     const validFiles: UploadedFile[] = [];
+    const errors: string[] = [];
+    
     for (const file of fileArray) {
       const validationError = validateFile(file);
       if (validationError) {
-        setError(validationError);
+        errors.push(`${file.name}: ${validationError}`);
         continue;
       }
 
@@ -106,6 +114,11 @@ export function FileUpload({
         progress: 0,
         status: 'pending',
       });
+    }
+
+    // Show validation errors
+    if (errors.length > 0) {
+      setError(errors.join('; '));
     }
 
     if (validFiles.length === 0) return;
@@ -128,18 +141,18 @@ export function FileUpload({
   const uploadFile = async (uploadedFile: UploadedFile) => {
     if (!uploadEndpoint) return;
 
-    // Update status to uploading
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === uploadedFile.id ? { ...f, status: 'uploading', progress: 0 } : f
-      )
-    );
-
     try {
       const formData = new FormData();
       formData.append('file', uploadedFile.file);
 
       const xhr = new XMLHttpRequest();
+
+      // Store XHR for cancellation and update status to uploading
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadedFile.id ? { ...f, status: 'uploading', progress: 0, xhr } : f
+        )
+      );
 
       // Track upload progress
       xhr.upload.addEventListener('progress', (e) => {
@@ -160,7 +173,7 @@ export function FileUpload({
           setFiles((prev) =>
             prev.map((f) =>
               f.id === uploadedFile.id
-                ? { ...f, status: 'success', progress: 100, uploadedData: response }
+                ? { ...f, status: 'success', progress: 100, uploadedData: response, xhr: undefined }
                 : f
             )
           );
@@ -173,7 +186,7 @@ export function FileUpload({
           setFiles((prev) =>
             prev.map((f) =>
               f.id === uploadedFile.id
-                ? { ...f, status: 'error', error: errorMessage }
+                ? { ...f, status: 'error', error: errorMessage, xhr: undefined }
                 : f
             )
           );
@@ -190,7 +203,7 @@ export function FileUpload({
         setFiles((prev) =>
           prev.map((f) =>
             f.id === uploadedFile.id
-              ? { ...f, status: 'error', error: errorMessage }
+              ? { ...f, status: 'error', error: errorMessage, xhr: undefined }
               : f
           )
         );
@@ -200,6 +213,17 @@ export function FileUpload({
         }
       });
 
+      // Handle abort (cancellation)
+      xhr.addEventListener('abort', () => {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadedFile.id
+              ? { ...f, status: 'cancelled', error: 'Upload cancelled', xhr: undefined }
+              : f
+          )
+        );
+      });
+
       xhr.open('POST', uploadEndpoint);
       xhr.send(formData);
     } catch (err) {
@@ -207,7 +231,7 @@ export function FileUpload({
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadedFile.id
-            ? { ...f, status: 'error', error: errorMessage }
+            ? { ...f, status: 'error', error: errorMessage, xhr: undefined }
             : f
         )
       );
@@ -218,7 +242,17 @@ export function FileUpload({
     }
   };
 
+  const cancelUpload = (fileId: string) => {
+    const file = files.find((f) => f.id === fileId);
+    if (file?.xhr && file.status === 'uploading') {
+      file.xhr.abort();
+    }
+  };
+
   const removeFile = (fileId: string) => {
+    // Cancel upload if in progress
+    cancelUpload(fileId);
+    // Remove file from list
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
@@ -331,15 +365,25 @@ export function FileUpload({
                     <p className="text-sm font-medium truncate">
                       {uploadedFile.file.name}
                     </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(uploadedFile.id)}
-                      disabled={uploadedFile.status === 'uploading'}
-                      className="flex-shrink-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    {uploadedFile.status === 'uploading' ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => cancelUpload(uploadedFile.id)}
+                        className="flex-shrink-0 text-red-600 hover:text-red-700"
+                      >
+                        Cancel
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(uploadedFile.id)}
+                        className="flex-shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 mt-1">
@@ -352,6 +396,16 @@ export function FileUpload({
                     {uploadedFile.status === 'error' && (
                       <span className="text-xs text-red-600">
                         ✗ {uploadedFile.error || 'Failed'}
+                      </span>
+                    )}
+                    {uploadedFile.status === 'cancelled' && (
+                      <span className="text-xs text-gray-600">
+                        ⊘ Cancelled
+                      </span>
+                    )}
+                    {uploadedFile.status === 'uploading' && (
+                      <span className="text-xs text-blue-600">
+                        Uploading... {uploadedFile.progress}%
                       </span>
                     )}
                   </div>

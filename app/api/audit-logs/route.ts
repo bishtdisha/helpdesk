@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/server-auth';
 import { auditService } from '@/lib/services';
 import { hasPermission } from '@/lib/rbac/permissions';
 
@@ -9,9 +9,9 @@ import { hasPermission } from '@/lib/rbac/permissions';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession();
+    const user = await getCurrentUser();
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is Admin
-    const isAdmin = await hasPermission(session.user.id, 'audit_logs', 'read');
+    const isAdmin = await hasPermission(user.id, 'audit_logs', 'read');
     
     if (!isAdmin) {
       return NextResponse.json(

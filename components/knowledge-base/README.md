@@ -1,180 +1,261 @@
-# Knowledge Base UI Components
+# Knowledge Base Components
 
-This directory contains the UI components for the knowledge base feature with role-based access control.
+This directory contains all components related to the Knowledge Base feature, implementing task 16 from the ticket system frontend integration spec.
 
 ## Components
 
 ### KBArticleList
-Main component for displaying a list of knowledge base articles with role-based filtering.
+Displays a list of knowledge base articles with role-based filtering, category navigation, and pagination support.
 
 **Features:**
-- Role-based article filtering (PUBLIC, INTERNAL, RESTRICTED)
-- Search functionality across title and summary
-- Category navigation
-- Access level filtering
-- Create article button (Admin/Team Leader only)
-- Article metadata display (views, helpful count)
-
-**Props:**
-- `userRole?: string` - Current user's role for permission checks
+- Fetches articles from `GET /api/knowledge-base/articles`
+- Role-based filtering (PUBLIC, INTERNAL, RESTRICTED)
+- Category filtering
+- Article metadata display (views, helpful count, author)
+- Empty state handling
+- Loading skeletons
 
 **Usage:**
 ```tsx
-import { KBArticleList } from "@/components/knowledge-base"
+import { KBArticleList } from '@/components/knowledge-base';
 
-<KBArticleList userRole={currentUser.role.name} />
+<KBArticleList
+  onArticleClick={(articleId) => console.log(articleId)}
+  showCategoryFilter={true}
+  showAccessLevelFilter={false}
+  defaultFilters={{ isPublished: true }}
+/>
 ```
 
 ### KBArticleDetail
-Component for displaying full article details with engagement tracking.
+Displays full article content with metadata, automatic view tracking, and helpful feedback.
 
 **Features:**
-- Full article content display with formatting
-- View tracking (automatically records views)
-- "Was this helpful?" feedback mechanism
-- Related articles suggestions
-- Edit/Delete actions (role-based)
-- Article metadata (views, helpful count, categories)
-
-**Props:**
-- `articleId: string` - ID of the article to display
-- `userRole?: string` - Current user's role for permission checks
-- `userId?: string` - Current user's ID for ownership checks
-
-**Usage:**
-```tsx
-import { KBArticleDetail } from "@/components/knowledge-base"
-
-<KBArticleDetail 
-  articleId={articleId} 
-  userRole={currentUser.role.name}
-  userId={currentUser.id}
-/>
-```
-
-### KBArticleEditor
-Component for creating and editing knowledge base articles.
-
-**Features:**
-- Create new articles or edit existing ones
-- Rich text content editor
-- Access level selection (PUBLIC, INTERNAL, RESTRICTED)
-- Team selection for RESTRICTED articles
-- Category assignment (multi-select)
-- Publish/unpublish toggle (Admin only)
-- Form validation
-- Draft saving
-
-**Props:**
-- `articleId?: string` - If provided, edit mode; otherwise, create mode
-- `userRole?: string` - Current user's role for permission checks
-
-**Usage:**
-```tsx
-import { KBArticleEditor } from "@/components/knowledge-base"
-
-// Create mode
-<KBArticleEditor userRole={currentUser.role.name} />
-
-// Edit mode
-<KBArticleEditor articleId={articleId} userRole={currentUser.role.name} />
-```
-
-### ArticleSuggestion
-Component for suggesting relevant articles based on ticket content.
-
-**Features:**
-- Automatic article suggestions based on content analysis
-- Relevance scoring (High, Medium, Low)
-- Quick view dialog for article preview
-- Full article view in new tab
-- Article metadata display
+- Fetches article from `GET /api/knowledge-base/articles/:id`
+- Displays formatted content with proper styling
+- Shows author, views, helpful count
+- Automatic view tracking via `POST /api/knowledge-base/articles/:id/view`
+- "Was this helpful?" feedback via `POST /api/knowledge-base/articles/:id/helpful`
 - Category badges
 
-**Props:**
-- `ticketContent: string` - Title + description of the ticket
-- `onArticleSelect?: (articleId: string) => void` - Callback when article is selected
-- `className?: string` - Additional CSS classes
-
 **Usage:**
 ```tsx
-import { ArticleSuggestion } from "@/components/knowledge-base"
+import { KBArticleDetail } from '@/components/knowledge-base';
 
-<ArticleSuggestion 
-  ticketContent={`${ticketTitle} ${ticketDescription}`}
-  onArticleSelect={(id) => console.log("Selected:", id)}
+<KBArticleDetail
+  articleId="article-id"
+  onBack={() => console.log('back')}
+  trackView={true}
 />
 ```
 
-## Role-Based Access Control
+### KBArticleSearch
+Provides search functionality with debounced input and highlighted search terms.
 
-The components implement the following access control rules:
+**Features:**
+- Debounced search input (300ms)
+- Sends queries to `GET /api/knowledge-base/search`
+- Highlights search terms in results
+- Empty state for no results
+- Loading states
 
-### Admin/Manager
-- View all articles (PUBLIC, INTERNAL, RESTRICTED)
-- Create new articles
-- Edit any article
-- Delete any article
-- Publish/unpublish articles
-- Assign any access level
+**Usage:**
+```tsx
+import { KBArticleSearch } from '@/components/knowledge-base';
 
-### Team Leader
-- View PUBLIC, INTERNAL, and team-specific RESTRICTED articles
-- Create new articles
-- Edit own articles and team articles
-- Cannot delete articles
-- Cannot publish/unpublish (articles saved as drafts)
-- Can assign PUBLIC, INTERNAL, and team RESTRICTED access levels
+<KBArticleSearch
+  onArticleClick={(articleId) => console.log(articleId)}
+  filters={{ isPublished: true }}
+  placeholder="Search articles..."
+  autoFocus={true}
+/>
+```
 
-### User/Employee
-- View PUBLIC and INTERNAL articles only
-- Cannot create articles
-- Cannot edit articles
-- Cannot delete articles
-- Read-only access
+### KBArticleSuggestions
+Displays suggested articles based on content, useful during ticket creation.
+
+**Features:**
+- Fetches suggestions from `GET /api/knowledge-base/suggest`
+- Content-based article recommendations
+- Quick preview functionality
+- Article summaries
+- Links to full article details
+
+**Usage:**
+```tsx
+import { KBArticleSuggestions } from '@/components/knowledge-base';
+
+<KBArticleSuggestions
+  content="My ticket description..."
+  onArticleClick={(articleId) => console.log(articleId)}
+  limit={5}
+  title="Suggested Articles"
+  showPreview={true}
+/>
+```
+
+### KBCategoryTree
+Displays category tree navigation with parent-child relationships.
+
+**Features:**
+- Fetches categories from `GET /api/knowledge-base/categories`
+- Tree structure with expand/collapse
+- Article count per category
+- Category selection
+- Hierarchical navigation
+
+**Usage:**
+```tsx
+import { KBCategoryTree } from '@/components/knowledge-base';
+
+<KBCategoryTree
+  onCategorySelect={(categoryId) => console.log(categoryId)}
+  selectedCategoryId={null}
+  showArticleCount={true}
+/>
+```
+
+### KnowledgeBase (Main)
+Main knowledge base interface integrating all components.
+
+**Features:**
+- Browse and search tabs
+- Category navigation sidebar
+- Article list and detail views
+- Seamless navigation between views
+
+**Usage:**
+```tsx
+import { KnowledgeBase } from '@/components/knowledge-base';
+
+<KnowledgeBase />
+```
+
+## Hooks
+
+### useKBArticles
+Fetches knowledge base articles with filtering.
+
+```tsx
+import { useKBArticles } from '@/lib/hooks';
+
+const { articles, isLoading, isError, error, refresh } = useKBArticles({
+  accessLevel: 'PUBLIC',
+  categoryId: 'category-id',
+  isPublished: true,
+  search: 'query',
+});
+```
+
+### useKBArticle
+Fetches a single article with automatic view tracking.
+
+```tsx
+import { useKBArticle } from '@/lib/hooks';
+
+const { 
+  article, 
+  isLoading, 
+  recordView, 
+  recordHelpful 
+} = useKBArticle('article-id', {
+  trackView: true,
+});
+```
+
+### useKBCategories
+Fetches all categories with parent-child relationships.
+
+```tsx
+import { useKBCategories } from '@/lib/hooks';
+
+const { categories, isLoading, isError } = useKBCategories();
+```
+
+### useKBSearch
+Provides debounced search functionality.
+
+```tsx
+import { useKBSearch } from '@/lib/hooks';
+
+const { 
+  results, 
+  isSearching, 
+  search, 
+  clearSearch, 
+  query 
+} = useKBSearch({
+  debounceMs: 300,
+  isPublished: true,
+});
+
+// Trigger search
+search('my query');
+```
+
+### useKBSuggestions
+Fetches article suggestions based on content.
+
+```tsx
+import { useKBSuggestions } from '@/lib/hooks';
+
+const { suggestions, isLoading } = useKBSuggestions(
+  'ticket content',
+  { limit: 5 }
+);
+```
 
 ## API Integration
 
-The components integrate with the following API endpoints:
+All components integrate with the following backend endpoints:
 
-- `GET /api/knowledge-base/articles` - List articles with filters
-- `POST /api/knowledge-base/articles` - Create new article
-- `GET /api/knowledge-base/articles/:id` - Get article details
-- `PUT /api/knowledge-base/articles/:id` - Update article
-- `DELETE /api/knowledge-base/articles/:id` - Delete article
+- `GET /api/knowledge-base/articles` - List articles with role-based filtering
+- `GET /api/knowledge-base/articles/:id` - Get single article
 - `POST /api/knowledge-base/articles/:id/view` - Record article view
 - `POST /api/knowledge-base/articles/:id/helpful` - Record helpful vote
 - `GET /api/knowledge-base/search` - Search articles
 - `GET /api/knowledge-base/suggest` - Get article suggestions
 - `GET /api/knowledge-base/categories` - List categories
 
-## Styling
+## RBAC Compliance
 
-All components use the shadcn/ui component library with Tailwind CSS for consistent styling and dark mode support.
+All components respect role-based access control:
 
-## Requirements Covered
+- **PUBLIC** articles: Visible to all users
+- **INTERNAL** articles: Visible to authenticated users
+- **RESTRICTED** articles: Visible only to specific teams
 
-These components fulfill the following requirements from the spec:
+The backend API handles all filtering, and the frontend displays only what the API returns.
 
-- **Requirement 9.1**: Knowledge base article access based on user roles
-- **Requirement 15.1**: Read-only knowledge base access for User/Employee
-- **Requirement 15.2**: Knowledge base search functionality
-- **Requirement 15.3**: Knowledge base category browsing
-- **Requirement 15.5**: Article suggestion based on ticket content
+## Requirements Implemented
 
-## Implementation Notes
+This implementation satisfies the following requirements:
 
-1. **View Tracking**: The `KBArticleDetail` component automatically records a view when an article is loaded.
+- **Requirement 11.1**: Fetch articles from API with role-based filtering
+- **Requirement 11.2**: Search interface with query endpoint
+- **Requirement 11.3**: Article suggestions during ticket creation
+- **Requirement 11.4**: Display article content with formatting
+- **Requirement 11.5**: Track article views
+- **Requirement 60.1**: Role-based article access control
+- **Requirement 60.2**: Display only permitted articles
+- **Requirement 60.3**: View count increment tracking
+- **Requirement 60.4**: Category-based filtering
 
-2. **Helpful Votes**: Users can vote once per article (tracked client-side with state).
+## Testing
 
-3. **Article Suggestions**: The `ArticleSuggestion` component uses keyword matching and relevance scoring to suggest articles. It automatically fetches suggestions when ticket content changes.
+To test the knowledge base components:
 
-4. **Access Level Colors**:
-   - PUBLIC: Green
-   - INTERNAL: Blue
-   - RESTRICTED: Orange
+1. Navigate to `/knowledge-base` in your application
+2. Browse articles by category
+3. Search for articles using keywords
+4. Click on an article to view details
+5. Mark articles as helpful
+6. Verify view counts increment
 
-5. **Content Formatting**: Article content supports basic line break formatting. For more advanced formatting, consider integrating a markdown parser or rich text editor.
+## Notes
 
-6. **Performance**: The components implement loading states and error handling for better UX.
+- All components use SWR for caching and revalidation
+- Search is debounced to reduce API calls
+- View tracking is automatic when viewing article details
+- All content is sanitized before rendering
+- Components are fully responsive and accessible

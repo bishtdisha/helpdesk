@@ -1,105 +1,240 @@
-# Authentication Utilities
+# Authentication and Authorization Infrastructure
 
-This module provides comprehensive authentication utilities for the application, including password hashing, session management, and user authentication.
+This directory contains the authentication and authorization infrastructure for the ticket system frontend.
 
-## Features
+## Components
 
-- **Password Security**: bcrypt-based password hashing with configurable salt rounds
-- **Session Management**: Secure token-based sessions with automatic expiry
-- **User Authentication**: Complete registration, login, and logout functionality
-- **Input Validation**: Email and password strength validation
-- **TypeScript Support**: Full type definitions for all authentication data
+### AuthProvider & useAuth
 
-## Quick Start
+The `AuthProvider` component provides global authentication state to the application.
 
-```typescript
-import { AuthService, validateRegistrationData } from '@/lib/auth';
+**Setup:**
 
-// Register a new user
-const registrationData = {
-  email: 'user@example.com',
-  password: 'SecurePass123!',
-  name: 'John Doe'
-};
+```tsx
+// app/layout.tsx
+import { AuthProvider } from '@/lib/contexts';
 
-// Validate input first
-const validation = validateRegistrationData(registrationData);
-if (!validation.isValid) {
-  console.log('Validation errors:', validation.errors);
-  return;
-}
-
-// Register the user
-const result = await AuthService.register(registrationData);
-if (result.success) {
-  console.log('User registered:', result.user);
-} else {
-  console.log('Registration failed:', result.error);
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  );
 }
 ```
 
-## API Reference
+**Usage:**
 
-### AuthService
+```tsx
+import { useAuth } from '@/lib/contexts';
 
-#### `register(data: UserRegistrationData): Promise<AuthResult>`
-Register a new user with email and password.
+function MyComponent() {
+  const { user, role, isLoading, isAuthenticated, login, logout } = useAuth();
 
-#### `login(data: UserLoginData, sessionOptions?: SessionOptions): Promise<AuthResult>`
-Authenticate a user and create a session.
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-#### `logout(token: string): Promise<boolean>`
-Invalidate a user session.
+  if (!isAuthenticated) {
+    return <div>Please log in</div>;
+  }
 
-#### `validateSession(token: string): Promise<SessionValidationResult>`
-Validate a session token and return user data.
-
-### PasswordUtils
-
-#### `hashPassword(password: string): Promise<string>`
-Hash a password using bcrypt.
-
-#### `verifyPassword(password: string, hash: string): Promise<boolean>`
-Verify a password against its hash.
-
-### SessionUtils
-
-#### `generateToken(): string`
-Generate a secure random session token.
-
-#### `createSession(userId: string, ipAddress?: string, userAgent?: string): Promise<UserSession>`
-Create a new user session.
-
-#### `validateSession(token: string): Promise<SessionWithUser | null>`
-Validate a session and return user data.
-
-#### `invalidateSession(token: string): Promise<boolean>`
-Invalidate a specific session.
-
-### Validation Functions
-
-#### `validatePassword(password: string): PasswordValidation`
-Validate password strength requirements.
-
-#### `validateRegistrationData(data): RegistrationValidation`
-Validate user registration input.
-
-#### `validateLoginData(data): LoginValidation`
-Validate user login input.
-
-## Environment Variables
-
-Make sure to set these environment variables:
-
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/database"
-SESSION_EXPIRY_HOURS=24
+  return (
+    <div>
+      <p>Welcome, {user.name}!</p>
+      <p>Role: {role}</p>
+      <button onClick={logout}>Logout</button>
+    </div>
+  );
+}
 ```
 
-## Security Features
+### usePermissions Hook
 
-- **Password Hashing**: Uses bcrypt with 12 salt rounds
-- **Session Security**: Cryptographically secure random tokens
-- **Automatic Cleanup**: Expired sessions are automatically removed
-- **Input Validation**: Comprehensive validation for all user inputs
-- **SQL Injection Protection**: Uses Prisma ORM with parameterized queries
+The `usePermissions` hook provides role-based permission checking functions.
+
+**Usage:**
+
+```tsx
+import { usePermissions } from '@/lib/hooks';
+
+function TicketActions({ ticket }) {
+  const permissions = usePermissions();
+
+  return (
+    <div>
+      {permissions.canEditTicket(ticket) && (
+        <button>Edit Ticket</button>
+      )}
+      {permissions.canAssignTicket(ticket) && (
+        <button>Assign Ticket</button>
+      )}
+      {permissions.canDeleteTicket(ticket) && (
+        <button>Delete Ticket</button>
+      )}
+    </div>
+  );
+}
+```
+
+**Available Permission Functions:**
+
+- `canAssignTicket(ticket?)` - Check if user can assign tickets
+- `canViewAnalytics()` - Check if user can view analytics
+- `canManageSLA()` - Check if user can manage SLA policies
+- `canCreateTicket()` - Check if user can create tickets
+- `canEditTicket(ticket?)` - Check if user can edit tickets
+- `canDeleteTicket(ticket?)` - Check if user can delete tickets
+- `canViewOrganizationAnalytics()` - Check if user can view organization analytics
+- `canViewTeamAnalytics()` - Check if user can view team analytics
+- `canManageEscalation()` - Check if user can manage escalation rules
+- `canManageUsers()` - Check if user can manage users
+- `canManageTeams()` - Check if user can manage teams
+- `canViewAllTickets()` - Check if user can view all tickets
+- `canViewTeamTickets()` - Check if user can view team tickets
+- `canAddInternalNotes()` - Check if user can add internal notes
+- `hasRole(role)` - Check if user has a specific role
+
+### PermissionGuard Component
+
+The `PermissionGuard` component conditionally renders children based on user permissions.
+
+**Usage Examples:**
+
+```tsx
+import { PermissionGuard } from '@/lib/components';
+
+// Require single permission
+<PermissionGuard require="canManageSLA">
+  <SLAManagementButton />
+</PermissionGuard>
+
+// Require multiple permissions (AND logic)
+<PermissionGuard require={["canEditTicket", "canAssignTicket"]}>
+  <TicketEditForm />
+</PermissionGuard>
+
+// Require specific role
+<PermissionGuard requireRole="Admin_Manager">
+  <AdminPanel />
+</PermissionGuard>
+
+// Require one of multiple roles (OR logic)
+<PermissionGuard requireRole={["Admin_Manager", "Team_Leader"]}>
+  <TeamManagement />
+</PermissionGuard>
+
+// With fallback content
+<PermissionGuard 
+  require="canViewAnalytics" 
+  fallback={<div>Access Denied</div>}
+>
+  <AnalyticsDashboard />
+</PermissionGuard>
+
+// With ticket context for permission check
+<PermissionGuard require="canEditTicket" ticket={ticket}>
+  <EditButton />
+</PermissionGuard>
+```
+
+**Higher-Order Component:**
+
+```tsx
+import { withPermission } from '@/lib/components';
+
+const ProtectedComponent = withPermission(MyComponent, {
+  require: "canManageSLA",
+  fallback: <AccessDenied />
+});
+```
+
+## Role-Based Access Control (RBAC)
+
+The system supports three user roles:
+
+### Admin_Manager
+- Full access to all features
+- Can view organization-wide analytics
+- Can manage SLA policies and escalation rules
+- Can assign tickets to anyone
+- Can manage users and teams
+- Can view and edit all tickets
+
+### Team_Leader
+- Can view team-specific analytics
+- Can assign tickets within their team
+- Can view and edit team tickets
+- Can add internal notes
+- Cannot access organization-wide features
+
+### User_Employee
+- Can create tickets
+- Can view and edit their own tickets
+- Can view tickets they're following
+- Cannot assign tickets
+- Cannot view analytics
+- Cannot add internal notes
+
+## API Integration
+
+The authentication system integrates with the following API endpoints:
+
+- `GET /api/auth/me` - Get current user information
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/logout` - Logout user
+
+## Best Practices
+
+1. **Always wrap your app with AuthProvider** at the root level
+2. **Use PermissionGuard for UI elements** that should only be visible to certain roles
+3. **Use usePermissions for conditional logic** in your components
+4. **Pass ticket context** to permission functions when checking ticket-specific permissions
+5. **Handle loading states** when using useAuth to avoid flickering
+6. **Trust backend RBAC** - Frontend permissions are for UX only, backend enforces security
+
+## Example: Complete Protected Page
+
+```tsx
+'use client';
+
+import { useAuth } from '@/lib/contexts';
+import { usePermissions } from '@/lib/hooks';
+import { PermissionGuard } from '@/lib/components';
+
+export default function TicketsPage() {
+  const { user, isLoading } = useAuth();
+  const permissions = usePermissions();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      <h1>Tickets</h1>
+      
+      {/* Show create button to all authenticated users */}
+      {permissions.canCreateTicket() && (
+        <button>Create Ticket</button>
+      )}
+      
+      {/* Show analytics only to Admin_Manager and Team_Leader */}
+      <PermissionGuard requireRole={["Admin_Manager", "Team_Leader"]}>
+        <AnalyticsWidget />
+      </PermissionGuard>
+      
+      {/* Show SLA management only to Admin_Manager */}
+      <PermissionGuard requireRole="Admin_Manager">
+        <SLAManagement />
+      </PermissionGuard>
+      
+      <TicketList />
+    </div>
+  );
+}
+```

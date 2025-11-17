@@ -821,6 +821,137 @@ export class TicketService {
   }
 
   /**
+   * Find similar resolved tickets based on content
+   */
+  async findSimilarTickets(
+    content: string,
+    userId: string,
+    limit: number = 5,
+    excludeId?: string
+  ): Promise<Array<{
+    id: string;
+    title: string;
+    description: string;
+    status: TicketStatus;
+    priority: TicketPriority;
+    createdAt: Date;
+    resolvedAt: Date | null;
+    resolutionTime: number | null;
+    relevanceScore: number;
+  }>> {
+    // Get user's role and team information for RBAC
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { teams: true },
+    });
+
+    if (!user) {
+      throw new TicketAccessDeniedError('unknown', userId);
+    }
+
+    // Build base query with RBAC filtering
+    let whereClause: Prisma.TicketWhereInput = {
+      status: { in: ['RESOLVED', 'CLOSED'] }, // Only resolved/closed tickets
+    };
+
+    // Exclude the current ticket if specified
+    if (excludeId) {
+      whereClause.id = { not: excludeId };
+    }
+
+    // Apply RBAC filtering
+    if (user.role?.name === 'Admin/Manager') {
+      // Admin can see all tickets - no additional filtering needed
+    } else if (user.role?.name === 'Team Leader') {
+      // Team leaders can only see their team's tickets
+      const teamIds = user.teams.map(team => team.id);
+      whereClause.teamId = { in: teamIds };
+    } else {
+      // User_Employee can only see tickets they created or are following
+      whereClause.OR = [
+        { createdById: userId },
+        { followers: { some: { userId } } },
+      ];
+    }
+
+    // Search for tickets with similar content using full-text search
+    // Split content into keywords for better matching
+    const keywords = content
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 2)
+      .slice(0, 10); // Limit to first 10 keywords
+
+    if (keywords.length === 0) {
+      return [];
+    }
+
+    // Use PostgreSQL full-text search if available, otherwise use LIKE
+    const searchConditions = keywords.map(keyword => ({
+      OR: [
+        { title: { contains: keyword, mode: 'insensitive' as const } },
+        { description: { contains: keyword, mode: 'insensitive' as const } },
+      ],
+    }));
+
+    whereClause.AND = searchConditions;
+
+    // Fetch similar tickets
+    const tickets = await prisma.ticket.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        createdAt: true,
+        resolvedAt: true,
+      },
+      take: limit * 3, // Get more tickets to calculate relevance and filter
+      orderBy: [
+        { resolvedAt: 'desc' },
+        { updatedAt: 'desc' },
+      ],
+    });
+
+    // Calculate relevance scores and resolution times
+    const ticketsWithScores = tickets.map(ticket => {
+      // Calculate relevance score based on keyword matches
+      const titleMatches = keywords.filter(keyword =>
+        ticket.title.toLowerCase().includes(keyword)
+      ).length;
+      const descriptionMatches = keywords.filter(keyword =>
+        ticket.description.toLowerCase().includes(keyword)
+      ).length;
+
+      // Weight title matches higher than description matches
+      const relevanceScore = (titleMatches * 3) + descriptionMatches;
+
+      // Calculate resolution time in hours
+      let resolutionTime: number | null = null;
+      if (ticket.resolvedAt) {
+        resolutionTime = Math.round(
+          (ticket.resolvedAt.getTime() - ticket.createdAt.getTime()) / (1000 * 60 * 60)
+        );
+      }
+
+      return {
+        ...ticket,
+        relevanceScore,
+        resolutionTime,
+      };
+    });
+
+    // Sort by relevance score and return top results
+    return ticketsWithScores
+      .filter(ticket => ticket.relevanceScore > 0)
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, limit);
+  }
+
+  /**
    * Create a history entry for ticket changes
    */
   private async createHistoryEntry(

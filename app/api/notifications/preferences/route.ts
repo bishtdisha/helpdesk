@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/server-auth';
 import { notificationService } from '@/lib/services/notification-service';
 
 /**
@@ -8,9 +8,9 @@ import { notificationService } from '@/lib/services/notification-service';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession();
+    const user = await getCurrentUser();
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
     }
 
     const preferences = await notificationService.getUserNotificationPreferences(
-      session.user.id
+      user.id
     );
 
     // If no preferences exist, return defaults
     if (!preferences) {
       return NextResponse.json({
-        userId: session.user.id,
+        userId: user.id,
         emailEnabled: true,
         inAppEnabled: true,
         notifyOnCreation: true,
@@ -52,9 +52,9 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession();
+    const user = await getCurrentUser();
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -90,7 +90,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const preferences = await notificationService.updateNotificationPreferences(
-      session.user.id,
+      user.id,
       updates
     );
 

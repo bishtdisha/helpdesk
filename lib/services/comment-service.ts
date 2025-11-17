@@ -26,6 +26,7 @@ export class CommentPermissionDeniedError extends PermissionError {
 // Types
 export interface CreateCommentData {
   content: string;
+  isInternal?: boolean;
 }
 
 export interface UpdateCommentData {
@@ -79,6 +80,7 @@ export class CommentService {
         content: data.content,
         ticketId,
         authorId: userId,
+        isInternal: data.isInternal || false,
       },
       include: {
         author: {

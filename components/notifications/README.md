@@ -66,6 +66,35 @@ import { NotificationBadge } from '@/components/notifications/notification-badge
 <NotificationBadge />
 ```
 
+### BrowserNotificationManager
+**File:** `browser-notification-manager.tsx`
+
+A background component that manages browser/desktop notifications:
+- Automatically requests browser notification permission (after 3 seconds delay)
+- Polls for new notifications every 30 seconds
+- Shows browser notifications based on user preferences
+- Sends browser notifications for high-priority tickets (SLA breaches, escalations)
+- Respects user's notification preferences from settings
+- Handles notification clicks to navigate to related tickets
+- Gracefully handles permission denied scenarios
+
+**Features:**
+- Only shows notifications for events the user has enabled in preferences
+- High-priority notifications (SLA breach, escalation) require user interaction
+- Clicking a browser notification navigates to the related ticket
+- Automatically loads and respects user notification preferences
+
+**Usage:**
+```tsx
+import { BrowserNotificationManager } from '@/components/notifications/browser-notification-manager'
+
+// Add to app layout (already integrated)
+<AuthProvider>
+  <BrowserNotificationManager />
+  {children}
+</AuthProvider>
+```
+
 ## Notification Types
 
 The system supports the following notification types:
@@ -97,8 +126,27 @@ A dedicated notifications page is available at `/dashboard/notifications` with t
 1. Notifications - Full notification center
 2. Preferences - Notification settings
 
+## Browser Notification Support
+
+The system includes full browser/desktop notification support:
+
+1. **Permission Management**: Automatically requests permission with a 3-second delay to avoid overwhelming users
+2. **User Preferences**: Respects notification preferences set in the preferences page
+3. **High-Priority Alerts**: Browser notifications for SLA breaches and escalations require user interaction
+4. **Click-Through**: Clicking a browser notification navigates directly to the related ticket
+5. **Graceful Degradation**: Works seamlessly even if browser notifications are not supported or denied
+
+### Browser Notification Behavior
+
+- **Automatic Permission Request**: After 3 seconds of being logged in, users are prompted to allow notifications
+- **Preference-Based**: Only sends browser notifications for events the user has enabled
+- **High-Priority Focus**: SLA breaches and escalations show persistent notifications
+- **Smart Polling**: Checks for new notifications every 30 seconds
+- **Duplicate Prevention**: Tracks last notification to avoid showing duplicates
+
 ## Dependencies
 
 - `date-fns` - For relative time formatting
 - `lucide-react` - For icons
 - Radix UI components - For UI primitives (dropdown, switch, tabs, etc.)
+- Browser Notification API - For desktop notifications

@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, Mail, Smartphone, Save, Loader2 } from "lucide-react"
+import { Bell, Mail, Smartphone, Save, Loader2, Monitor, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications"
 
 interface NotificationPreferences {
   userId: string
@@ -29,6 +31,7 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const { isSupported, permission, requestPermission, isGranted, isDenied } = useBrowserNotifications()
 
   useEffect(() => {
     loadPreferences()
@@ -146,6 +149,55 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Browser Notification Permission */}
+        {isSupported && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold mb-3">Browser Notifications</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Allow browser notifications for high-priority alerts
+              </p>
+            </div>
+
+            {isDenied && (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Browser notifications are blocked. Please enable them in your browser settings to receive desktop alerts.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {permission === 'default' && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>Enable browser notifications to receive desktop alerts for important updates.</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={requestPermission}
+                    className="ml-4"
+                  >
+                    Enable
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isGranted && (
+              <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <AlertDescription className="text-green-800 dark:text-green-300">
+                  Browser notifications are enabled. You'll receive desktop alerts for high-priority tickets and SLA breaches.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
+
+        {isSupported && <Separator />}
+
         {/* Notification Channels */}
         <div className="space-y-4">
           <div>
