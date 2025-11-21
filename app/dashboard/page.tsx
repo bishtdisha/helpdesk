@@ -17,6 +17,7 @@ import { TeamManagement } from "@/components/team-management"
 
 export default function DashboardPage() {
   const [activeModule, setActiveModule] = useState("dashboard")
+  const [sidebarOpen, setSidebarOpen] = useState(true) // Default to open
   // Removed isLoading check - render immediately
 
   const getModuleTitle = (module: string) => {
@@ -69,9 +70,22 @@ export default function DashboardPage() {
   // Render immediately - middleware already validated session
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+      <Sidebar 
+        activeModule={activeModule} 
+        onModuleChange={(module) => {
+          setActiveModule(module)
+          // Close sidebar on mobile after selection
+          if (window.innerWidth < 1024) {
+            setSidebarOpen(false)
+          }
+        }}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <NavigationHeader title={getModuleTitle(activeModule)} />
+        <NavigationHeader 
+          title={getModuleTitle(activeModule)}
+        />
         <main className="flex-1 overflow-auto p-6">{renderActiveModule()}</main>
       </div>
     </div>

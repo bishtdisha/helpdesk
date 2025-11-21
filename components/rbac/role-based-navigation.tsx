@@ -14,7 +14,8 @@ import {
   Home,
   UserCog,
   Shield,
-  Clock
+  Clock,
+  Menu
 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,8 @@ import type { RoleType } from "@/lib/types/rbac"
 interface RoleBasedNavigationProps {
   activeModule: string
   onModuleChange: (module: string) => void
+  isOpen?: boolean
+  onToggle?: () => void
 }
 
 interface MenuItem {
@@ -151,20 +154,42 @@ function getUserRole(user: any): RoleType | null {
   return user.role.name as RoleType
 }
 
-export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedNavigationProps) {
+export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = true, onToggle }: RoleBasedNavigationProps) {
   const { user, isAuthenticated, isLoading } = useAuth()
 
   // Show loading state
   if (isLoading) {
     return (
-      <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-        <div className="px-6 py-3 border-b border-sidebar-border flex items-center h-[56px]">
-          <h2 className="text-xl font-bold text-sidebar-foreground">Helpdesk</h2>
+      <div className={cn(
+        "bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300",
+        "fixed lg:static inset-y-0 left-0 z-50",
+        isOpen ? "w-64" : "w-16",
+        "translate-x-0"
+      )}>
+        <div className="px-3 py-3 border-b border-sidebar-border flex items-center justify-between h-[56px]">
+          {isOpen && (
+            <h2 className="text-xl font-bold text-sidebar-foreground">
+              Helpdesk
+            </h2>
+          )}
+          {onToggle && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="h-8 w-8 flex-shrink-0"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
         </div>
         <nav className="flex-1 p-4">
           <div className="space-y-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-12 bg-sidebar-accent rounded-lg animate-pulse" />
+              <div key={i} className={cn(
+                "bg-sidebar-accent rounded-lg animate-pulse",
+                isOpen ? "h-12" : "h-10 w-10 mx-auto"
+              )} />
             ))}
           </div>
         </nav>
@@ -184,10 +209,40 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
   )
 
   return (
-    <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="px-6 py-3 border-b border-sidebar-border flex items-center h-[56px]">
-        <h2 className="text-xl font-bold text-sidebar-foreground">Helpdesk</h2>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onToggle}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={cn(
+        "bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out",
+        "fixed lg:static inset-y-0 left-0 z-50",
+        isOpen ? "w-64" : "w-16",
+        "translate-x-0"
+      )}>
+        <div className="px-3 py-3 border-b border-sidebar-border flex items-center justify-between h-[56px]">
+          {isOpen && (
+            <h2 className="text-xl font-bold text-sidebar-foreground">
+              Helpdesk
+            </h2>
+          )}
+          {onToggle && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="h-8 w-8 flex-shrink-0"
+              aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
@@ -201,14 +256,16 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
                   <button
                     onClick={() => onModuleChange(item.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors",
+                      "w-full flex items-center gap-3 rounded-lg text-left transition-colors",
+                      isOpen ? "px-4 py-3" : "px-2 py-3 justify-center",
                       activeModule === item.id
                         ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
+                    title={!isOpen ? item.label : undefined}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    {isOpen && <span className="font-medium">{item.label}</span>}
                   </button>
                 </li>
               )
@@ -226,14 +283,16 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
                   <button
                     onClick={() => onModuleChange(item.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors",
+                      "w-full flex items-center gap-3 rounded-lg text-left transition-colors",
+                      isOpen ? "px-4 py-3" : "px-2 py-3 justify-center",
                       activeModule === item.id
                         ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
+                    title={!isOpen ? item.label : undefined}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    {isOpen && <span className="font-medium">{item.label}</span>}
                   </button>
                 </li>
               </PermissionGate>
@@ -244,23 +303,61 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
 
       {/* Authentication actions for unauthenticated users */}
       {!isLoading && !isAuthenticated && (
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-2 border-t border-sidebar-border">
           <div className="space-y-2">
-            <Button variant="outline" size="sm" className="w-full justify-start" asChild>
-              <Link href="/login" className="flex items-center gap-2">
-                <LogIn className="h-4 w-4" />
-                Sign In
-              </Link>
-            </Button>
-            <Button size="sm" className="w-full justify-start" asChild>
-              <Link href="/register" className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4" />
-                Sign Up
-              </Link>
-            </Button>
+            {isOpen ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start" 
+                  asChild
+                >
+                  <Link href="/login" className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4 flex-shrink-0" />
+                    <span>Sign In</span>
+                  </Link>
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="w-full justify-start" 
+                  asChild
+                >
+                  <Link href="/register" className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4 flex-shrink-0" />
+                    <span>Sign Up</span>
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="w-full" 
+                  asChild
+                  title="Sign In"
+                >
+                  <Link href="/login">
+                    <LogIn className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button 
+                  size="icon" 
+                  className="w-full" 
+                  asChild
+                  title="Sign Up"
+                >
+                  <Link href="/register">
+                    <UserPlus className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
