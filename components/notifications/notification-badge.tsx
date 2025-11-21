@@ -206,7 +206,7 @@ export function NotificationBadge() {
             {notifications.map(notification => (
               <DropdownMenuItem
                 key={notification.id}
-                className={`p-3 cursor-pointer ${!notification.isRead ? 'bg-accent/50' : ''
+                className={`p-3 cursor-pointer ${!notification.isRead ? 'bg-primary/10' : ''
                   }`}
                 onSelect={(e) => {
                   e.preventDefault()

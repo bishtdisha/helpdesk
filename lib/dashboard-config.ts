@@ -131,7 +131,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
   {
     id: 'admin-default',
     name: 'Admin Default',
-    description: 'Default layout for administrators with all widgets',
+    description: 'Compact layout for administrators with all widgets',
     role: 'Admin/Manager',
     visibleWidgets: [
       'welcome',
@@ -144,21 +144,21 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       'recent-activity',
     ],
     layout: [
-      // Welcome message - reduced height
-      { i: 'welcome', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
+      // Welcome message - compact
+      { i: 'welcome', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 1 },
       
-      // Metrics in one row - 4 widgets of 3 columns each
-      { i: 'open-tickets', x: 0, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: 'resolved-today', x: 3, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: 'avg-response-time', x: 6, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: 'active-customers', x: 9, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
+      // Metrics in one row - 4 widgets of 3 columns each - compact
+      { i: 'open-tickets', x: 0, y: 2, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'resolved-today', x: 3, y: 2, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'avg-response-time', x: 6, y: 2, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'active-customers', x: 9, y: 2, w: 3, h: 2, minW: 2, minH: 2 },
       
-      // Charts in second row
-      { i: 'weekly-activity', x: 0, y: 5, w: 6, h: 6, minW: 4, minH: 4 },
-      { i: 'status-distribution', x: 6, y: 5, w: 6, h: 6, minW: 4, minH: 4 },
+      // Charts in second row - compact
+      { i: 'weekly-activity', x: 0, y: 4, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'status-distribution', x: 6, y: 4, w: 6, h: 5, minW: 4, minH: 4 },
       
-      // Bottom row - recent activity takes full width
-      { i: 'recent-activity', x: 0, y: 11, w: 12, h: 6, minW: 6, minH: 4 },
+      // Bottom row - recent activity - compact
+      { i: 'recent-activity', x: 0, y: 9, w: 12, h: 5, minW: 6, minH: 4 },
     ],
   },
   {

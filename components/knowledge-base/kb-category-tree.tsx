@@ -84,7 +84,7 @@ export function KBCategoryTree({
           variant="ghost"
           className={cn(
             'w-full justify-start text-left h-auto py-2 px-3',
-            isSelected && 'bg-accent',
+            isSelected && 'bg-primary/10',
             level > 0 && 'ml-4'
           )}
           onClick={() => handleCategorySelect(category.id)}
@@ -202,7 +202,7 @@ export function KBCategoryTree({
           variant="ghost"
           className={cn(
             'w-full justify-start text-left h-auto py-2 px-3',
-            !selectedCategoryId && 'bg-accent'
+            !selectedCategoryId && 'bg-primary/10'
           )}
           onClick={() => handleCategorySelect(null)}
         >

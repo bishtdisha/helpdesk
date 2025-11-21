@@ -251,7 +251,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
                       key={notification.id}
                       className={`flex gap-3 p-3 rounded-lg border transition-colors ${
                         !notification.isRead
-                          ? 'bg-accent/50 border-accent'
+                          ? 'bg-primary/10 border-primary'
                           : 'hover:bg-accent/30'
                       }`}
                     >

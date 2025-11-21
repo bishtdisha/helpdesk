@@ -264,7 +264,7 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
               <div className="space-y-1">
                 <Label htmlFor="notifyOnCreation" className="text-sm font-medium cursor-pointer">
                   Ticket Created
@@ -281,7 +281,7 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
               <div className="space-y-1">
                 <Label htmlFor="notifyOnAssignment" className="text-sm font-medium cursor-pointer">
                   Ticket Assigned
@@ -298,7 +298,7 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
               <div className="space-y-1">
                 <Label htmlFor="notifyOnStatusChange" className="text-sm font-medium cursor-pointer">
                   Status Changed
@@ -315,7 +315,7 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
               <div className="space-y-1">
                 <Label htmlFor="notifyOnComment" className="text-sm font-medium cursor-pointer">
                   New Comment
@@ -332,7 +332,7 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
               <div className="space-y-1">
                 <Label htmlFor="notifyOnResolution" className="text-sm font-medium cursor-pointer">
                   Ticket Resolved
@@ -349,7 +349,7 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
               <div className="space-y-1">
                 <Label htmlFor="notifyOnSLABreach" className="text-sm font-medium cursor-pointer">
                   SLA Breach Alert

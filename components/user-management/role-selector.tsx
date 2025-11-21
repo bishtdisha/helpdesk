@@ -196,7 +196,7 @@ export function RoleSelector({ user, isOpen, onClose, onSuccess }: RoleSelectorP
             
             {/* Selected role description */}
             {selectedRole && (
-              <div className="p-3 bg-accent/50 rounded-md">
+              <div className="p-3 bg-primary/10 rounded-md">
                 <p className="text-sm text-muted-foreground">
                   {getRoleDescription(selectedRole.name)}
                 </p>

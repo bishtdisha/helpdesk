@@ -7,7 +7,6 @@ import { useTicketUpdates } from '@/lib/hooks/use-ticket-updates';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { useKeyboardShortcutsContext } from '@/lib/contexts/keyboard-shortcuts-context';
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
-import { useFilterPresets, FilterPreset } from '@/lib/hooks/use-filter-presets';
 import { useDebouncedCallback, useStableCallback, useMemoizedProps } from '@/lib/performance/memoization';
 import { VirtualizedTicketList, TicketListPerformanceMonitor } from '@/components/virtualized-ticket-list';
 import { useVirtualScrolling } from '@/lib/performance/virtual-scrolling';
@@ -24,17 +23,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TicketStatusBadge } from '@/components/ticket-status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
-import { TicketExportDialog } from '@/components/ticket-export-dialog';
 import { BulkActionToolbar } from '@/components/bulk-action-toolbar';
 import { BulkActionConfirmationDialog } from '@/components/bulk-action-confirmation-dialog';
 import { BulkAssignmentDialog } from '@/components/bulk-assignment-dialog';
-import { FilterPresetSaveDialog } from '@/components/filter-preset-save-dialog';
-import { FilterPresetDropdown } from '@/components/filter-preset-dropdown';
-import { FilterPresetManageDialog } from '@/components/filter-preset-manage-dialog';
-import { AdvancedSearchDialog } from '@/components/advanced-search-dialog';
 import { InlineHelp } from '@/components/ui/inline-help';
 import { TicketListOnboarding } from '@/components/ticket-list-onboarding';
-import { Search, Filter, Eye, RefreshCw, AlertCircle, Bell, Download, Save, Settings } from 'lucide-react';
+import { Search, Filter, Eye, RefreshCw, AlertCircle, Bell } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
@@ -57,14 +51,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   
-  // Filter preset state
-  const { presets, savePreset, renamePreset, deletePreset } = useFilterPresets();
-  const [activePresetId, setActivePresetId] = useState<string | null>(null);
-  const [savePresetDialogOpen, setSavePresetDialogOpen] = useState(false);
-  const [managePresetsDialogOpen, setManagePresetsDialogOpen] = useState(false);
-  
-  // Advanced search state
-  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+
   
   // Register search input for keyboard shortcuts
   useEffect(() => {
@@ -125,9 +112,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
       },
     },
   ]);
-  
-  // Export dialog state
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+
   
   // Bulk selection state
   const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
@@ -225,55 +210,12 @@ export function TicketList({ onTicketClick }: TicketListProps) {
     setPage(1);
   }, 300);
 
-  // Memoized filter preset handlers
-  const handleSavePreset = useCallback((name: string) => {
-    const currentFilters: TicketFilters = {};
-    
-    if (searchTerm) {
-      currentFilters.search = searchTerm;
-    }
-    if (statusFilter !== 'all') {
-      currentFilters.status = [statusFilter as TicketStatus];
-    }
-    if (priorityFilter !== 'all') {
-      currentFilters.priority = [priorityFilter as TicketPriority];
-    }
-
-    const preset = savePreset(name, currentFilters);
-    setActivePresetId(preset.id);
-  }, [searchTerm, statusFilter, priorityFilter, savePreset]);
-
-  const handleApplyPreset = useCallback((preset: FilterPreset) => {
-    // Apply filters from preset
-    setSearchTerm(preset.filters.search || '');
-    setStatusFilter(preset.filters.status?.[0] || 'all');
-    setPriorityFilter(preset.filters.priority?.[0] || 'all');
-    setPage(1);
-    setActivePresetId(preset.id);
-    
-    toast.success(`Applied preset: ${preset.name}`);
-  }, []);
-
   const handleClearFilters = useCallback(() => {
     setSearchTerm('');
     setStatusFilter('all');
     setPriorityFilter('all');
     setPage(1);
-    setActivePresetId(null);
   }, []);
-
-  // Advanced search handler
-  const handleAdvancedSearch = (advancedFilters: any) => {
-    // Apply basic filters
-    setSearchTerm(advancedFilters.search || '');
-    setStatusFilter(advancedFilters.status?.[0] || 'all');
-    setPriorityFilter(advancedFilters.priority?.[0] || 'all');
-    setPage(1);
-    setActivePresetId(null);
-    
-    // TODO: Handle advanced filters like date ranges, customer search, etc.
-    // For now, we'll just apply the basic filters
-  };
 
   // Bulk selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -550,11 +492,6 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                 <Filter className="h-5 w-5" />
                 Filters & Search
               </CardTitle>
-              {activePresetId && (
-                <Badge variant="outline" className="text-xs">
-                  Preset Active
-                </Badge>
-              )}
             </div>
             {newTicketsCount > 0 && (
               <div className="flex items-center gap-2">
@@ -652,18 +589,6 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                 </SelectContent>
               </Select>
               <TooltipButton 
-                onClick={() => setAdvancedSearchOpen(true)} 
-                variant="outline" 
-                className="gap-2"
-                tooltip="Open advanced search with more filter options"
-                shortcut="Ctrl+Shift+F"
-                data-tour="advanced-search"
-                aria-label="Open advanced search dialog with additional filter options"
-              >
-                <Settings className="h-4 w-4" aria-hidden="true" />
-                Advanced
-              </TooltipButton>
-              <TooltipButton 
                 onClick={handleRefresh} 
                 variant="outline" 
                 size="icon"
@@ -675,37 +600,6 @@ export function TicketList({ onTicketClick }: TicketListProps) {
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
               </TooltipButton>
-            </div>
-            
-            {/* Filter Preset Controls */}
-            <div className="flex items-center gap-2" data-tour="filter-presets">
-              <FilterPresetDropdown
-                presets={presets}
-                activePresetId={activePresetId}
-                onSelectPreset={handleApplyPreset}
-                onManagePresets={() => setManagePresetsDialogOpen(true)}
-              />
-              {hasActiveFilters && (
-                <TooltipButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSavePresetDialogOpen(true)}
-                  className="gap-2"
-                  tooltip="Save current filters as a preset for quick access"
-                >
-                  <Save className="h-4 w-4" />
-                  Save Filter
-                </TooltipButton>
-              )}
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearFilters}
-                >
-                  Clear Filters
-                </Button>
-              )}
             </div>
           </div>
         </CardContent>
@@ -733,21 +627,6 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                   : 'No tickets found'}
               </CardDescription>
             </div>
-            {tickets.length > 0 && (
-              <TooltipButton
-                variant="outline"
-                size="sm"
-                onClick={() => setExportDialogOpen(true)}
-                className="gap-2"
-                tooltip="Export tickets to CSV format"
-                shortcut="Ctrl+E"
-                data-tour="export-button"
-                aria-label="Export current ticket list to CSV file"
-              >
-                <Download className="h-4 w-4" aria-hidden="true" />
-                Export
-              </TooltipButton>
-            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -818,7 +697,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                           key={ticket.id} 
                           className={`cursor-pointer hover:bg-muted/50 ${
                             isUpdated ? 'bg-blue-50 dark:bg-blue-950/20 border-l-4 border-l-blue-500' : ''
-                          } ${isSelected ? 'bg-accent' : ''}`}
+                          } ${isSelected ? 'bg-primary/10' : ''}`}
                         >
                           {canPerformBulkActions && (
                             <TableCell onClick={(e) => e.stopPropagation()}>
@@ -909,13 +788,6 @@ export function TicketList({ onTicketClick }: TicketListProps) {
         </CardContent>
       </Card>
 
-      {/* Export Dialog */}
-      <TicketExportDialog
-        open={exportDialogOpen}
-        onOpenChange={setExportDialogOpen}
-        currentFilters={filters}
-      />
-
       {/* Bulk Action Toolbar */}
       {canPerformBulkActions && (
         <>
@@ -982,33 +854,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
         />
       )}
 
-      {/* Filter Preset Save Dialog */}
-      <FilterPresetSaveDialog
-        open={savePresetDialogOpen}
-        onOpenChange={setSavePresetDialogOpen}
-        onSave={handleSavePreset}
-      />
 
-      {/* Filter Preset Manage Dialog */}
-      <FilterPresetManageDialog
-        open={managePresetsDialogOpen}
-        onOpenChange={setManagePresetsDialogOpen}
-        presets={presets}
-        onRename={renamePreset}
-        onDelete={deletePreset}
-      />
-
-      {/* Advanced Search Dialog */}
-      <AdvancedSearchDialog
-        open={advancedSearchOpen}
-        onOpenChange={setAdvancedSearchOpen}
-        onSearch={handleAdvancedSearch}
-        initialFilters={{
-          search: searchTerm,
-          status: statusFilter !== 'all' ? [statusFilter as any] : undefined,
-          priority: priorityFilter !== 'all' ? [priorityFilter as any] : undefined,
-        }}
-      />
     </div>
   );
 }

@@ -73,10 +73,10 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
   }
 
   return (
-    <header id="navigation" className="bg-card border-b border-border px-6 py-4 flex items-center justify-between" role="banner">
-      <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+    <header id="navigation" className="bg-card border-b border-border px-6 py-3 flex items-center justify-between h-[56px]" role="banner">
+      <h1 className="text-xl font-semibold text-foreground">{title}</h1>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {isLoading ? (
           // Loading state
           <div className="flex items-center gap-3">
@@ -104,21 +104,21 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
               </Button>
             </HelpSidebar>
             
-            <div className="flex items-center gap-3">
-              {/* Profile button with initials and role - Clean Layout */}
+            <div className="flex items-center gap-2">
+              {/* Profile button with initials and role - Compact */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button 
-                    className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50 rounded-lg transition-all duration-200 cursor-pointer border border-transparent hover:border-border/30"
+                    className="flex items-center gap-2 px-2 py-1.5 hover:bg-primary/10 rounded-lg transition-all duration-200 cursor-pointer border border-transparent hover:border-border/30"
                     aria-label={`User menu for ${user.name || user.email} (${user.role?.name || 'User'})`}
                   >
                     {/* User initials circle */}
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-600 text-white font-semibold text-sm shadow-sm">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-600 text-white font-semibold text-xs shadow-sm">
                       {getUserInitials(user.name, user.email)}
                     </div>
                     
                     {/* Role text with proper spacing */}
-                    <span className="text-base font-medium text-foreground tracking-wide">
+                    <span className="text-sm font-medium text-foreground">
                       {user.role?.name === 'Admin/Manager' ? 'Admin' : 
                        user.role?.name === 'Team Leader' ? 'Leader' : 
                        user.role?.name === 'User/Employee' ? 'Employee' : 

@@ -71,8 +71,8 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
           <button
             key={item.id}
             type="button"
-            className={`flex items-center gap-2 w-full px-3 py-2 text-left rounded-md hover:bg-accent transition-colors ${
-              index === selectedIndex ? 'bg-accent' : ''
+            className={`flex items-center gap-2 w-full px-3 py-2 text-left rounded-md hover:bg-primary/10 transition-colors ${
+              index === selectedIndex ? 'bg-primary/10' : ''
             }`}
             onClick={() => selectItem(index)}
           >

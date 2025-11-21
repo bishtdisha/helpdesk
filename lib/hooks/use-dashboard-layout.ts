@@ -51,8 +51,10 @@ export function useDashboardLayout() {
 
   // Load preferences from localStorage
   const loadPreferences = useCallback(() => {
-    if (!user?.id) {
-      setIsLoading(false);
+    // Don't wait for user - load immediately
+    setIsLoading(false);
+    
+    if (!user?.id || user.id === 'loading') {
       return;
     }
     
@@ -62,7 +64,6 @@ export function useDashboardLayout() {
       setVisibleWidgets(preferences.visibleWidgets || []);
       setCurrentPreset(preferences.currentPreset);
     }
-    setIsLoading(false);
   }, [user?.id]);
 
   // Save preferences to localStorage

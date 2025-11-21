@@ -124,8 +124,6 @@ export function Tickets() {
               </div>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">Import</Button>
-          <Button variant="outline">Export</Button>
         </div>
       </div>
 

@@ -174,7 +174,7 @@ export function DashboardSettingsDialog({
                         return (
                           <div
                             key={widget.id}
-                            className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                            className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-primary/10 transition-colors"
                           >
                             <div className="flex items-center gap-3">
                               <WidgetIcon className="h-4 w-4 text-muted-foreground" />
@@ -234,7 +234,7 @@ export function DashboardSettingsDialog({
                           ? 'ring-2 ring-primary bg-primary/5' 
                           : isSelected 
                             ? 'ring-2 ring-primary/50 bg-primary/2' 
-                            : 'hover:bg-accent/50'
+                            : 'hover:bg-primary/10'
                       }`}
                       onClick={() => handlePresetPreview(preset.id)}
                     >

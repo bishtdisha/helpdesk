@@ -120,7 +120,7 @@ export function KBArticleSuggestions({
           {suggestions.map((suggestion) => (
             <div
               key={suggestion.id}
-              className="border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer"
+              className="border rounded-lg p-4 hover:bg-primary/10 transition-colors cursor-pointer"
               onClick={() => handleArticleClick(suggestion.id)}
             >
               <div className="flex items-start justify-between gap-4">

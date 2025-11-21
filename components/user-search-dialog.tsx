@@ -210,7 +210,7 @@ export function UserSearchDialog({
                   return (
                     <div
                       key={user.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-primary/10 transition-colors"
                     >
                       {/* Avatar */}
                       <Avatar className="h-10 w-10">

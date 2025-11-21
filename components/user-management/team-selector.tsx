@@ -180,7 +180,7 @@ export function TeamSelector({ user, isOpen, onClose, onSuccess }: TeamSelectorP
             
             {/* Selected team description */}
             {selectedTeam && (
-              <div className="p-3 bg-accent/50 rounded-md">
+              <div className="p-3 bg-primary/10 rounded-md">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant="secondary">{selectedTeam.name}</Badge>
                 </div>

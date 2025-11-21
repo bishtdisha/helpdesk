@@ -158,8 +158,8 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
   if (isLoading) {
     return (
       <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-        <div className="p-6 border-b border-sidebar-border">
-          <h2 className="text-xl font-bold text-sidebar-foreground">Odoo Helpdesk</h2>
+        <div className="px-6 py-3 border-b border-sidebar-border flex items-center h-[56px]">
+          <h2 className="text-xl font-bold text-sidebar-foreground">Helpdesk</h2>
         </div>
         <nav className="flex-1 p-4">
           <div className="space-y-2">
@@ -185,8 +185,8 @@ export function RoleBasedNavigation({ activeModule, onModuleChange }: RoleBasedN
 
   return (
     <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-6 border-b border-sidebar-border">
-        <h2 className="text-xl font-bold text-sidebar-foreground">Odoo Helpdesk</h2>
+      <div className="px-6 py-3 border-b border-sidebar-border flex items-center h-[56px]">
+        <h2 className="text-xl font-bold text-sidebar-foreground">Helpdesk</h2>
       </div>
       
       <nav className="flex-1 p-4">

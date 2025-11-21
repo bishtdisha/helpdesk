@@ -110,10 +110,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load cached user immediately, then fetch in background
   useEffect(() => {
+    // Try to load from cache first (instant)
     const hasCached = loadCachedUser();
     
-    // Always fetch fresh data in background, even if we have cache
-    fetchUser();
+    // If no cache, set a minimal user object to prevent blocking
+    if (!hasCached) {
+      // Set a placeholder to allow rendering
+      setUser({
+        id: 'loading',
+        email: 'loading@example.com',
+        name: 'Loading...',
+        roleId: null,
+        teamId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        role: {
+          id: 'loading',
+          name: 'Admin/Manager', // Default to show dashboard
+          description: null,
+        },
+        team: null,
+      });
+    }
+    
+    // Always fetch fresh data in background (non-blocking)
+    setTimeout(() => fetchUser(), 0);
   }, [loadCachedUser, fetchUser]);
 
   // Login function
