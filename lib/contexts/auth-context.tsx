@@ -39,13 +39,53 @@ interface AuthContextType {
 // Create context with undefined default
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Session cache key
+const SESSION_CACHE_KEY = 'cached_user_session';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed to false - don't block rendering
   const router = useRouter();
 
-  // Fetch user data from API
+  // Load cached user data
+  const loadCachedUser = useCallback(() => {
+    try {
+      const cached = localStorage.getItem(SESSION_CACHE_KEY);
+      if (cached) {
+        const { user: cachedUser, timestamp } = JSON.parse(cached);
+        const age = Date.now() - timestamp;
+        
+        // Use cache if less than 5 minutes old
+        if (age < CACHE_DURATION) {
+          setUser(cachedUser);
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading cached user:', error);
+    }
+    return false;
+  }, []);
+
+  // Save user to cache
+  const cacheUser = useCallback((userData: User | null) => {
+    try {
+      if (userData) {
+        localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify({
+          user: userData,
+          timestamp: Date.now()
+        }));
+      } else {
+        localStorage.removeItem(SESSION_CACHE_KEY);
+      }
+    } catch (error) {
+      console.error('Error caching user:', error);
+    }
+  }, []);
+
+  // Fetch user data from API (non-blocking)
   const fetchUser = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/me', {
@@ -55,25 +95,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+        cacheUser(data.user);
       } else if (response.status === 401) {
         // Not authenticated
         setUser(null);
+        cacheUser(null);
       } else {
         console.error('Failed to fetch user:', response.statusText);
-        setUser(null);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  }, [cacheUser]);
 
-  // Fetch user on mount
+  // Load cached user immediately, then fetch in background
   useEffect(() => {
+    const hasCached = loadCachedUser();
+    
+    // Always fetch fresh data in background, even if we have cache
     fetchUser();
-  }, [fetchUser]);
+  }, [loadCachedUser, fetchUser]);
 
   // Login function
   const login = useCallback(async (email: string, password: string) => {
@@ -119,9 +160,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
+      cacheUser(null);
       router.push('/login');
     }
-  }, [router]);
+  }, [router, cacheUser]);
 
   // Refresh user data
   const refreshUser = useCallback(async () => {
@@ -147,10 +189,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 // Hook to use auth context
 export function useAuth() {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
+
   return context;
 }

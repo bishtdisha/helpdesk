@@ -27,8 +27,6 @@ export function CustomizableDashboard() {
     applyPreset,
   } = useDashboardLayout();
 
-
-
   // Get available widgets for current user role
   const availableWidgets = useMemo(() => {
     if (!user?.role?.name) return [];
@@ -90,17 +88,7 @@ export function CustomizableDashboard() {
     updateLayout(dashboardLayout);
   };
 
-
-
-
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  // Removed blocking loading state - render skeleton widgets instead
 
   return (
     <main id="main-content" className="space-y-4" role="main" aria-label="Dashboard">
@@ -109,15 +97,15 @@ export function CustomizableDashboard() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
       </header>
 
-      {/* Dashboard Grid */}
-      {widgetsToShow.length > 0 ? (
-        <section 
-          className="dashboard-grid" 
-          role="region" 
-          aria-label="Dashboard widgets"
-          aria-live="polite"
-          aria-atomic="false"
-        >
+      {/* Dashboard Grid - Always render, show skeleton if loading */}
+      <section 
+        className="dashboard-grid" 
+        role="region" 
+        aria-label="Dashboard widgets"
+        aria-live="polite"
+        aria-atomic="false"
+      >
+        {widgetsToShow.length > 0 ? (
           <ResponsiveGridLayout
             className="layout"
             layouts={gridLayouts}
@@ -143,23 +131,24 @@ export function CustomizableDashboard() {
                   id={widget.id}
                   title={widget.title}
                   component={widget.component}
+                  user={user}
                 />
               </div>
             ))}
           </ResponsiveGridLayout>
-        </section>
-      ) : (
-        <section 
-          className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-muted-foreground/25 rounded-lg"
-          role="region"
-          aria-label="Empty dashboard"
-        >
-          <p className="text-lg font-medium text-muted-foreground">No widgets to display</p>
-          <p className="text-sm text-muted-foreground">
-            Dashboard is loading...
-          </p>
-        </section>
-      )}
+        ) : (
+          // Show skeleton while layout initializes
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-12 h-32 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-3 h-48 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-3 h-48 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-3 h-48 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-3 h-48 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-6 h-96 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-6 h-96 bg-muted/50 animate-pulse rounded-lg" />
+          </div>
+        )}
+      </section>
 
 
 

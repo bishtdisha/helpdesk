@@ -22,31 +22,11 @@ import { Suspense } from "react"
  * - User/Employee: User Dashboard (Personal Stats & Tickets)
  */
 export function DashboardRouter() {
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user } = useAuth()
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Not authenticated
-  if (!isAuthenticated || !user) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">
-            Please log in to view your dashboard.
-          </p>
-        </CardContent>
-      </Card>
-    )
+  // Show skeleton while user data loads (non-blocking)
+  if (!user) {
+    return <DashboardSkeleton />
   }
 
   // Get user role

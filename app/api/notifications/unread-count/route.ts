@@ -24,7 +24,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ count });
+    return NextResponse.json(
+      { count },
+      {
+        headers: {
+          // Cache for 5 seconds, stale-while-revalidate for 15 seconds
+          'Cache-Control': 'private, max-age=5, stale-while-revalidate=15',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching unread notification count:', error);
     return NextResponse.json(

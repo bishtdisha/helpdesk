@@ -25,8 +25,8 @@ const nextConfig = {
   swcMinify: true,
   // Optimize production builds
   productionBrowserSourceMaps: false,
-  // Enable React strict mode for better development experience
-  reactStrictMode: true,
+  // Disable React strict mode to prevent duplicate API calls in development
+  reactStrictMode: false,
   // Optimize CSS
   experimental: {
     optimizeCss: true,

@@ -34,12 +34,18 @@ export function NotificationBadge() {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    loadUnreadCount()
-    
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(loadUnreadCount, 30000)
-    
-    return () => clearInterval(interval)
+    // Delay the initial fetch to allow UI to load first
+    const timer = setTimeout(() => {
+      loadUnreadCount()
+
+      // Start polling only after initial fetch
+      const interval = setInterval(loadUnreadCount, 30000)
+
+      // Cleanup interval on unmount
+      return () => clearInterval(interval)
+    }, 2000) // Wait 2 seconds after UI renders
+
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -51,7 +57,7 @@ export function NotificationBadge() {
   const loadUnreadCount = async () => {
     try {
       const response = await fetch('/api/notifications/unread-count')
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch unread count')
       }
@@ -67,7 +73,7 @@ export function NotificationBadge() {
     try {
       setLoading(true)
       const response = await fetch('/api/notifications?page=1&limit=5')
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch notifications')
       }
@@ -149,8 +155,8 @@ export function NotificationBadge() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -158,9 +164,9 @@ export function NotificationBadge() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      
-      <DropdownMenuContent 
-        align="end" 
+
+      <DropdownMenuContent
+        align="end"
         className="w-96 max-h-[500px] overflow-y-auto"
         sideOffset={8}
       >
@@ -175,7 +181,7 @@ export function NotificationBadge() {
             </Badge>
           )}
         </DropdownMenuLabel>
-        
+
         <DropdownMenuSeparator />
 
         {loading ? (
@@ -200,9 +206,8 @@ export function NotificationBadge() {
             {notifications.map(notification => (
               <DropdownMenuItem
                 key={notification.id}
-                className={`p-3 cursor-pointer ${
-                  !notification.isRead ? 'bg-accent/50' : ''
-                }`}
+                className={`p-3 cursor-pointer ${!notification.isRead ? 'bg-accent/50' : ''
+                  }`}
                 onSelect={(e) => {
                   e.preventDefault()
                   if (!notification.isRead) {
@@ -217,7 +222,7 @@ export function NotificationBadge() {
                   <div className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${getNotificationColor(notification.type)}`}>
                     {getNotificationIcon(notification.type)}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -232,7 +237,7 @@ export function NotificationBadge() {
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                         </p>
                       </div>
-                      
+
                       {!notification.isRead && (
                         <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 mt-1" />
                       )}
@@ -241,12 +246,12 @@ export function NotificationBadge() {
                 </div>
               </DropdownMenuItem>
             ))}
-            
+
             <DropdownMenuSeparator />
-            
+
             <DropdownMenuItem asChild>
-              <Link 
-                href="/dashboard/notifications" 
+              <Link
+                href="/dashboard/notifications"
                 className="w-full text-center text-sm font-medium text-primary cursor-pointer"
               >
                 View All Notifications

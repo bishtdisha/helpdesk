@@ -1,7 +1,31 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+// Lightweight session validation in middleware
+// This validates the session exists and is not expired
+async function validateSessionToken(token: string): Promise<boolean> {
+  try {
+    // Call internal API to validate session (lightweight check)
+    const response = await fetch(new URL('/api/auth/validate', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.valid === true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Session validation error in middleware:', error);
+    return false;
+  }
+}
+
+export async function middleware(request: NextRequest) {
   // Get the pathname of the request (e.g. /, /login, /register)
   const { pathname } = request.nextUrl
 
@@ -24,7 +48,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // If user has a session token, let them through
+  // Validate session token (full validation)
+  const isValid = await validateSessionToken(sessionToken);
+  
+  if (!isValid) {
+    // Session is invalid or expired - redirect to login
+    const loginUrl = new URL('/login', request.url)
+    const response = NextResponse.redirect(loginUrl)
+    // Clear invalid session cookie
+    response.cookies.delete('session-token')
+    return response
+  }
+
+  // Session is valid - let them through
   return NextResponse.next()
 }
 

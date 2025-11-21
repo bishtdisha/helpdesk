@@ -12,9 +12,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      user,
-    });
+    return NextResponse.json(
+      { user },
+      {
+        headers: {
+          // Cache for 10 seconds, stale-while-revalidate for 30 seconds
+          'Cache-Control': 'private, max-age=10, stale-while-revalidate=30',
+        },
+      }
+    );
   } catch (error) {
     console.error('Auth check error:', error);
     return NextResponse.json(

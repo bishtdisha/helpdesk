@@ -105,6 +105,7 @@ export function OnboardingTour({
 
   // Skip the tour
   const skipTour = () => {
+    markTourCompleted() // Mark as completed even when skipped
     endTour(false)
   }
 

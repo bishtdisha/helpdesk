@@ -17,7 +17,7 @@ import { TeamManagement } from "@/components/team-management"
 
 export default function DashboardPage() {
   const [activeModule, setActiveModule] = useState("dashboard")
-  const { isAuthenticated, isLoading } = useAuth()
+  // Removed isLoading check - render immediately
 
   const getModuleTitle = (module: string) => {
     switch (module) {
@@ -66,31 +66,7 @@ export default function DashboardPage() {
     }
   }
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // If not authenticated, middleware will redirect to login
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Redirecting to login...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show the full dashboard interface to authenticated users
+  // Render immediately - middleware already validated session
   return (
     <div className="flex h-screen bg-background">
       <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />

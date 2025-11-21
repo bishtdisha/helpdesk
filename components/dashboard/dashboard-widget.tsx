@@ -28,10 +28,17 @@ interface DashboardWidgetProps {
   id: string;
   title: string;
   component: string;
+  user?: {
+    id: string;
+    name: string | null;
+    role?: {
+      name: string;
+    } | null;
+  } | null;
 }
 
-export function DashboardWidget({ id, title, component }: DashboardWidgetProps) {
-  const { user } = useAuth();
+export function DashboardWidget({ id, title, component, user }: DashboardWidgetProps) {
+  // User passed as prop - no need to call useAuth() here
 
   const renderWidget = () => {
     switch (component) {
