@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { 
   LayoutDashboard, 
@@ -15,9 +16,11 @@ import {
   UserCog,
   Shield,
   Clock,
-  Menu
+  Menu,
+  Plus
 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
+import { usePermissions } from "@/lib/hooks/use-permissions"
 import { Button } from "@/components/ui/button"
 import { PermissionGate } from "./permission-gate"
 import { PERMISSION_ACTIONS, RESOURCE_TYPES, ROLE_TYPES } from "@/lib/rbac/permissions"
@@ -155,7 +158,9 @@ function getUserRole(user: any): RoleType | null {
 }
 
 export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = true, onToggle }: RoleBasedNavigationProps) {
+  const router = useRouter()
   const { user, isAuthenticated, isLoading } = useAuth()
+  const permissions = usePermissions()
 
   // Show loading state
   if (isLoading) {
@@ -300,6 +305,24 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
           })}
         </ul>
       </nav>
+
+      {/* New Ticket Quick Action - for authenticated users with permission */}
+      {!isLoading && isAuthenticated && permissions.canCreateTicket() && (
+        <div className="px-4 pb-4 border-t border-sidebar-border pt-4">
+          <Button
+            onClick={() => router.push('/dashboard/tickets/new')}
+            className={cn(
+              "w-full flex items-center gap-2 justify-center",
+              !isOpen && "px-2"
+            )}
+            size={isOpen ? "default" : "icon"}
+            title={!isOpen ? "New Ticket" : undefined}
+          >
+            <Plus className="h-4 w-4 flex-shrink-0" />
+            {isOpen && <span>New Ticket</span>}
+          </Button>
+        </div>
+      )}
 
       {/* Authentication actions for unauthenticated users */}
       {!isLoading && !isAuthenticated && (

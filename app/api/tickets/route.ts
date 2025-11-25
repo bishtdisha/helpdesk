@@ -105,6 +105,8 @@ export async function GET(request: NextRequest) {
  * - category: Ticket category (optional)
  * - customerId: Customer ID (required)
  * - teamId: Team ID (optional)
+ * - phone: Phone number (optional)
+ * - status: Ticket status (optional: OPEN, IN_PROGRESS, WAITING_FOR_CUSTOMER, RESOLVED, CLOSED)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { title, description, priority, category, customerId, teamId } = body;
+    const { title, description, priority, category, customerId, teamId, phone, status } = body;
 
     // Validate required fields
     if (!title || !description || !priority || !customerId) {
@@ -179,6 +181,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate status if provided
+    if (status && !Object.values(TicketStatus).includes(status)) {
+      return NextResponse.json(
+        {
+          error: 'Validation error',
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid status. Must be one of: OPEN, IN_PROGRESS, WAITING_FOR_CUSTOMER, RESOLVED, CLOSED',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate phone number format if provided
+    if (phone) {
+      // Allow alphanumeric characters and common phone symbols: +, -, (, ), space
+      const phoneRegex = /^[0-9+\-() ]+$/;
+      if (!phoneRegex.test(phone)) {
+        return NextResponse.json(
+          {
+            error: 'Validation error',
+            code: 'VALIDATION_ERROR',
+            message: 'Phone number can only contain digits, spaces, hyphens, parentheses, and plus signs',
+          },
+          { status: 400 }
+        );
+      }
+
+      if (phone.length > 50) {
+        return NextResponse.json(
+          {
+            error: 'Validation error',
+            code: 'VALIDATION_ERROR',
+            message: 'Phone number cannot exceed 50 characters',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate category length if provided
     if (category && category.length > 100) {
       return NextResponse.json(
@@ -199,6 +240,8 @@ export async function POST(request: NextRequest) {
       category: category?.trim() || undefined,
       customerId,
       teamId: teamId || undefined,
+      phone: phone?.trim() || undefined,
+      status: status || undefined,
     };
 
     // Create the ticket
@@ -235,13 +278,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Handle Prisma foreign key constraint errors
-    if (error instanceof Error && error.message.includes('Foreign key constraint')) {
+    // Handle foreign key validation errors from our service
+    if (error instanceof Error && 
+        (error.message.includes('does not exist') || 
+         error.message.includes('Foreign key constraint'))) {
       return NextResponse.json(
         {
           error: 'Validation error',
           code: 'VALIDATION_ERROR',
-          message: 'Invalid customerId or teamId',
+          message: error.message,
         },
         { status: 400 }
       );

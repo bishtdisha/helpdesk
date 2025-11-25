@@ -7,7 +7,26 @@ function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
     <textarea
       data-slot="textarea"
       className={cn(
-        'border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+        // Base styles with strong border and shadow
+        'flex field-sizing-content min-h-[140px] w-full rounded-xl border-[3px] border-input bg-transparent px-4 py-3 text-base font-medium shadow-md',
+        // Darker text color
+        'text-foreground/90',
+        // Placeholder and selection
+        'placeholder:text-muted-foreground/70 selection:bg-primary selection:text-primary-foreground',
+        // Transition for smooth effects
+        'transition-all duration-200',
+        // Hover state with stronger effects
+        'hover:border-ring/50 hover:shadow-lg hover:shadow-black/10',
+        // Focus state with prominent shadow
+        'focus-visible:outline-none focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:shadow-xl focus-visible:shadow-black/15',
+        // Invalid/error state
+        'aria-invalid:border-destructive aria-invalid:ring-destructive/25',
+        // Disabled state
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
+        // Dark mode
+        'dark:bg-input/30',
+        // Larger text on all screens
+        'text-[15px] leading-relaxed',
         className,
       )}
       {...props}

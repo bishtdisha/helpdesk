@@ -123,3 +123,77 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Enhanced Input Styling */
+@layer components {
+  /* Text inputs, textareas, and select triggers */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  [role="combobox"],
+  button[role="combobox"] {
+    @apply border-[3px] border-input rounded-xl px-4 py-3;
+    @apply shadow-md;
+    @apply transition-all duration-200;
+    @apply font-medium text-[15px];
+    @apply text-foreground/90;
+  }
+
+  /* Hover state */
+  input[type="text"]:hover:not(:disabled),
+  input[type="email"]:hover:not(:disabled),
+  input[type="password"]:hover:not(:disabled),
+  input[type="number"]:hover:not(:disabled),
+  input[type="tel"]:hover:not(:disabled),
+  input[type="url"]:hover:not(:disabled),
+  input[type="search"]:hover:not(:disabled),
+  textarea:hover:not(:disabled),
+  [role="combobox"]:hover:not(:disabled),
+  button[role="combobox"]:hover:not(:disabled) {
+    @apply border-ring/50;
+    @apply shadow-lg shadow-black/10;
+  }
+
+  /* Focus state */
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  input[type="search"]:focus,
+  textarea:focus,
+  [role="combobox"]:focus,
+  button[role="combobox"]:focus {
+    @apply border-ring;
+    @apply shadow-xl shadow-black/15;
+    @apply outline-none ring-4 ring-ring/25;
+  }
+
+  /* Disabled state */
+  input:disabled,
+  textarea:disabled,
+  [role="combobox"]:disabled,
+  button[role="combobox"]:disabled {
+    @apply opacity-50 cursor-not-allowed;
+    @apply shadow-none;
+  }
+
+  /* Error state */
+  input[aria-invalid="true"],
+  textarea[aria-invalid="true"],
+  [role="combobox"][aria-invalid="true"],
+  button[role="combobox"][aria-invalid="true"] {
+    @apply border-destructive ring-destructive/25;
+  }
+
+  /* Textarea specific */
+  textarea {
+    @apply min-h-[140px] leading-relaxed;
+  }
+}

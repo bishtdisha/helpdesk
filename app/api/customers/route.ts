@@ -3,11 +3,12 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { prisma } from '@/lib/db';
 
 /**
- * GET /api/customers - List customers with search
+ * GET /api/customers - List customers with search and pagination
  * 
  * Query parameters:
- * - search: Search by name or email
- * - limit: Items to return (default: 10, max: 50)
+ * - page: Page number (default: 1)
+ * - limit: Items per page (default: 10, max: 100)
+ * - search: Search by name, email, or company
  */
 export async function GET(request: NextRequest) {
   try {
@@ -21,8 +22,9 @@ export async function GET(request: NextRequest) {
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const search = searchParams.get('search') || '';
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
 
     // Build where clause for search
     const where = search
@@ -35,7 +37,10 @@ export async function GET(request: NextRequest) {
         }
       : {};
 
-    // Fetch customers
+    // Get total count
+    const total = await prisma.customer.count({ where });
+
+    // Fetch customers with pagination
     const customers = await prisma.customer.findMany({
       where,
       select: {
@@ -44,15 +49,18 @@ export async function GET(request: NextRequest) {
         email: true,
         company: true,
       },
-      take: limit,
       orderBy: {
         name: 'asc',
       },
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     return NextResponse.json({
       customers,
-      count: customers.length,
+      total,
+      page,
+      limit,
     });
   } catch (error) {
     console.error('Error fetching customers:', error);

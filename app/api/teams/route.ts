@@ -26,6 +26,7 @@ import {
  * - page: Page number (default: 1)
  * - limit: Items per page (default: 10, max: 100)
  * - search: Search by team name or description
+ * - simple: Return simplified response for dropdowns (default: false)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const search = searchParams.get('search') || undefined;
+    const simple = searchParams.get('simple') === 'true';
 
     // Get user's access scope to determine filtering
     const userPermissions = await permissionEngine.getUserPermissions(currentUser.id);
@@ -96,7 +98,30 @@ export async function GET(request: NextRequest) {
     // Get total count
     const total = await prisma.team.count({ where: whereClause });
 
-    // Get teams with members and leaders
+    // For simple dropdown response, return only id and name
+    if (simple) {
+      const teams = await prisma.team.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: [
+          { name: 'asc' },
+        ],
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+
+      return NextResponse.json({
+        teams,
+        total,
+        page,
+        limit,
+      });
+    }
+
+    // Get teams with members and leaders for full response
     const teams = await prisma.team.findMany({
       where: whereClause,
       include: {

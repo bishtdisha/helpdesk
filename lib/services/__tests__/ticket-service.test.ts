@@ -20,6 +20,12 @@ jest.mock('../../db', () => ({
     user: {
       findUnique: jest.fn(),
     },
+    customer: {
+      findUnique: jest.fn(),
+    },
+    team: {
+      findUnique: jest.fn(),
+    },
     ticketFollower: {
       findMany: jest.fn(),
     },
@@ -61,6 +67,17 @@ describe('TicketService', () => {
         creator: { id: mockUserId, name: 'Test User', email: 'user@test.com' },
         team: { id: mockTeamId, name: 'Test Team' },
       };
+
+      // Mock foreign key validation
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        id: mockCustomerId,
+        name: 'Test Customer',
+        email: 'customer@test.com',
+      });
+      (prisma.team.findUnique as jest.Mock).mockResolvedValue({
+        id: mockTeamId,
+        name: 'Test Team',
+      });
 
       (prisma.ticket.create as jest.Mock).mockResolvedValue(mockTicket);
       (prisma.ticketHistory.create as jest.Mock).mockResolvedValue({});

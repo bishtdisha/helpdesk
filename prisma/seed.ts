@@ -222,6 +222,7 @@ async function main() {
     data: {
       title: 'Login Issue - Cannot access account',
       description: 'Customer is unable to login to their account. Password reset not working.',
+      phone: '+1 (555) 123-4567',
       status: 'OPEN',
       priority: 'HIGH',
       customerId: customer1.id,
@@ -235,6 +236,7 @@ async function main() {
     data: {
       title: 'Bug Report - Application crashes on startup',
       description: 'Application crashes immediately after launching. Error code: 0x8007000E',
+      phone: '555-987-6543',
       status: 'IN_PROGRESS',
       priority: 'URGENT',
       customerId: customer2.id,
@@ -248,6 +250,7 @@ async function main() {
     data: {
       title: 'Feature Request - Dark mode support',
       description: 'Customer requesting dark mode theme for better usability',
+      phone: '+44 20 7946 0958',
       status: 'OPEN',
       priority: 'LOW',
       customerId: customer1.id,

@@ -147,6 +147,29 @@ export class FileUploadService {
   }
 
   /**
+   * Move a file from one location to another
+   */
+  async moveFile(oldPath: string, newPath: string): Promise<void> {
+    const fullOldPath = path.join(this.uploadDir, oldPath);
+    const fullNewPath = path.join(this.uploadDir, newPath);
+
+    if (!existsSync(fullOldPath)) {
+      throw new FileUploadError(
+        `Source file not found: ${oldPath}`,
+        'FILE_NOT_FOUND'
+      );
+    }
+
+    // Ensure the target directory exists
+    const targetDir = path.dirname(fullNewPath);
+    await this.ensureDirectoryExists(targetDir);
+
+    // Read the file and write to new location
+    const fs = await import('fs/promises');
+    await fs.rename(fullOldPath, fullNewPath);
+  }
+
+  /**
    * Delete a file from storage
    */
   async deleteFile(filePath: string): Promise<void> {

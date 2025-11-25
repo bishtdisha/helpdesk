@@ -4,6 +4,7 @@ import { ticketAccessControl } from '../rbac/ticket-access-control';
 import { PermissionError } from '../rbac/errors';
 import { notificationService } from './notification-service';
 import { slaService } from './sla-service';
+import { fileUploadService } from './file-upload-service';
 
 // Types for ticket operations
 export interface CreateTicketData {
@@ -13,6 +14,22 @@ export interface CreateTicketData {
   category?: string;
   customerId: string;
   teamId?: string;
+  phone?: string;
+  status?: TicketStatus;
+}
+
+export interface CreateTicketWithAttachmentsAndCommentsData {
+  title: string;
+  description: string;
+  priority: TicketPriority;
+  category?: string;
+  customerId: string;
+  teamId?: string;
+  phone?: string;
+  status?: TicketStatus;
+  attachments?: File[];
+  initialComment?: string;
+  isCommentInternal?: boolean;
 }
 
 export interface UpdateTicketData {
@@ -96,9 +113,52 @@ export class InvalidTicketStatusTransitionError extends Error {
  */
 export class TicketService {
   /**
+   * Validate foreign key references exist in the database
+   * @throws Error if any foreign key reference is invalid
+   */
+  private async validateForeignKeys(data: CreateTicketData): Promise<void> {
+    // Validate customer exists
+    const customer = await prisma.customer.findUnique({
+      where: { id: data.customerId },
+    });
+    if (!customer) {
+      throw new Error(`Customer with ID ${data.customerId} does not exist`);
+    }
+
+    // Validate team exists if provided
+    if (data.teamId) {
+      const team = await prisma.team.findUnique({
+        where: { id: data.teamId },
+      });
+      if (!team) {
+        throw new Error(`Team with ID ${data.teamId} does not exist`);
+      }
+    }
+
+    // Note: assignedTo is not part of CreateTicketData, it's handled separately in assignTicket
+  }
+
+  /**
    * Create a new ticket
    */
   async createTicket(data: CreateTicketData, userId: string): Promise<Ticket> {
+    // Validate required fields
+    if (!data.title || data.title.trim().length === 0) {
+      throw new Error('Title is required and cannot be empty');
+    }
+    if (!data.description || data.description.trim().length === 0) {
+      throw new Error('Description is required and cannot be empty');
+    }
+    if (!data.priority) {
+      throw new Error('Priority is required');
+    }
+    if (!data.customerId) {
+      throw new Error('Customer ID is required');
+    }
+
+    // Validate foreign key references
+    await this.validateForeignKeys(data);
+
     // Calculate SLA due date based on priority
     const tempTicket = {
       priority: data.priority,
@@ -116,7 +176,8 @@ export class TicketService {
         customerId: data.customerId,
         createdBy: userId,
         teamId: data.teamId,
-        status: TicketStatus.OPEN,
+        phone: data.phone,
+        status: data.status || TicketStatus.OPEN,
         slaDueAt: slaDueAt,
       },
       include: {
@@ -139,6 +200,234 @@ export class TicketService {
     await notificationService.sendTicketCreatedNotification(ticket);
 
     return ticket;
+  }
+
+  /**
+   * Create a ticket with attachments and initial comment in an atomic transaction
+   * This ensures that if any part fails, the entire operation is rolled back
+   */
+  async createTicketWithAttachmentsAndComments(
+    data: CreateTicketWithAttachmentsAndCommentsData,
+    userId: string
+  ): Promise<Ticket> {
+    // Validate required fields
+    if (!data.title || data.title.trim().length === 0) {
+      throw new Error('Title is required and cannot be empty');
+    }
+    if (!data.description || data.description.trim().length === 0) {
+      throw new Error('Description is required and cannot be empty');
+    }
+    if (!data.priority) {
+      throw new Error('Priority is required');
+    }
+    if (!data.customerId) {
+      throw new Error('Customer ID is required');
+    }
+
+    // Validate foreign key references
+    await this.validateForeignKeys(data);
+
+    // Calculate SLA due date based on priority
+    const tempTicket = {
+      priority: data.priority,
+      createdAt: new Date(),
+    } as Ticket;
+    const slaDueAt = await slaService.calculateSLADueDate(tempTicket);
+
+    // Upload files first (outside transaction) to avoid long-running transactions
+    const uploadedFiles: Array<{
+      fileName: string;
+      filePath: string;
+      fileSize: number;
+      mimeType: string;
+    }> = [];
+
+    let tempTicketId: string | null = null;
+
+    try {
+      // If there are attachments, we need to upload them
+      if (data.attachments && data.attachments.length > 0) {
+        // Generate a temporary ticket ID for file storage
+        tempTicketId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+        for (const file of data.attachments) {
+          const uploadedFile = await fileUploadService.uploadTicketAttachment(file, tempTicketId);
+          uploadedFiles.push({
+            fileName: uploadedFile.originalFileName,
+            filePath: uploadedFile.filePath,
+            fileSize: uploadedFile.fileSize,
+            mimeType: uploadedFile.mimeType,
+          });
+        }
+      }
+
+      // Execute the entire ticket creation in a transaction
+      const ticket = await prisma.$transaction(async (tx) => {
+        // Create the ticket
+        const newTicket = await tx.ticket.create({
+          data: {
+            title: data.title,
+            description: data.description,
+            priority: data.priority,
+            category: data.category,
+            customerId: data.customerId,
+            createdBy: userId,
+            teamId: data.teamId,
+            phone: data.phone,
+            status: data.status || TicketStatus.OPEN,
+            slaDueAt: slaDueAt,
+          },
+          include: {
+            customer: true,
+            creator: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            team: true,
+          },
+        });
+
+        // If we uploaded files, we need to move them to the correct location and create attachment records
+        if (uploadedFiles.length > 0 && tempTicketId) {
+          for (const uploadedFile of uploadedFiles) {
+            // Update the file path to use the real ticket ID
+            const oldPath = uploadedFile.filePath;
+            const newPath = oldPath.replace(tempTicketId, newTicket.id);
+
+            // Move the file to the correct location
+            await fileUploadService.moveFile(oldPath, newPath);
+
+            // Create attachment record
+            await tx.ticketAttachment.create({
+              data: {
+                ticketId: newTicket.id,
+                uploadedBy: userId,
+                fileName: uploadedFile.fileName,
+                filePath: newPath,
+                fileSize: uploadedFile.fileSize,
+                mimeType: uploadedFile.mimeType,
+              },
+            });
+
+            // Create history entry for attachment
+            await tx.ticketHistory.create({
+              data: {
+                ticketId: newTicket.id,
+                userId,
+                action: 'attachment_added',
+                fieldName: 'attachments',
+                oldValue: null,
+                newValue: uploadedFile.fileName,
+              },
+            });
+          }
+        }
+
+        // Create initial comment if provided
+        if (data.initialComment && data.initialComment.trim().length > 0) {
+          await tx.comment.create({
+            data: {
+              content: data.initialComment.trim(),
+              ticketId: newTicket.id,
+              authorId: userId,
+              isInternal: data.isCommentInternal || false,
+            },
+          });
+
+          // Create history entry for comment
+          await tx.ticketHistory.create({
+            data: {
+              ticketId: newTicket.id,
+              userId,
+              action: 'comment_added',
+              fieldName: 'comments',
+              oldValue: null,
+              newValue: 'Initial comment',
+            },
+          });
+        }
+
+        // Create history entry for ticket creation
+        await tx.ticketHistory.create({
+          data: {
+            ticketId: newTicket.id,
+            userId,
+            action: 'created',
+            fieldName: null,
+            oldValue: null,
+            newValue: null,
+          },
+        });
+
+        return newTicket;
+      });
+
+      // Send notification (outside transaction)
+      await notificationService.sendTicketCreatedNotification(ticket);
+
+      // Fetch the complete ticket with all relationships
+      const completeTicket = await prisma.ticket.findUnique({
+        where: { id: ticket.id },
+        include: {
+          customer: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          team: true,
+          attachments: {
+            include: {
+              uploader: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          comments: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'asc',
+            },
+          },
+        },
+      });
+
+      return completeTicket!;
+    } catch (error) {
+      // If transaction fails, clean up any uploaded files
+      if (uploadedFiles.length > 0) {
+        for (const uploadedFile of uploadedFiles) {
+          try {
+            if (fileUploadService.fileExists(uploadedFile.filePath)) {
+              await fileUploadService.deleteFile(uploadedFile.filePath);
+            }
+          } catch (cleanupError) {
+            console.error('Error cleaning up uploaded file:', cleanupError);
+            // Continue cleanup even if one file fails
+          }
+        }
+      }
+
+      // Re-throw the original error
+      throw error;
+    }
   }
 
   /**

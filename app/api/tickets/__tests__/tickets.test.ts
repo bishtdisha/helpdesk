@@ -1,3 +1,7 @@
+/**
+ * @jest-environment node
+ */
+
 import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 import { prisma } from '@/lib/db';
 import { ticketService } from '@/lib/services/ticket-service';

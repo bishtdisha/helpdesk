@@ -30,8 +30,9 @@ import bcrypt from 'bcrypt';
  * - limit: Items per page (default: 10, max: 100)
  * - roleId: Filter by role ID
  * - teamId: Filter by team ID
- * - isActive: Filter by active status
+ * - isActive: Filter by active status (default: true for simple mode)
  * - search: Search by name or email
+ * - simple: Return simplified response for dropdowns (default: false)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -69,7 +70,9 @@ export async function GET(request: NextRequest) {
     const roleId = searchParams.get('roleId') || undefined;
     const teamId = searchParams.get('teamId') || undefined;
     const isActiveParam = searchParams.get('isActive');
-    const isActive = isActiveParam ? isActiveParam === 'true' : undefined;
+    const simple = searchParams.get('simple') === 'true';
+    // Default to active users only in simple mode
+    const isActive = isActiveParam ? isActiveParam === 'true' : (simple ? true : undefined);
     const search = searchParams.get('search') || undefined;
 
     // Get user's access scope to determine filtering
@@ -129,7 +132,32 @@ export async function GET(request: NextRequest) {
     // Get total count
     const total = await prisma.user.count({ where: whereClause });
 
-    // Get users with pagination
+    // For simple dropdown response, return only id, name, and email
+    if (simple) {
+      const users = await prisma.user.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+        orderBy: [
+          { name: 'asc' },
+          { email: 'asc' },
+        ],
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+
+      return NextResponse.json({
+        users,
+        total,
+        page,
+        limit,
+      });
+    }
+
+    // Get users with pagination for full response
     const users = await prisma.user.findMany({
       where: whereClause,
       include: {

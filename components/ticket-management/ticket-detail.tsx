@@ -1,13 +1,13 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { Avatar } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CommentInput } from "@/components/comment-input"
+import { BackNavigation } from "@/components/ticket-management/back-navigation"
 import {
-  ArrowLeft,
   Clock,
   User,
   Users,
@@ -16,14 +16,13 @@ import {
   History,
   AlertCircle,
   CheckCircle,
-  Edit,
   UserPlus,
-  X,
 } from "lucide-react"
 import { TicketStatus, TicketPriority } from "@prisma/client"
 import { TicketWithRelations } from "@/lib/types/ticket"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { formatDistanceToNow, format } from "date-fns"
+import { toast } from "sonner"
 
 interface TicketDetailProps {
   ticketId: string
@@ -37,6 +36,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
   const [ticket, setTicket] = useState<TicketWithRelations | null>(null)
   const [loading, setLoading] = useState(true)
   const [newComment, setNewComment] = useState("")
+  const [isInternal, setIsInternal] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
 
   // Fetch ticket details
@@ -70,39 +70,30 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
       const response = await fetch(`/api/tickets/${ticket.id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newComment }),
+        body: JSON.stringify({ 
+          content: newComment,
+          isInternal: isInternal 
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to add comment')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to add comment')
       }
 
+      // Clear input after successful submission
       setNewComment("")
-      await fetchTicket() // Refresh ticket data
+      setIsInternal(false)
+      
+      // Update comment list immediately on success
+      await fetchTicket()
+      
+      toast.success('Comment added successfully')
     } catch (error) {
       console.error('Error adding comment:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to add comment')
     } finally {
       setSubmittingComment(false)
-    }
-  }
-
-  const handleStatusChange = async (newStatus: TicketStatus) => {
-    if (!ticket) return
-
-    try {
-      const response = await fetch(`/api/tickets/${ticket.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update status')
-      }
-
-      await fetchTicket()
-    } catch (error) {
-      console.error('Error updating status:', error)
     }
   }
 
@@ -174,14 +165,6 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
     return user.role.name === 'Admin/Manager' || user.role.name === 'Team Leader'
   }
 
-  const canEditTicket = () => {
-    if (!user?.role || !ticket) return false
-    if (user.role.name === 'Admin/Manager') return true
-    if (user.role.name === 'Team Leader' && ticket.teamId) return true
-    if (user.role.name === 'User/Employee' && ticket.createdBy === user.id) return true
-    return false
-  }
-
   const isSLABreached = (slaDueAt: Date | null) => {
     if (!slaDueAt) return false
     return new Date(slaDueAt) < new Date()
@@ -199,10 +182,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <div className="text-muted-foreground">Ticket not found</div>
-        <Button onClick={onBack} variant="outline">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Tickets
-        </Button>
+        <BackNavigation />
       </div>
     )
   }
@@ -211,10 +191,8 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
-          <Button onClick={onBack} variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-3">
+          <BackNavigation />
           <div>
             <h2 className="text-2xl font-bold">{ticket.title}</h2>
             <p className="text-muted-foreground">
@@ -343,7 +321,19 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
                   {/* Comments List */}
                   <div className="space-y-4">
                     {ticket.comments && ticket.comments.length > 0 ? (
-                      ticket.comments.map((comment) => (
+                      ticket.comments
+                        // Sort comments chronologically (oldest first)
+                        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                        // Filter internal comments based on user permissions
+                        .filter((comment) => {
+                          // Show all comments to admins and team leaders
+                          if (user?.role?.name === 'Admin/Manager' || user?.role?.name === 'Team Leader') {
+                            return true;
+                          }
+                          // Show only non-internal comments to other users
+                          return !comment.isInternal;
+                        })
+                        .map((comment) => (
                         <div key={comment.id} className="flex gap-3 p-4 bg-muted rounded-lg">
                           <Avatar className="h-8 w-8">
                             <div className="bg-primary text-primary-foreground flex items-center justify-center h-full">
@@ -353,6 +343,9 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium">{comment.author.name}</span>
+                              {comment.isInternal && (
+                                <Badge variant="secondary" className="text-xs">Internal</Badge>
+                              )}
                               <span className="text-xs text-muted-foreground">
                                 {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                               </span>
@@ -370,11 +363,14 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
 
                   {/* Add Comment */}
                   <div className="space-y-2">
-                    <Textarea
-                      placeholder="Add a comment..."
+                    <CommentInput
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      rows={3}
+                      onChange={setNewComment}
+                      isInternal={isInternal}
+                      onIsInternalChange={setIsInternal}
+                      placeholder="Add a comment..."
+                      disabled={submittingComment}
+                      showInternalOption={user?.role?.name === 'Admin/Manager' || user?.role?.name === 'Team Leader'}
                     />
                     <div className="flex justify-end">
                       <Button
@@ -516,6 +512,12 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
                 <div>
                   <div className="text-muted-foreground">Category</div>
                   <div className="font-medium">{ticket.category}</div>
+                </div>
+              )}
+              {ticket.phone && (
+                <div>
+                  <div className="text-muted-foreground">Phone Number</div>
+                  <div className="font-medium">{ticket.phone}</div>
                 </div>
               )}
               <div>

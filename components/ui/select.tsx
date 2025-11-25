@@ -37,7 +37,27 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        // Base styles with strong border and shadow
+        "flex w-fit items-center justify-between gap-2 rounded-xl border-[3px] border-input bg-transparent px-4 py-3 text-[15px] font-medium whitespace-nowrap shadow-md",
+        // Darker text and placeholder colors
+        "text-foreground/90 data-[placeholder]:text-muted-foreground/70 [&_svg:not([class*='text-'])]:text-muted-foreground",
+        // Transition for smooth effects
+        "transition-all duration-200",
+        // Hover state with stronger effects
+        "hover:border-ring/50 hover:shadow-lg hover:shadow-black/10 dark:hover:bg-input/50",
+        // Focus state with prominent shadow
+        "focus-visible:outline-none focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:shadow-xl focus-visible:shadow-black/15",
+        // Invalid/error state
+        "aria-invalid:border-destructive aria-invalid:ring-destructive/25",
+        // Disabled state
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none",
+        // Dark mode
+        "dark:bg-input/30",
+        // Size variants
+        "data-[size=default]:h-11 data-[size=sm]:h-9",
+        // Value and icon styling
+        "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

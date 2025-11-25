@@ -81,6 +81,7 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Title</TableHead>
+            <TableHead>Customer</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead>SLA</TableHead>
@@ -100,6 +101,9 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
               >
                 <TableCell className="font-medium">{ticket.id.slice(0, 8)}</TableCell>
                 <TableCell className="max-w-md truncate">{ticket.title}</TableCell>
+                <TableCell className="max-w-xs truncate">
+                  {ticket.customer?.name || 'Unknown Customer'}
+                </TableCell>
                 <TableCell>
                   <TicketStatusBadge status={ticket.status} />
                 </TableCell>
@@ -167,6 +171,7 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
                 </div>
 
                 <div className="text-sm text-muted-foreground space-y-1">
+                  <p>Customer: {ticket.customer?.name || 'Unknown Customer'}</p>
                   {permissions.canViewTeamTickets() && (
                     <p>Assignee: {ticket.assignedUser?.name || 'Unassigned'}</p>
                   )}
