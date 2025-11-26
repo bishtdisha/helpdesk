@@ -85,12 +85,14 @@ const menuItems: MenuItem[] = [
     excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
   },
   
-  // User Management - Admin/Manager ONLY (Requirement 18.2)
+  // User Management - Admin/Manager and Team Leader
   { 
     id: "users", 
     label: "User Management", 
     icon: UserCog,
-    requireRole: ROLE_TYPES.ADMIN_MANAGER
+    action: PERMISSION_ACTIONS.READ,
+    resource: RESOURCE_TYPES.USERS,
+    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
   },
   
   // Team Management - Admin/Manager and Team Leader (Requirement 18.3)

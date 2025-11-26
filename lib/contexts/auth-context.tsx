@@ -108,14 +108,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cacheUser]);
 
-  // Load cached user immediately, then fetch in background
+  // Load cached user immediately, only fetch if needed
   useEffect(() => {
     // Try to load from cache first (instant)
     const hasCached = loadCachedUser();
     
-    // If no cache, set a minimal user object to prevent blocking
-    if (!hasCached) {
-      // Set a placeholder to allow rendering
+    if (hasCached) {
+      // Cache hit - validate in background after 30 seconds
+      const validationTimer = setTimeout(() => {
+        fetchUser();
+      }, 30000); // 30 seconds delay
+      
+      return () => clearTimeout(validationTimer);
+    } else {
+      // No cache - fetch immediately but don't block rendering
       setUser({
         id: 'loading',
         email: 'loading@example.com',
@@ -132,10 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         team: null,
       });
+      
+      // Fetch user data
+      setTimeout(() => fetchUser(), 0);
     }
-    
-    // Always fetch fresh data in background (non-blocking)
-    setTimeout(() => fetchUser(), 0);
   }, [loadCachedUser, fetchUser]);
 
   // Login function

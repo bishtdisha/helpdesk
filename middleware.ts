@@ -24,9 +24,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Session token exists - let them through
-  // Validation will happen in the background via AuthProvider
-  return NextResponse.next()
+  // Session token exists - pass it to API routes via header
+  // Validation will happen in API routes using optimized methods
+  const response = NextResponse.next()
+  response.headers.set('x-session-token', sessionToken)
+  
+  return response
 }
 
 // Configure which routes this middleware runs on

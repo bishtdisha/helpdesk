@@ -11,7 +11,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force && npm run db:seed"
+    "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "db:cleanup": "tsx scripts/cleanup-database.ts",
+    "db:check-users": "tsx scripts/check-users.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
