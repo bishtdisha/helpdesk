@@ -231,36 +231,48 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teams.map((team) => (
-                  <TableRow key={team.id}>
-                    <TableCell>
-                      <div className="font-medium">{team.name}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate text-muted-foreground">
-                        {team.description || 'No description'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">
-                          {team.members?.length || 0} members
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Crown className="w-4 h-4 text-yellow-500" />
-                        <span className="text-sm text-muted-foreground">
-                          {getTeamLeaderNames(team)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(team.createdAt).toLocaleDateString()}
-                      </div>
-                    </TableCell>
+                {teams.map((team) => {
+                  // Check if current user leads this team
+                  const isLeader = currentUser && team.teamLeaders?.some(tl => tl.user.id === currentUser.id);
+                  
+                  return (
+                    <TableRow key={team.id} className={isLeader ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium">{team.name}</div>
+                          {isLeader && (
+                            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">
+                              <Crown className="w-3 h-3 mr-1" />
+                              You lead this team
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate text-muted-foreground">
+                          {team.description || 'No description'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">
+                            {team.members?.length || 0} members
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Crown className="w-4 h-4 text-yellow-500" />
+                          <span className="text-sm text-muted-foreground">
+                            {getTeamLeaderNames(team)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(team.createdAt).toLocaleDateString()}
+                        </div>
+                      </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -297,9 +309,10 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

@@ -1,20 +1,27 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff, Check, X } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Eye, EyeOff, Check, X, Loader2 } from "lucide-react"
 import { validateRegistrationData, validatePassword } from "@/lib/validation"
+
+interface Team {
+  id: string
+  name: string
+}
 
 interface FormData {
   name: string
   email: string
   password: string
   confirmPassword: string
+  teamId: string
 }
 
 interface FormErrors {
@@ -32,12 +39,15 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    teamId: "",
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [teams, setTeams] = useState<Team[]>([])
+  const [teamsLoading, setTeamsLoading] = useState(true)
   
   // Password requirements validation state
   const passwordRequirements = {
@@ -47,6 +57,26 @@ export default function RegisterPage() {
     hasNumber: /\d/.test(formData.password),
     hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password),
   }
+
+  // Fetch teams on component mount
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        setTeamsLoading(true)
+        const response = await fetch('/api/teams/public')
+        if (response.ok) {
+          const data = await response.json()
+          setTeams(data.teams || [])
+        }
+      } catch (error) {
+        console.error('Error fetching teams:', error)
+      } finally {
+        setTeamsLoading(false)
+      }
+    }
+
+    fetchTeams()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -105,6 +135,7 @@ export default function RegisterPage() {
           name: formData.name.trim(),
           email: formData.email.trim(),
           password: formData.password,
+          teamId: formData.teamId || undefined,
         }),
       })
 
@@ -203,6 +234,30 @@ export default function RegisterPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teamId">Team (Optional)</Label>
+              <Select
+                value={formData.teamId || undefined}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, teamId: value === "none" ? "" : value }))}
+                disabled={teamsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={teamsLoading ? "Loading teams..." : "Select a team (optional)"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No team</SelectItem>
+                  {teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                You can join a team now or later
+              </p>
             </div>
 
             <div className="space-y-2">

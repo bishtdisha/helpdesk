@@ -21,6 +21,8 @@ export interface UserRegistrationData {
   email: string;
   password: string;
   name?: string;
+  roleId?: string;
+  teamId?: string;
 }
 
 // User login data

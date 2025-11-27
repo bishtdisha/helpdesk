@@ -392,17 +392,17 @@ export function AdvancedSearchDialog({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="teamId">Team</Label>
-                    <Select value={filters.teamId || ''} onValueChange={(value) => updateFilter('teamId', value || undefined)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select team..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">All Teams</SelectItem>
-                        {/* TODO: Load teams from API */}
-                        <SelectItem value="team1">Support Team</SelectItem>
-                        <SelectItem value="team2">Technical Team</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <DynamicDropdownSelect
+                      value={filters.teamId || ''}
+                      onValueChange={(value) => updateFilter('teamId', value || undefined)}
+                      placeholder="Select team..."
+                      apiEndpoint="/api/teams"
+                      responseKey="teams"
+                      formatLabel={(team: any) => team.name}
+                      formatValue={(team: any) => team.id}
+                      allowClear
+                      clearLabel="All Teams"
+                    />
                   </div>
 
                   <div className="space-y-2">

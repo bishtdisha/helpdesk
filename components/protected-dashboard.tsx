@@ -10,6 +10,7 @@ import { KnowledgeBase } from "@/components/knowledge-base"
 import { Settings } from "@/components/settings"
 import { NavigationHeader } from "@/components/navigation-header"
 import { UserManagementPage } from "@/components/user-management/user-management-page"
+import { TeamManagement } from "@/components/team-management/team-management"
 import { SLAManagement } from "@/components/sla-management"
 
 import { Button } from "@/components/ui/button"
@@ -37,7 +38,7 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
       case "users":
         return <UserManagementPage />
       case "teams":
-        return <Customers />
+        return <TeamManagement />
       case "reports":
         return <Reports />
       case "knowledge-base":
@@ -82,7 +83,7 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
           {/* Show user welcome message and placeholder content when on dashboard */}
           {activeModule === "dashboard" && (
             <div className="space-y-6">
-              {/* Welcome Card */}
+              {/* Welcome Card with Role Context */}
               <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-100/20 to-transparent dark:via-slate-700/20"></div>
                 <CardHeader className="relative">
@@ -93,7 +94,21 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
                     Welcome back, {user.name || 'User'}!
                   </CardTitle>
                   <CardDescription className="text-base text-muted-foreground mt-2">
-                    Ready to tackle today's challenges? Here's your dashboard overview.
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <span>Role: <strong>{user.role?.name || 'No role assigned'}</strong></span>
+                      </div>
+                      {user.team && (
+                        <div className="flex items-center gap-2">
+                          <span>Team: <strong>{user.team.name}</strong></span>
+                        </div>
+                      )}
+                      {user.teamLeaderships && user.teamLeaderships.length > 0 && (
+                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                          <span>👑 Leading: <strong>{user.teamLeaderships.map((tl: any) => tl.team.name).join(', ')}</strong></span>
+                        </div>
+                      )}
+                    </div>
                   </CardDescription>
                 </CardHeader>
               </Card>

@@ -17,7 +17,8 @@ import {
   Shield,
   Clock,
   Menu,
-  Plus
+  Plus,
+  Crown
 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { usePermissions } from "@/lib/hooks/use-permissions"
@@ -306,6 +307,42 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
             )
           })}
         </ul>
+        
+        {/* My Team Quick Access - for team leaders */}
+        {!isLoading && isAuthenticated && user?.teamLeaderships && user.teamLeaderships.length > 0 && (
+          <div className="mt-auto px-4 pb-2">
+            <div className={cn(
+              "rounded-lg bg-amber-100/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800",
+              isOpen ? "p-3" : "p-2"
+            )}>
+              {isOpen ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    <Crown className="h-3 w-3" />
+                    <span>MY TEAM{user.teamLeaderships.length > 1 ? 'S' : ''}</span>
+                  </div>
+                  {user.teamLeaderships.map((leadership: any) => (
+                    <button
+                      key={leadership.team.id}
+                      onClick={() => onModuleChange('teams')}
+                      className="w-full text-left text-sm text-amber-900 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-200 transition-colors"
+                    >
+                      {leadership.team.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <button
+                  onClick={() => onModuleChange('teams')}
+                  className="w-full flex justify-center"
+                  title="My Team"
+                >
+                  <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* New Ticket Quick Action - for authenticated users with permission */}

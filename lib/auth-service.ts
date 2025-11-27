@@ -31,12 +31,14 @@ export class AuthService {
       // Hash the password
       const hashedPassword = await PasswordUtils.hashPassword(data.password);
 
-      // Create the user
+      // Create the user with role and optional team
       const user = await prisma.user.create({
         data: {
           email: data.email,
           name: data.name,
           password: hashedPassword,
+          roleId: data.roleId,
+          teamId: data.teamId,
         },
         select: {
           id: true,
@@ -210,6 +212,18 @@ export class AuthService {
           select: {
             id: true,
             name: true,
+          },
+        },
+        teamLeaderships: {
+          select: {
+            id: true,
+            teamId: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },

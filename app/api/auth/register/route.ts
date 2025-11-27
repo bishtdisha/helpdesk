@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { email, password, name } = body;
+    const { email, password, name, teamId } = body;
 
     // Validate input data
     const validation = validateRegistrationData({ email, password, name });
@@ -38,11 +38,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Register the user
+    // Get the default "Employee" role
+    const userRole = await prisma.role.findUnique({
+      where: { name: 'Employee' },
+    });
+
+    if (!userRole) {
+      return NextResponse.json(
+        {
+          error: 'Configuration error',
+          message: 'Default user role not found. Please contact support.',
+        },
+        { status: 500 }
+      );
+    }
+
+    // Validate team if provided
+    if (teamId) {
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+      });
+
+      if (!team) {
+        return NextResponse.json(
+          {
+            error: 'Invalid team',
+            message: 'The selected team does not exist',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Register the user with default role and optional team
     const result = await AuthService.register({
       email: email.toLowerCase().trim(),
       password,
       name: name?.trim(),
+      roleId: userRole.id,
+      teamId: teamId || undefined,
     });
 
     if (!result.success) {
