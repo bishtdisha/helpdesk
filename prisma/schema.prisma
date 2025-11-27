@@ -19,6 +19,9 @@ model User {
   roleId    String?  // Direct role assignment for simplified RBAC
   teamId    String?  // Team assignment
   isActive  Boolean  @default(true)
+  isDeleted Boolean  @default(false)  // Soft delete flag
+  deletedAt DateTime?                 // When user was deleted
+  deletedBy String?                   // Who deleted the user
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
     const teamId = searchParams.get('teamId') || undefined;
     const isActiveParam = searchParams.get('isActive');
     const simple = searchParams.get('simple') === 'true';
+    const includeDeleted = searchParams.get('includeDeleted') === 'true';
     // Default to active users only in simple mode
     const isActive = isActiveParam ? isActiveParam === 'true' : (simple ? true : undefined);
     const search = searchParams.get('search') || undefined;
@@ -81,6 +82,11 @@ export async function GET(request: NextRequest) {
 
     // Build where clause based on user's permissions
     let whereClause: any = {};
+
+    // Filter out soft-deleted users by default
+    if (!includeDeleted) {
+      whereClause.isDeleted = false;
+    }
 
     // Apply role-based filtering
     if (!accessScope.organizationWide) {
