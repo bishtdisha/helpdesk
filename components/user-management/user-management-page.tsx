@@ -26,7 +26,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Plus, Edit, Trash2, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react"
+import { 
+  Users, Plus, Edit, Trash2, Loader2, AlertTriangle, CheckCircle2, 
+  Search, Filter, X
+} from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 
 interface User {
@@ -60,6 +63,7 @@ interface Team {
  */
 export function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,6 +85,12 @@ export function UserManagementPage() {
     roleId: "",
     teamId: "",
   })
+  const [filters, setFilters] = useState({
+    search: "",
+    roleId: "all",
+    teamId: "all",
+    status: "all",
+  })
   const { toast } = useToast()
 
   // Fetch users
@@ -91,6 +101,7 @@ export function UserManagementPage() {
       if (!response.ok) throw new Error("Failed to fetch users")
       const data = await response.json()
       setUsers(data.users || [])
+      setFilteredUsers(data.users || [])
     } catch (error) {
       console.error("Error fetching users:", error)
       toast({
@@ -101,6 +112,57 @@ export function UserManagementPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Apply filters
+  useEffect(() => {
+    let filtered = [...users]
+
+    // Search filter (name or email)
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase()
+      filtered = filtered.filter(
+        (user) =>
+          user.name?.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower)
+      )
+    }
+
+    // Role filter
+    if (filters.roleId !== "all") {
+      if (filters.roleId === "none") {
+        filtered = filtered.filter((user) => !user.role)
+      } else {
+        filtered = filtered.filter((user) => user.role?.id === filters.roleId)
+      }
+    }
+
+    // Team filter
+    if (filters.teamId !== "all") {
+      if (filters.teamId === "none") {
+        filtered = filtered.filter((user) => !user.team)
+      } else {
+        filtered = filtered.filter((user) => user.team?.id === filters.teamId)
+      }
+    }
+
+    // Status filter
+    if (filters.status !== "all") {
+      const isActive = filters.status === "active"
+      filtered = filtered.filter((user) => user.isActive === isActive)
+    }
+
+    setFilteredUsers(filtered)
+  }, [filters, users])
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      search: "",
+      roleId: "all",
+      teamId: "all",
+      status: "all",
+    })
   }
 
   // Fetch roles
@@ -256,24 +318,22 @@ export function UserManagementPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                User Management
-              </CardTitle>
-              <CardDescription>Manage user accounts and roles</CardDescription>
-            </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add User
-                </Button>
-              </DialogTrigger>
+      <div className="space-y-4">
+        {/* Header Section */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage user accounts and roles
+            </p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add User
+              </Button>
+            </DialogTrigger>
               <DialogContent>
                 <form onSubmit={handleCreateUser}>
                   <DialogHeader>
@@ -338,64 +398,192 @@ export function UserManagementPage() {
                 </form>
               </DialogContent>
             </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+
+        {/* Filters & Search Section */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {/* Header with Clear Button */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Filters & Search</span>
+                </div>
+                {(filters.search || filters.roleId !== "all" || filters.teamId !== "all" || filters.status !== "all") && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {filteredUsers.length} of {users.length}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="h-7 px-2 text-xs"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Search and Filters in Single Row */}
+              <div className="flex gap-3 flex-col md:flex-row">
+                {/* Search Bar - Takes remaining space */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search users by name or email..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className="pl-9 h-9"
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <Select
+                  value={filters.roleId}
+                  onValueChange={(value) => setFilters({ ...filters, roleId: value })}
+                >
+                  <SelectTrigger className="h-9 w-full md:w-[160px]">
+                    <SelectValue placeholder="All Roles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="none">No Role</SelectItem>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Team Filter */}
+                <Select
+                  value={filters.teamId}
+                  onValueChange={(value) => setFilters({ ...filters, teamId: value })}
+                >
+                  <SelectTrigger className="h-9 w-full md:w-[160px]">
+                    <SelectValue placeholder="All Teams" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Teams</SelectItem>
+                    <SelectItem value="none">No Team</SelectItem>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Status Filter */}
+                <Select
+                  value={filters.status}
+                  onValueChange={(value) => setFilters({ ...filters, status: value })}
+                >
+                  <SelectTrigger className="h-9 w-full md:w-[140px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          ) : users.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No users found
-            </div>
-          ) : (
-            <Table>
+          </CardContent>
+        </Card>
+
+        {/* Users Table Card */}
+        <Card>
+          <CardContent className="p-0">
+
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                <p className="text-sm font-medium text-muted-foreground">Loading users...</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                <div className="rounded-full bg-muted p-6 mb-4">
+                  <Users className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
+                  {users.length === 0 ? "No users yet" : "No matching users"}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                  {users.length === 0 
+                    ? "Get started by creating your first user account" 
+                    : "Try adjusting your filters or search terms"}
+                </p>
+                {users.length === 0 && (
+                  <Button onClick={() => setIsDialogOpen(true)} size="lg">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create First User
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold">User</TableHead>
+                  <TableHead className="font-semibold">Role</TableHead>
+                  <TableHead className="font-semibold">Team</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold">Joined</TableHead>
+                  <TableHead className="font-semibold text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name || "N/A"}</TableCell>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{user.name || "N/A"}</span>
+                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {user.role ? (
-                        <Badge variant={user.role.name === "Admin_Manager" ? "default" : "secondary"}>
+                        <Badge variant={user.role.name === "Admin_Manager" ? "default" : "secondary"} className="font-normal">
                           {user.role.name}
                         </Badge>
                       ) : (
-                        <span className="text-muted-foreground">No role</span>
+                        <Badge variant="outline" className="font-normal text-muted-foreground">
+                          No role
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {user.team ? (
-                        <span className="text-sm">{user.team.name}</span>
+                        <span className="text-sm font-medium">{user.team.name}</span>
                       ) : (
-                        <span className="text-muted-foreground text-sm">No team</span>
+                        <span className="text-sm text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.isActive ? "default" : "secondary"}>
+                      <Badge 
+                        variant={user.isActive ? "default" : "secondary"} 
+                        className={user.isActive ? "bg-green-500 hover:bg-green-600" : ""}
+                      >
                         {user.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatDate(user.createdAt)}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(user.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-1 justify-end">
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           title="Edit user"
                           onClick={() => handleEditClick(user)}
+                          className="h-8 w-8 p-0"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -404,7 +592,7 @@ export function UserManagementPage() {
                           size="sm" 
                           title="Delete user"
                           onClick={() => handleDeleteClick(user)}
-                          className="text-destructive hover:text-destructive"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -415,8 +603,8 @@ export function UserManagementPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Edit User Dialog */}
