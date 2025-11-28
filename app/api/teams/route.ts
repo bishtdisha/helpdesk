@@ -38,7 +38,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if user has permission to view teams
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const simple = searchParams.get('simple') === 'true';
+
+    // For simple dropdown response, return only id and name (no permission checks for dropdowns)
+    if (simple) {
+      const teams = await prisma.team.findMany({
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
+
+      return NextResponse.json({ 
+        teams,
+        total: teams.length,
+        page: 1,
+        limit: teams.length
+      });
+    }
+
+    // Check if user has permission to view teams (for full response)
     const hasPermission = await permissionEngine.checkPermission(
       currentUser.id,
       PERMISSION_ACTIONS.READ,
@@ -57,12 +81,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse query parameters
-    const { searchParams } = new URL(request.url);
+    // Parse query parameters (already parsed above for simple mode)
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const search = searchParams.get('search') || undefined;
-    const simple = searchParams.get('simple') === 'true';
 
     // Get user's access scope to determine filtering
     const userPermissions = await permissionEngine.getUserPermissions(currentUser.id);

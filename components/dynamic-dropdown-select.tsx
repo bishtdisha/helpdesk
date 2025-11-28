@@ -77,10 +77,14 @@ export function DynamicDropdownSelect<T extends Record<string, any>>({
           params.search = search;
         }
         
-        // Add pagination for large datasets
-        params.limit = 50;
+        // Add pagination for large datasets - increased to show all records
+        params.limit = 200;
+        
+        console.log(`[DynamicDropdownSelect] Fetching from ${endpoint} with params:`, params);
         
         const response = await apiClient.get<any>(endpoint, params);
+        
+        console.log(`[DynamicDropdownSelect] Response from ${endpoint}:`, response);
         
         // Extract items from response using responseKey or assume direct array
         let fetchedItems: T[];
@@ -93,6 +97,9 @@ export function DynamicDropdownSelect<T extends Record<string, any>>({
           const arrayKey = Object.keys(response).find(key => Array.isArray(response[key]));
           fetchedItems = arrayKey ? response[arrayKey] : [];
         }
+        
+        console.log(`[DynamicDropdownSelect] Extracted ${fetchedItems.length} items from ${endpoint}`);
+        console.log(`[DynamicDropdownSelect] First item:`, fetchedItems[0]);
         
         setItems(fetchedItems);
         setLoadingAnnouncement(`${fetchedItems.length} options loaded`);
@@ -137,7 +144,9 @@ export function DynamicDropdownSelect<T extends Record<string, any>>({
 
   // Handle item selection
   const handleSelect = (itemValue: string) => {
+    console.log('[DynamicDropdownSelect] Item selected:', itemValue);
     const item = items.find((i) => formatValue(i) === itemValue);
+    console.log('[DynamicDropdownSelect] Found item:', item);
     if (item) {
       setSelectedItem(item);
       onValueChange(itemValue);
@@ -185,14 +194,14 @@ export function DynamicDropdownSelect<T extends Record<string, any>>({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[400px] p-0" align="start" side="bottom">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={searchQuery}
             onValueChange={handleSearch}
           />
-          <CommandList>
+          <CommandList className="max-h-[300px] overflow-auto">
             <CommandEmpty>
               {isLoading ? (
                 <div className="py-6 text-center text-sm">
@@ -210,37 +219,58 @@ export function DynamicDropdownSelect<T extends Record<string, any>>({
               )}
             </CommandEmpty>
             <CommandGroup>
-              {items.map((item) => {
-                const itemValue = formatValue(item);
-                const itemLabel = formatLabel(item);
-                const secondaryLabel = formatSecondaryLabel?.(item);
-                
-                return (
-                  <CommandItem
-                    key={itemValue}
-                    value={itemValue}
-                    onSelect={handleSelect}
-                    className="cursor-pointer"
-                  >
-                    <Check
-                      className={cn(
-                        'mr-2 h-4 w-4',
-                        value === itemValue ? 'opacity-100' : 'opacity-0'
-                      )}
-                    />
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium truncate">{itemLabel}</span>
-                        {secondaryLabel && (
-                          <span className="text-xs text-muted-foreground truncate">
-                            {secondaryLabel}
-                          </span>
+              {isLoading ? (
+                <div className="py-6 text-center text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                  <span>Loading...</span>
+                </div>
+              ) : items.length === 0 ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  No items available
+                </div>
+              ) : (
+                items.map((item, index) => {
+                  const itemValue = formatValue(item);
+                  const itemLabel = formatLabel(item);
+                  const secondaryLabel = formatSecondaryLabel?.(item);
+                  
+                  if (index === 0) {
+                    console.log('[DynamicDropdownSelect] Rendering first item:', {
+                      item,
+                      itemValue,
+                      itemLabel,
+                      secondaryLabel
+                    });
+                  }
+                  
+                  return (
+                    <CommandItem
+                      key={itemValue}
+                      value={itemLabel}
+                      keywords={[itemLabel, secondaryLabel || '', itemValue]}
+                      onSelect={() => handleSelect(itemValue)}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          value === itemValue ? 'opacity-100' : 'opacity-0'
                         )}
+                      />
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium truncate">{itemLabel}</span>
+                          {secondaryLabel && (
+                            <span className="text-xs text-muted-foreground truncate">
+                              {secondaryLabel}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </CommandItem>
-                );
-              })}
+                    </CommandItem>
+                  );
+                })
+              )}
             </CommandGroup>
           </CommandList>
         </Command>

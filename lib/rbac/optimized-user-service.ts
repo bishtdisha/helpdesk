@@ -161,7 +161,7 @@ export class OptimizedUserService {
       },
       // Data query with member counts
       async (skip: number, take: number) => {
-        const teams = await prisma.team.findMany({
+        const teams = await prisma.teams.findMany({
           where,
           include: {
             members: {

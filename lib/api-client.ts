@@ -23,7 +23,9 @@ export class APIClient {
    * Build URL with query parameters
    */
   private buildURL(endpoint: string, params?: Record<string, any>): string {
-    const url = new URL(endpoint, window.location.origin + this.baseURL);
+    // If endpoint already starts with /api, use it as-is, otherwise prepend baseURL
+    const fullPath = endpoint.startsWith('/api') ? endpoint : `${this.baseURL}${endpoint}`;
+    const url = new URL(fullPath, window.location.origin);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

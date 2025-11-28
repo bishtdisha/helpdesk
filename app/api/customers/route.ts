@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const search = searchParams.get('search') || '';
+    const simple = searchParams.get('simple') === 'true';
 
     // Build where clause for search
     const where = search
@@ -40,7 +41,30 @@ export async function GET(request: NextRequest) {
     // Get total count
     const total = await prisma.customer.count({ where });
 
-    // Fetch customers with pagination
+    // For simple dropdown response, return only id and name (minimal data)
+    if (simple) {
+      const customers = await prisma.customer.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+
+      return NextResponse.json({
+        customers,
+        total,
+        page,
+        limit,
+      });
+    }
+
+    // Fetch customers with full details for regular requests
     const customers = await prisma.customer.findMany({
       where,
       select: {

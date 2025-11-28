@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DynamicDropdownSelect } from '@/components/dynamic-dropdown-select';
+import { SimpleSelect } from '@/components/simple-select';
 import { FileAttachmentUpload } from '@/components/file-attachment-upload';
 import { CommentInput } from '@/components/comment-input';
 import { apiClient } from '@/lib/api-client';
@@ -538,21 +539,16 @@ export function EnhancedTicketCreateForm({
                   <FormItem>
                     <FormLabel>Customer *</FormLabel>
                     <FormControl>
-                      <DynamicDropdownSelect
-                        endpoint="/api/customers"
+                      <SimpleSelect
+                        endpoint="/api/users?simple=true&limit=200"
                         value={field.value}
                         onValueChange={field.onChange}
                         placeholder="Search for a customer..."
                         disabled={isSubmitting}
-                        formatLabel={(customer: any) => customer.name}
-                        formatValue={(customer: any) => customer.id}
-                        formatSecondaryLabel={(customer: any) => customer.email}
-                        searchPlaceholder="Search by name or email..."
-                        emptyMessage="No customers found"
-                        responseKey="customers"
-                        aria-required="true"
-                        aria-invalid={fieldState.invalid}
-                        aria-describedby={fieldState.error ? 'customerId-error' : undefined}
+                        responseKey="users"
+                        labelKey="name"
+                        valueKey="id"
+                        searchPlaceholder="Search users..."
                       />
                     </FormControl>
                     <FormMessage id="customerId-error" />
@@ -568,20 +564,16 @@ export function EnhancedTicketCreateForm({
                   <FormItem>
                     <FormLabel>Team</FormLabel>
                     <FormControl>
-                      <DynamicDropdownSelect
-                        endpoint="/api/teams"
+                      <SimpleSelect
+                        endpoint="/api/teams?simple=true&limit=200"
                         value={field.value}
                         onValueChange={field.onChange}
                         placeholder="Select a team (optional)..."
                         disabled={isSubmitting}
-                        formatLabel={(team: any) => team.name}
-                        formatValue={(team: any) => team.id}
-                        formatSecondaryLabel={(team: any) => team.description}
-                        searchPlaceholder="Search teams..."
-                        emptyMessage="No teams found"
                         responseKey="teams"
-                        aria-invalid={fieldState.invalid}
-                        aria-describedby={fieldState.error ? 'teamId-error' : undefined}
+                        labelKey="name"
+                        valueKey="id"
+                        searchPlaceholder="Search teams..."
                       />
                     </FormControl>
                     <FormMessage id="teamId-error" />
@@ -597,20 +589,16 @@ export function EnhancedTicketCreateForm({
                   <FormItem>
                     <FormLabel>Assigned To</FormLabel>
                     <FormControl>
-                      <DynamicDropdownSelect
-                        endpoint="/api/users"
+                      <SimpleSelect
+                        endpoint="/api/users?simple=true&limit=200"
                         value={field.value}
                         onValueChange={field.onChange}
-                        placeholder="Assign to a user (optional)..."
+                        placeholder="Assign to a user..."
                         disabled={isSubmitting}
-                        formatLabel={(user: any) => user.name || user.email}
-                        formatValue={(user: any) => user.id}
-                        formatSecondaryLabel={(user: any) => user.email}
-                        searchPlaceholder="Search users..."
-                        emptyMessage="No users found"
                         responseKey="users"
-                        aria-invalid={fieldState.invalid}
-                        aria-describedby={fieldState.error ? 'assignedTo-error' : undefined}
+                        labelKey="name"
+                        valueKey="id"
+                        searchPlaceholder="Search users..."
                       />
                     </FormControl>
                     <FormMessage id="assignedTo-error" />

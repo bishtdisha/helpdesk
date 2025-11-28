@@ -396,7 +396,7 @@ export class AnalyticsService {
     });
 
     // Get team performance summaries
-    const teams = await prisma.team.findMany({
+    const teams = await prisma.teams.findMany({
       select: {
         id: true,
         name: true,

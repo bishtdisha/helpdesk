@@ -138,18 +138,16 @@ export async function GET(request: NextRequest) {
     // Get total count
     const total = await prisma.user.count({ where: whereClause });
 
-    // For simple dropdown response, return only id, name, and email
+    // For simple dropdown response, return only id and name (minimal data)
     if (simple) {
       const users = await prisma.user.findMany({
         where: whereClause,
         select: {
           id: true,
           name: true,
-          email: true,
         },
         orderBy: [
           { name: 'asc' },
-          { email: 'asc' },
         ],
         skip: (page - 1) * limit,
         take: limit,
