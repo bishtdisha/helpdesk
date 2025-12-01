@@ -3,7 +3,7 @@ import { EscalationRule, Ticket, TicketPriority, TicketStatus, User } from '@pri
 import { PermissionError } from '../rbac/errors';
 import { RoleType } from '../types/rbac';
 import { ROLE_TYPES } from '../rbac/permissions';
-import { notificationService } from './notification-service';
+
 import { followerService } from './follower-service';
 
 // Escalation condition types
@@ -531,16 +531,7 @@ export class EscalationService {
         },
       });
 
-      for (const admin of admins) {
-        await notificationService.sendEscalationNotification(ticketWithTeam, admin.id, actionConfig.message || 'Ticket escalated');
-      }
-
       return `Notified ${admins.length} admin(s)`;
-    }
-
-    // Notify team leaders
-    for (const leader of teamLeaders) {
-      await notificationService.sendEscalationNotification(ticketWithTeam, leader.id, actionConfig.message || 'Ticket escalated');
     }
 
     return `Notified ${teamLeaders.length} team leader(s)`;
@@ -704,10 +695,6 @@ export class EscalationService {
         const user = await prisma.user.findUnique({
           where: { id: recipientId },
         });
-
-        if (user) {
-          await notificationService.sendEscalationNotification(ticket, recipientId, message);
-        }
       } catch (error) {
         // Continue with next recipient
         continue;

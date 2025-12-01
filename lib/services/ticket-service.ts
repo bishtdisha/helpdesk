@@ -2,7 +2,7 @@ import { prisma } from '../db';
 import { Ticket, TicketStatus, TicketPriority, Prisma } from '@prisma/client';
 import { ticketAccessControl } from '../rbac/ticket-access-control';
 import { PermissionError } from '../rbac/errors';
-import { notificationService } from './notification-service';
+
 import { slaService } from './sla-service';
 import { fileUploadService } from './file-upload-service';
 
@@ -196,9 +196,6 @@ export class TicketService {
     // Create history entry
     await this.createHistoryEntry(ticket.id, userId, 'created', null, null, null);
 
-    // Send notification
-    await notificationService.sendTicketCreatedNotification(ticket);
-
     return ticket;
   }
 
@@ -364,9 +361,6 @@ export class TicketService {
 
         return newTicket;
       });
-
-      // Send notification (outside transaction)
-      await notificationService.sendTicketCreatedNotification(ticket);
 
       // Fetch the complete ticket with all relationships
       const completeTicket = await prisma.ticket.findUnique({
@@ -639,16 +633,6 @@ export class TicketService {
       );
     }
 
-    // Send notification if status changed
-    if (data.status && data.status !== currentTicket.status) {
-      await notificationService.sendTicketStatusChangedNotification(ticket, currentTicket.status);
-      
-      // Send resolved notification if ticket was resolved
-      if (data.status === TicketStatus.RESOLVED) {
-        await notificationService.sendTicketResolvedNotification(ticket);
-      }
-    }
-
     return ticket;
   }
 
@@ -834,14 +818,6 @@ export class TicketService {
       newStatus
     );
 
-    // Send notification
-    await notificationService.sendTicketStatusChangedNotification(ticket, currentTicket.status);
-    
-    // Send resolved notification if ticket was resolved
-    if (newStatus === TicketStatus.RESOLVED) {
-      await notificationService.sendTicketResolvedNotification(ticket);
-    }
-
     return ticket;
   }
 
@@ -943,9 +919,6 @@ export class TicketService {
         TicketStatus.IN_PROGRESS
       );
     }
-
-    // Send assignment notification
-    await notificationService.sendTicketAssignedNotification(ticket, assignee);
 
     return ticket;
   }
@@ -1087,11 +1060,6 @@ export class TicketService {
 
     // Check SLA compliance
     const compliance = await slaService.checkSLACompliance(ticket);
-
-    // Send notification if breach risk is high
-    if (compliance.breachRisk === 'high' && compliance.remainingTime < 0) {
-      await notificationService.sendSLABreachNotification(ticket);
-    }
   }
 
   /**

@@ -12,14 +12,7 @@ export const CACHE_CONFIG = {
     dedupingInterval: 5000, // 5 seconds
   },
   
-  // Moderately changing data
-  notifications: {
-    refreshInterval: 60000, // 1 minute (reduced from 30 seconds)
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    dedupingInterval: 15000, // 15 seconds
-  },
-  
+
   // Slowly changing data
   analytics: {
     refreshInterval: 300000, // 5 minutes
@@ -84,13 +77,7 @@ export class CacheManager {
     mutate(key => typeof key === 'string' && key.startsWith('/api/tickets'), undefined, { revalidate: true });
   }
 
-  // Invalidate notification caches
-  static invalidateNotificationCaches() {
-    mutate('/api/notifications');
-    mutate('/api/notifications/unread-count');
-  }
-
-  // Invalidate analytics caches
+// Invalidate analytics caches
   static invalidateAnalyticsCaches() {
     mutate(key => typeof key === 'string' && key.includes('/api/analytics'), undefined, { revalidate: true });
   }
@@ -112,9 +99,6 @@ export class CacheManager {
     
     // Preload initial ticket list
     mutate('/api/tickets?page=1&limit=20');
-    
-    // Preload notification count
-    mutate('/api/notifications/unread-count');
   }
 }
 
@@ -212,14 +196,7 @@ export class OptimisticUpdates {
     );
   }
 
-  // Optimistically update notification count
-  static updateNotificationCount(delta: number) {
-    mutate(
-      '/api/notifications/unread-count',
-      (currentCount: number) => Math.max(0, (currentCount || 0) + delta),
-      false
-    );
-  }
+
 }
 
 // Cache warming strategies
@@ -275,11 +252,6 @@ export class BackgroundRefresh {
 
   // Start background refresh for critical data
   static startBackgroundRefresh() {
-    // Refresh notification count every 30 seconds
-    this.intervals.set('notifications', setInterval(() => {
-      mutate('/api/notifications/unread-count');
-    }, 30000));
-
     // Refresh ticket stats every 60 seconds
     this.intervals.set('ticket-stats', setInterval(() => {
       mutate('/api/tickets/stats');

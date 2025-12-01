@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { NotificationBadge } from "@/components/notifications/notification-badge"
+
 import { HelpSidebar } from "@/components/help-sidebar"
 import { LogOut, User, LogIn, UserPlus, Settings, UserCog, HelpCircle } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
@@ -89,8 +89,6 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
         ) : isAuthenticated && user ? (
           // Authenticated user
           <>
-            <NotificationBadge />
-            
             <HelpSidebar>
               <Button 
                 variant="ghost" 

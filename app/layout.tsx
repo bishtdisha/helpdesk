@@ -6,7 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/contexts/auth-context"
 import { KeyboardShortcutsProvider } from "@/lib/contexts/keyboard-shortcuts-context"
-import { BrowserNotificationManager } from "@/components/notifications/browser-notification-manager"
+
 import { SkipLinks } from "@/components/accessibility/skip-links"
 import { GlobalAriaLiveRegion } from "@/components/accessibility/aria-live-announcer"
 import { Toaster } from "@/components/ui/sonner"
@@ -35,7 +35,6 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <AuthProvider>
               <KeyboardShortcutsProvider>
-                <BrowserNotificationManager />
                 {children}
               </KeyboardShortcutsProvider>
             </AuthProvider>

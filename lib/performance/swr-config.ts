@@ -76,11 +76,6 @@ export function getSmartCacheConfig(url: string): SWRConfiguration {
     return getCacheConfig('tickets');
   }
   
-  // Notifications - frequently changing
-  if (url.includes('/api/notifications')) {
-    return getCacheConfig('notifications');
-  }
-  
   // Analytics - moderately changing
   if (url.includes('/api/analytics')) {
     return getCacheConfig('analytics');

@@ -37,6 +37,7 @@ export function SimpleSelect({
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Bind portal root
   useEffect(() => {
@@ -90,6 +91,34 @@ export function SimpleSelect({
     };
   }, [open, calculatePosition]);
 
+  // Click outside to close
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      // Check if click is outside both the wrapper and dropdown
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
+        setOpen(false);
+        setSearchQuery('');
+      }
+    };
+
+    // Add listener with a slight delay to avoid immediate closure
+    setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
   const selectedItem = items.find((item) => item[valueKey] === value);
   const selectedLabel = selectedItem ? selectedItem[labelKey] : '';
 
@@ -126,6 +155,7 @@ export function SimpleSelect({
       {open && portalContainer &&
         createPortal(
           <div
+            ref={dropdownRef}
             className="bg-white border shadow-lg rounded-md z-[99999]"
             style={{
               position: 'fixed',

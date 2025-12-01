@@ -1,7 +1,7 @@
 import { prisma } from '../db';
 import { TicketStatus } from '@prisma/client';
 import { slaService } from '../services/sla-service';
-import { notificationService } from '../services/notification-service';
+
 
 /**
  * SLA Monitor Job
@@ -186,17 +186,6 @@ export class SLAMonitorJob {
         for (const follower of ticket.followers) {
           recipientIds.add(follower.userId);
         }
-      }
-
-      // Send SLA breach notification (it will handle all recipients internally)
-      try {
-        await notificationService.sendSLABreachNotification(ticket);
-        notificationsSent = recipientIds.size;
-      } catch (error) {
-        console.error(
-          `[SLA Monitor] Failed to send SLA breach notifications:`,
-          error instanceof Error ? error.message : 'Unknown error'
-        );
       }
 
       return notificationsSent;

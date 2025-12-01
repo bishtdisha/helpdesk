@@ -2,7 +2,7 @@ import { prisma } from '../db';
 import { Comment } from '@prisma/client';
 import { ticketAccessControl } from '../rbac/ticket-access-control';
 import { PermissionError } from '../rbac/errors';
-import { notificationService } from './notification-service';
+
 
 // Custom errors
 export class CommentNotFoundError extends Error {
@@ -95,9 +95,6 @@ export class CommentService {
 
     // Create history entry
     await this.createCommentHistoryEntry(ticketId, userId, 'comment_added', comment.id);
-
-    // Send notification
-    await notificationService.sendTicketCommentNotification(ticket, comment);
 
     return comment;
   }

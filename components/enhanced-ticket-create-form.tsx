@@ -68,16 +68,13 @@ const enhancedTicketFormSchema = z.object({
   }),
   customerId: z
     .string()
-    .uuid('Invalid customer ID')
     .min(1, 'Customer is required'),
   teamId: z
     .string()
-    .uuid('Invalid team ID')
     .optional()
     .or(z.literal('')),
   assignedTo: z
     .string()
-    .uuid('Invalid user ID')
     .optional()
     .or(z.literal('')),
 });
