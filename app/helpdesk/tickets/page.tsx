@@ -1,7 +1,7 @@
 "use client"
 
-import { TicketsPage } from "@/components/ticket-management/tickets-page"
+import { TicketManagementPage } from "@/components/ticket-management/ticket-management-page"
 
 export default function Tickets() {
-  return <TicketsPage />
+  return <TicketManagementPage />
 }

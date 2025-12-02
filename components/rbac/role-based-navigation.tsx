@@ -350,7 +350,7 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
       {/* New Ticket Quick Action - for authenticated users with permission */}
       {!isLoading && isAuthenticated && permissions.canCreateTicket() && (
         <div className="px-4 pb-4 border-t border-sidebar-border pt-4">
-          <Link href="/helpdesk/tickets">
+          <Link href="/helpdesk/tickets/new">
             <Button
               className={cn(
                 "w-full flex items-center gap-2 justify-center",
