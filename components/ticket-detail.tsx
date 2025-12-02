@@ -19,7 +19,6 @@ import { SLACountdownTimer } from './sla-countdown-timer';
 import { TicketComments } from './ticket-comments';
 import { FollowerManager } from './follower-manager';
 import { TicketTimeline } from './ticket-timeline';
-import { TicketSuggestedActions } from './ticket-suggested-actions';
 import { InlineHelp } from '@/components/ui/inline-help';
 import { 
   Select, 
@@ -327,7 +326,8 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
               <label className="text-sm font-medium text-muted-foreground">SLA Status</label>
               <div>
                 <SLACountdownTimer 
-                  slaDueAt={ticket.slaDueAt} 
+                  slaDueAt={ticket.slaDueAt}
+                  createdAt={ticket.createdAt}
                   status={ticket.status}
                   detailed={true}
                 />
@@ -392,19 +392,6 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Suggested Actions */}
-      <TicketSuggestedActions 
-        ticket={{
-          id: ticket.id,
-          title: ticket.title,
-          description: ticket.description,
-          priority: ticket.priority,
-          status: ticket.status,
-          category: ticket.category,
-        }}
-        onRefresh={refresh}
-      />
 
       {/* Help for SLA Management */}
       {ticket.slaDueAt && (

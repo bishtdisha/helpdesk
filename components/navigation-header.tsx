@@ -1,12 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 import { HelpSidebar } from "@/components/help-sidebar"
-import { LogOut, User, LogIn, UserPlus, Settings, UserCog, HelpCircle } from "lucide-react"
+import { LogOut, User, LogIn, UserPlus, Settings, UserCog, HelpCircle, ArrowLeft } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { UserRoleBadge } from "@/components/rbac/user-role-badge"
 import { ActionButton } from "@/components/rbac/action-button"
@@ -26,6 +27,7 @@ interface NavigationHeaderProps {
 
 export function NavigationHeader({ title }: NavigationHeaderProps) {
   const { user, isAuthenticated, isLoading, logout } = useAuth()
+  const router = useRouter()
 
   // Get user initials for avatar
   const getUserInitials = (name?: string | null, email?: string) => {
@@ -72,9 +74,28 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
     }
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back()
+    } else {
+      router.push('/dashboard')
+    }
+  }
+
   return (
     <header id="navigation" className="bg-card border-b border-border px-6 py-3 flex items-center justify-between h-[56px]" role="banner">
-      <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          className="flex items-center hover:bg-accent"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+      </div>
       
       <div className="flex items-center gap-3">
         {isLoading ? (

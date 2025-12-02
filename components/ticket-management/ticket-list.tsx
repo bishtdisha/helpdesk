@@ -111,7 +111,7 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
                   <TicketPriorityBadge priority={ticket.priority} />
                 </TableCell>
                 <TableCell>
-                  <SLACountdownTimer slaDueAt={ticket.slaDueAt} status={ticket.status} />
+                  <SLACountdownTimer slaDueAt={ticket.slaDueAt} createdAt={ticket.createdAt} status={ticket.status} />
                 </TableCell>
                 {permissions.canViewTeamTickets() && (
                   <TableCell>
@@ -167,7 +167,7 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
                 <div className="flex flex-wrap gap-2">
                   <TicketStatusBadge status={ticket.status} />
                   <TicketPriorityBadge priority={ticket.priority} />
-                  <SLACountdownTimer slaDueAt={ticket.slaDueAt} status={ticket.status} />
+                  <SLACountdownTimer slaDueAt={ticket.slaDueAt} createdAt={ticket.createdAt} status={ticket.status} />
                 </div>
 
                 <div className="text-sm text-muted-foreground space-y-1">

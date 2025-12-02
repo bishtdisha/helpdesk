@@ -190,33 +190,10 @@ async function main() {
 
   console.log('✓ Team leaders assigned\n');
 
-  // Create Customers
-  console.log('Creating customers...');
-  const customer1 = await prisma.customer.upsert({
-    where: { email: 'customer1@example.com' },
-    update: {},
-    create: {
-      name: 'Acme Corporation',
-      email: 'customer1@example.com',
-      phone: '+1-555-0101',
-      company: 'Acme Corp',
-    },
-  });
+  // Note: Customers are now just users, so we'll use existing users as customers for tickets
+  console.log('Using existing users as customers for sample tickets...');
 
-  const customer2 = await prisma.customer.upsert({
-    where: { email: 'customer2@example.com' },
-    update: {},
-    create: {
-      name: 'Tech Solutions Inc',
-      email: 'customer2@example.com',
-      phone: '+1-555-0102',
-      company: 'Tech Solutions',
-    },
-  });
-
-  console.log('✓ Customers created\n');
-
-  // Create Sample Tickets
+  // Create Sample Tickets (using employees as customers)
   console.log('Creating sample tickets...');
   const ticket1 = await prisma.ticket.create({
     data: {
@@ -225,7 +202,7 @@ async function main() {
       phone: '+1 (555) 123-4567',
       status: 'OPEN',
       priority: 'HIGH',
-      customerId: customer1.id,
+      customerId: employee1.id,  // Using employee1 as the customer
       createdBy: employee1.id,
       assignedTo: teamLead1.id,
       teamId: supportTeam.id,
@@ -239,7 +216,7 @@ async function main() {
       phone: '555-987-6543',
       status: 'IN_PROGRESS',
       priority: 'URGENT',
-      customerId: customer2.id,
+      customerId: employee2.id,  // Using employee2 as the customer
       createdBy: employee2.id,
       assignedTo: teamLead2.id,
       teamId: technicalTeam.id,
@@ -253,7 +230,7 @@ async function main() {
       phone: '+44 20 7946 0958',
       status: 'OPEN',
       priority: 'LOW',
-      customerId: customer1.id,
+      customerId: employee1.id,  // Using employee1 as the customer
       createdBy: employee1.id,
     },
   });

@@ -74,6 +74,10 @@ export default function DashboardPage() {
         activeModule={activeModule} 
         onModuleChange={(module) => {
           setActiveModule(module)
+          // Navigate to dashboard to reset any sub-routes
+          if (window.location.pathname !== '/dashboard') {
+            window.history.pushState({}, '', '/dashboard')
+          }
           // Close sidebar on mobile after selection
           if (window.innerWidth < 1024) {
             setSidebarOpen(false)
@@ -86,7 +90,7 @@ export default function DashboardPage() {
         <NavigationHeader 
           title={getModuleTitle(activeModule)}
         />
-        <main className="flex-1 overflow-auto p-6">{renderActiveModule()}</main>
+        <main key={activeModule} className="flex-1 overflow-auto p-6">{renderActiveModule()}</main>
       </div>
     </div>
   )

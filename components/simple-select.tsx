@@ -129,6 +129,7 @@ export function SimpleSelect({
   return (
     <div ref={wrapperRef} className="w-full">
       <Button
+        type="button"
         variant="outline"
         role="combobox"
         aria-expanded={open}

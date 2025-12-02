@@ -8,11 +8,12 @@ import { TicketStatus } from '@prisma/client';
 
 interface SLACountdownTimerProps {
   slaDueAt: Date | string | null;
+  createdAt: Date | string;
   status: TicketStatus;
   className?: string;
 }
 
-export function SLACountdownTimer({ slaDueAt, status, className }: SLACountdownTimerProps) {
+export function SLACountdownTimer({ slaDueAt, createdAt, status, className }: SLACountdownTimerProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isOverdue, setIsOverdue] = useState(false);
   const [urgencyLevel, setUrgencyLevel] = useState<'safe' | 'warning' | 'critical'>('safe');
@@ -30,35 +31,39 @@ export function SLACountdownTimer({ slaDueAt, status, className }: SLACountdownT
 
     const updateTimer = () => {
       const now = new Date();
+      const ticketCreated = new Date(createdAt);
       const dueDate = new Date(slaDueAt);
-      const diff = dueDate.getTime() - now.getTime();
-
-      if (diff <= 0) {
+      
+      // Calculate ELAPSED time (counting UP from ticket creation)
+      const elapsedDiff = now.getTime() - ticketCreated.getTime();
+      
+      // Calculate remaining time to check if breached
+      const remainingDiff = dueDate.getTime() - now.getTime();
+      
+      // Check if SLA is breached
+      if (remainingDiff <= 0) {
         setIsOverdue(true);
         setUrgencyLevel('critical');
-        const overdueDiff = Math.abs(diff);
-        const hours = Math.floor(overdueDiff / (1000 * 60 * 60));
-        const minutes = Math.floor((overdueDiff % (1000 * 60 * 60)) / (1000 * 60));
-        setTimeRemaining(`${hours}h ${minutes}m overdue`);
-        return;
-      }
-
-      // Calculate time remaining
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-      // Determine urgency level
-      const totalHours = diff / (1000 * 60 * 60);
-      if (totalHours <= 2) {
-        setUrgencyLevel('critical');
-      } else if (totalHours <= 24) {
-        setUrgencyLevel('warning');
       } else {
-        setUrgencyLevel('safe');
+        setIsOverdue(false);
+        
+        // Determine urgency level based on remaining time
+        const totalHours = remainingDiff / (1000 * 60 * 60);
+        if (totalHours <= 2) {
+          setUrgencyLevel('critical');
+        } else if (totalHours <= 24) {
+          setUrgencyLevel('warning');
+        } else {
+          setUrgencyLevel('safe');
+        }
       }
 
-      // Format time remaining
+      // Calculate elapsed time components
+      const days = Math.floor(elapsedDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((elapsedDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((elapsedDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+      // Format elapsed time (counting UP)
       if (days > 0) {
         setTimeRemaining(`${days}d ${hours}h`);
       } else if (hours > 0) {
@@ -75,7 +80,7 @@ export function SLACountdownTimer({ slaDueAt, status, className }: SLACountdownT
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [slaDueAt, status]);
+  }, [slaDueAt, createdAt, status]);
 
   // Don't render for closed/resolved tickets
   if (status === TicketStatus.CLOSED || status === TicketStatus.RESOLVED) {

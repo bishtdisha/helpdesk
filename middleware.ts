@@ -8,8 +8,14 @@ export async function middleware(request: NextRequest) {
   // Get the session token from cookies
   const sessionToken = request.cookies.get('session-token')?.value
 
+  // Redirect old /dashboard routes to /helpdesk
+  if (pathname.startsWith('/dashboard')) {
+    const newPath = pathname.replace('/dashboard', '/helpdesk')
+    return NextResponse.redirect(new URL(newPath, request.url))
+  }
+
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/register', '/welcome']
+  const publicRoutes = ['/login', '/register', '/welcome', '/']
   const isPublicRoute = publicRoutes.includes(pathname)
 
   // If user is on a public route, let them through

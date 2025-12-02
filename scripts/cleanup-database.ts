@@ -140,10 +140,8 @@ async function cleanupDatabase() {
     const deletedTags = await prisma.tag.deleteMany();
     console.log(`   ✓ Deleted ${deletedTags.count} tags`);
 
-    // Delete customers
-    console.log('   Deleting customers...');
-    const deletedCustomers = await prisma.customer.deleteMany();
-    console.log(`   ✓ Deleted ${deletedCustomers.count} customers`);
+    // Note: Customers are now users, so we don't delete them separately
+    console.log('   ✓ Skipping customer deletion (customers are now users)');
 
     // Delete KB article categories
     console.log('   Deleting KB article categories...');
@@ -274,7 +272,6 @@ async function cleanupDatabase() {
       roles: await prisma.role.count(),
       teams: await prisma.team.count(),
       tickets: await prisma.ticket.count(),
-      customers: await prisma.customer.count(),
       comments: await prisma.comment.count(),
       notifications: await prisma.notification.count(),
       kbArticles: await prisma.knowledgeBaseArticle.count(),

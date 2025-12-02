@@ -14,6 +14,7 @@ export interface CreateTicketData {
   category?: string;
   customerId: string;
   teamId?: string;
+  assignedTo?: string;
   phone?: string;
   status?: TicketStatus;
 }
@@ -25,6 +26,7 @@ export interface CreateTicketWithAttachmentsAndCommentsData {
   category?: string;
   customerId: string;
   teamId?: string;
+  assignedTo?: string;
   phone?: string;
   status?: TicketStatus;
   attachments?: File[];
@@ -117,12 +119,12 @@ export class TicketService {
    * @throws Error if any foreign key reference is invalid
    */
   private async validateForeignKeys(data: CreateTicketData): Promise<void> {
-    // Validate customer exists
-    const customer = await prisma.customer.findUnique({
+    // Validate customer (user) exists
+    const customer = await prisma.user.findUnique({
       where: { id: data.customerId },
     });
     if (!customer) {
-      throw new Error(`Customer with ID ${data.customerId} does not exist`);
+      throw new Error(`User with ID ${data.customerId} does not exist`);
     }
 
     // Validate team exists if provided
@@ -135,7 +137,15 @@ export class TicketService {
       }
     }
 
-    // Note: assignedTo is not part of CreateTicketData, it's handled separately in assignTicket
+    // Validate assignedTo user exists if provided
+    if (data.assignedTo) {
+      const assignee = await prisma.user.findUnique({
+        where: { id: data.assignedTo },
+      });
+      if (!assignee) {
+        throw new Error(`Assigned user with ID ${data.assignedTo} does not exist`);
+      }
+    }
   }
 
   /**
@@ -176,6 +186,7 @@ export class TicketService {
         customerId: data.customerId,
         createdBy: userId,
         teamId: data.teamId,
+        assignedTo: data.assignedTo,
         phone: data.phone,
         status: data.status || TicketStatus.OPEN,
         slaDueAt: slaDueAt,
@@ -270,6 +281,7 @@ export class TicketService {
             customerId: data.customerId,
             createdBy: userId,
             teamId: data.teamId,
+            assignedTo: data.assignedTo,
             phone: data.phone,
             status: data.status || TicketStatus.OPEN,
             slaDueAt: slaDueAt,

@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
  * - category: Ticket category (optional)
  * - customerId: Customer ID (required)
  * - teamId: Team ID (optional)
+ * - assignedTo: Assigned user ID (optional)
  * - phone: Phone number (optional)
  * - status: Ticket status (optional: OPEN, IN_PROGRESS, WAITING_FOR_CUSTOMER, RESOLVED, CLOSED)
  */
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { title, description, priority, category, customerId, teamId, phone, status } = body;
+    const { title, description, priority, category, customerId, teamId, phone, status, assignedTo } = body;
 
     // Validate required fields
     if (!title || !description || !priority || !customerId) {
@@ -240,6 +241,7 @@ export async function POST(request: NextRequest) {
       category: category?.trim() || undefined,
       customerId,
       teamId: teamId || undefined,
+      assignedTo: assignedTo || undefined,
       phone: phone?.trim() || undefined,
       status: status || undefined,
     };

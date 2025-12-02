@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CommentInput } from "@/components/comment-input"
-import { BackNavigation } from "@/components/ticket-management/back-navigation"
 import {
   Clock,
   User,
@@ -182,7 +181,6 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <div className="text-muted-foreground">Ticket not found</div>
-        <BackNavigation />
       </div>
     )
   }
@@ -192,7 +190,6 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <BackNavigation />
           <div>
             <h2 className="text-2xl font-bold">{ticket.title}</h2>
             <p className="text-muted-foreground">

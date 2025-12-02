@@ -259,10 +259,11 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
             
             // For public items or when not authenticated, render directly
             if (item.public || !isAuthenticated) {
+              const href = item.id === 'dashboard' ? '/helpdesk/dashboard' : `/helpdesk/${item.id}`
               return (
                 <li key={item.id}>
-                  <button
-                    onClick={() => onModuleChange(item.id)}
+                  <Link
+                    href={href}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-lg text-left transition-colors",
                       isOpen ? "px-4 py-3" : "px-2 py-3 justify-center",
@@ -274,12 +275,13 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
                     {isOpen && <span className="font-medium">{item.label}</span>}
-                  </button>
+                  </Link>
                 </li>
               )
             }
 
             // For protected items, use PermissionGate for additional validation
+            const href = item.id === 'dashboard' ? '/helpdesk/dashboard' : `/helpdesk/${item.id}`
             return (
               <PermissionGate
                 key={item.id}
@@ -288,8 +290,8 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
                 requireRole={item.requireRole}
               >
                 <li>
-                  <button
-                    onClick={() => onModuleChange(item.id)}
+                  <Link
+                    href={href}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-lg text-left transition-colors",
                       isOpen ? "px-4 py-3" : "px-2 py-3 justify-center",
@@ -301,7 +303,7 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
                     {isOpen && <span className="font-medium">{item.label}</span>}
-                  </button>
+                  </Link>
                 </li>
               </PermissionGate>
             )
@@ -322,23 +324,23 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
                     <span>MY TEAM{user.teamLeaderships.length > 1 ? 'S' : ''}</span>
                   </div>
                   {user.teamLeaderships.map((leadership: any) => (
-                    <button
+                    <Link
                       key={leadership.team.id}
-                      onClick={() => onModuleChange('teams')}
-                      className="w-full text-left text-sm text-amber-900 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-200 transition-colors"
+                      href="/helpdesk/teams"
+                      className="w-full text-left text-sm text-amber-900 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-200 transition-colors block"
                     >
                       {leadership.team.name}
-                    </button>
+                    </Link>
                   ))}
                 </div>
               ) : (
-                <button
-                  onClick={() => onModuleChange('teams')}
+                <Link
+                  href="/helpdesk/teams"
                   className="w-full flex justify-center"
                   title="My Team"
                 >
                   <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -348,18 +350,19 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
       {/* New Ticket Quick Action - for authenticated users with permission */}
       {!isLoading && isAuthenticated && permissions.canCreateTicket() && (
         <div className="px-4 pb-4 border-t border-sidebar-border pt-4">
-          <Button
-            onClick={() => router.push('/dashboard/tickets/new')}
-            className={cn(
-              "w-full flex items-center gap-2 justify-center",
-              !isOpen && "px-2"
-            )}
-            size={isOpen ? "default" : "icon"}
-            title={!isOpen ? "New Ticket" : undefined}
-          >
-            <Plus className="h-4 w-4 flex-shrink-0" />
-            {isOpen && <span>New Ticket</span>}
-          </Button>
+          <Link href="/helpdesk/tickets">
+            <Button
+              className={cn(
+                "w-full flex items-center gap-2 justify-center",
+                !isOpen && "px-2"
+              )}
+              size={isOpen ? "default" : "icon"}
+              title={!isOpen ? "New Ticket" : undefined}
+            >
+              <Plus className="h-4 w-4 flex-shrink-0" />
+              {isOpen && <span>New Ticket</span>}
+            </Button>
+          </Link>
         </div>
       )}
 

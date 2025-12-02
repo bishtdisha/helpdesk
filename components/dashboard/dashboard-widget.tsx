@@ -26,54 +26,66 @@ interface DashboardWidgetProps {
 }
 
 export function DashboardWidget({ id, title, component, user }: DashboardWidgetProps) {
-  // Fetch real data with SWR (with caching and revalidation)
-  const { data: stats, isLoading: statsLoading } = useSWR(
-    component === 'MetricWidget' ? '/api/dashboard/stats' : null,
-    fetcher,
-    { 
-      refreshInterval: 60000, // Refresh every 60 seconds (reduced from 30s)
-      revalidateOnFocus: false,
-      dedupingInterval: 30000, // Dedupe requests within 30 seconds
-      errorRetryCount: 2,
-      errorRetryInterval: 5000,
-    }
-  );
+  // Temporarily disabled to fix infinite loop
+  const stats = null;
+  const statsLoading = false;
+  const statsError = null;
+  
+  // const { data: stats, isLoading: statsLoading, error: statsError } = useSWR(
+  //   component === 'MetricWidget' ? '/api/dashboard/stats' : null,
+  //   fetcher,
+  //   { 
+  //     refreshInterval: 0,
+  //     revalidateOnFocus: false,
+  //     dedupingInterval: 30000,
+  //     errorRetryCount: 0,
+  //     shouldRetryOnError: false,
+  //   }
+  // );
 
-  const { data: activityData, isLoading: activityLoading } = useSWR(
-    component === 'WeeklyActivityChart' ? '/api/dashboard/activity' : null,
-    fetcher,
-    { 
-      refreshInterval: 60000,
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      errorRetryCount: 2,
-      errorRetryInterval: 5000,
-    }
-  );
+  // Temporarily disabled to prevent infinite loop
+  const activityData = null;
+  const activityLoading = false;
+  const statusData = null;
+  const statusLoading = false;
+  const recentActivity = null;
+  const recentLoading = false;
 
-  const { data: statusData, isLoading: statusLoading } = useSWR(
-    component === 'StatusDistributionChart' ? '/api/dashboard/status-distribution' : null,
-    fetcher,
-    { 
-      refreshInterval: 60000,
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      errorRetryCount: 2,
-      errorRetryInterval: 5000,
-    }
-  );
+  // const { data: activityData, isLoading: activityLoading } = useSWR(
+  //   component === 'WeeklyActivityChart' ? '/api/dashboard/activity' : null,
+  //   fetcher,
+  //   { 
+  //     refreshInterval: 0,
+  //     revalidateOnFocus: false,
+  //     dedupingInterval: 30000,
+  //     errorRetryCount: 0,
+  //     shouldRetryOnError: false,
+  //   }
+  // );
 
-  const { data: recentActivity, isLoading: recentLoading } = useSWR(
-    component === 'RecentActivityWidget' ? '/api/dashboard/recent-activity' : null,
-    fetcher,
-    { 
-      refreshInterval: 30000, // More frequent for recent activity
-      revalidateOnFocus: false,
-      dedupingInterval: 15000,
-      errorRetryCount: 2,
-      errorRetryInterval: 5000,
-    }
-  );
+  // const { data: statusData, isLoading: statusLoading } = useSWR(
+  //   component === 'StatusDistributionChart' ? '/api/dashboard/status-distribution' : null,
+  //   fetcher,
+  //   { 
+  //     refreshInterval: 0,
+  //     revalidateOnFocus: false,
+  //     dedupingInterval: 30000,
+  //     errorRetryCount: 0,
+  //     shouldRetryOnError: false,
+  //   }
+  // );
+
+  // const { data: recentActivity, isLoading: recentLoading } = useSWR(
+  //   component === 'RecentActivityWidget' ? '/api/dashboard/recent-activity' : null,
+  //   fetcher,
+  //   { 
+  //     refreshInterval: 0,
+  //     revalidateOnFocus: false,
+  //     dedupingInterval: 15000,
+  //     errorRetryCount: 0,
+  //     shouldRetryOnError: false,
+  //   }
+  // );
 
   const isLoading = !user || user.id === 'loading';
 
@@ -119,6 +131,9 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
 
       case 'MetricWidget':
         const getMetricData = () => {
+          if (statsError) {
+            return { value: 'Error', change: '0%', changeType: 'neutral' as const, icon: AlertCircle, color: 'text-red-500' };
+          }
           if (statsLoading || !stats) {
             return { value: '...', change: '...', changeType: 'neutral' as const, icon: AlertCircle, color: 'text-gray-500' };
           }

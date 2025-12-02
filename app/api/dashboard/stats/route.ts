@@ -44,10 +44,10 @@ export async function GET(request: NextRequest) {
         }
       }),
       
-      // Active customers (customers with tickets in last 30 days)
-      prisma.customer.count({
+      // Active customers (users with tickets in last 30 days)
+      prisma.user.count({
         where: {
-          tickets: {
+          customerTickets: {
             some: {
               createdAt: {
                 gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -89,8 +89,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard stats' },
+      { 
+        error: 'Failed to fetch dashboard stats',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

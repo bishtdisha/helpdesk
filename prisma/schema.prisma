@@ -31,8 +31,9 @@ model User {
   userRoles           UserRole[]         // Keep existing many-to-many for complex scenarios
   userSessions        UserSession[]
   auditLogs           AuditLog[]
-  assignedTickets     Ticket[]           @relation("AssignedTickets")
-  createdTickets      Ticket[]           @relation("CreatedTickets")
+  customerTickets     Ticket[]           @relation("TicketCustomer")  // Tickets where user is the customer
+  assignedTickets     Ticket[]           @relation("AssignedTickets") // Tickets assigned to user
+  createdTickets      Ticket[]           @relation("CreatedTickets")  // Tickets created by user
   comments            Comment[]
   teamLeaderships     TeamLeader[]       // Teams this user leads
   ticketFollowers     TicketFollower[]
@@ -41,6 +42,7 @@ model User {
   notifications          Notification[]
   notificationPreference NotificationPreferences?
   createdTemplates       TicketTemplate[]
+  ticketFeedback         TicketFeedback[]  // Feedback given by user
 
   @@map("users")
 }
@@ -177,42 +179,27 @@ model AuditLog {
 }
 
 // Customer Support System
-model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  company   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  tickets  Ticket[]
-  feedback TicketFeedback[]
-
-  @@map("customers")
-}
-
 model Ticket {
-  id          String         @id @default(cuid())
-  title       String
-  description String
-  phone       String?
-  status      TicketStatus   @default(OPEN)
-  priority    TicketPriority @default(MEDIUM)
-  category    String?
-  customerId  String
-  assignedTo  String?
-  teamId      String?
-  createdBy   String
-  slaDueAt    DateTime?
-  resolvedAt  DateTime?
-  closedAt    DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id           String         @id @default(cuid())
+  ticketNumber Int            @unique @default(autoincrement())
+  title        String
+  description  String
+  phone        String?
+  status       TicketStatus   @default(OPEN)
+  priority     TicketPriority @default(MEDIUM)
+  category     String?
+  customerId   String         // User who created/raised the ticket
+  assignedTo   String?        // User assigned to handle the ticket
+  teamId       String?
+  createdBy    String         // Same as customerId or auditor
+  slaDueAt     DateTime?
+  resolvedAt   DateTime?
+  closedAt     DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   // Relationships
-  customer       Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer       User               @relation("TicketCustomer", fields: [customerId], references: [id], onDelete: Cascade)
   assignedUser   User?              @relation("AssignedTickets", fields: [assignedTo], references: [id], onDelete: SetNull)
   creator        User               @relation("CreatedTickets", fields: [createdBy], references: [id], onDelete: Cascade)
   team           Team?              @relation("TeamTickets", fields: [teamId], references: [id], onDelete: SetNull)
@@ -223,6 +210,8 @@ model Ticket {
   history        TicketHistory[]
   feedback       TicketFeedback?
 
+  @@index([customerId])
+  @@index([assignedTo])
   @@index([teamId])
   @@index([createdBy])
   @@index([status])
@@ -362,15 +351,15 @@ model EscalationRule {
 model TicketFeedback {
   id         String   @id @default(cuid())
   ticketId   String   @unique
-  customerId String
+  customerId String   // User who gave the feedback
   rating     Int
   comment    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   // Relationships
-  ticket   Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  customer User   @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("ticket_feedback")
 }
