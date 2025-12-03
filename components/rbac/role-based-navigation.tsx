@@ -76,14 +76,12 @@ const menuItems: MenuItem[] = [
     resource: RESOURCE_TYPES.KNOWLEDGE_BASE
   },
   
-  // Analytics - Admin and Team Leader only (Requirement 18.2, 18.3)
+  // Analytics - Admin/Manager ONLY (Team Leader access removed)
   { 
     id: "analytics", 
     label: "Analytics", 
     icon: BarChart3,
-    action: PERMISSION_ACTIONS.READ,
-    resource: RESOURCE_TYPES.ANALYTICS,
-    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
+    requireRole: ROLE_TYPES.ADMIN_MANAGER
   },
   
   // User Management - Admin/Manager ONLY (Team Leader access removed)

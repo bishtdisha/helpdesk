@@ -44,26 +44,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if user has permission to view users
-    const hasPermission = await permissionEngine.checkPermission(
-      currentUser.id,
-      PERMISSION_ACTIONS.READ,
-      RESOURCE_TYPES.USERS
-    );
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { 
-          error: 'Insufficient permissions',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          message: 'You do not have permission to view users',
-          requiredPermission: 'users:read'
-        },
-        { status: 403 }
-      );
-    }
-
-    // Parse query parameters
+    // Parse query parameters first to check forAssignment
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
@@ -72,6 +53,29 @@ export async function GET(request: NextRequest) {
     const isActiveParam = searchParams.get('isActive');
     const simple = searchParams.get('simple') === 'true';
     const includeDeleted = searchParams.get('includeDeleted') === 'true';
+    const forAssignment = searchParams.get('forAssignment') === 'true';
+
+    // Check if user has permission to view users
+    // Skip permission check for assignment dropdown - all authenticated users can see users for assignment
+    if (!forAssignment) {
+      const hasPermission = await permissionEngine.checkPermission(
+        currentUser.id,
+        PERMISSION_ACTIONS.READ,
+        RESOURCE_TYPES.USERS
+      );
+
+      if (!hasPermission) {
+        return NextResponse.json(
+          { 
+            error: 'Insufficient permissions',
+            code: 'INSUFFICIENT_PERMISSIONS',
+            message: 'You do not have permission to view users',
+            requiredPermission: 'users:read'
+          },
+          { status: 403 }
+        );
+      }
+    }
     // Default to active users only in simple mode
     const isActive = isActiveParam ? isActiveParam === 'true' : (simple ? true : undefined);
     const search = searchParams.get('search') || undefined;
@@ -89,13 +93,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply role-based filtering
-    if (!accessScope.organizationWide) {
-      // Non-admin users can only see users in their teams
+    // Special case: forAssignment parameter allows Team Leaders to see ALL users for ticket assignment
+    if (forAssignment) {
+      // When assigning tickets, Team Leaders and Admins can see all users
+      // No additional filtering needed - show all active users
+    } else if (!accessScope.organizationWide) {
+      // For non-assignment purposes, non-admin users can only see users in their teams
       if (accessScope.teamIds.length > 0) {
-        whereClause.OR = [
-          { teamId: { in: accessScope.teamIds } },
-          { id: currentUser.id }, // Always allow users to see themselves
-        ];
+        // Team Leaders and other non-admin users can see users in their teams
+        whereClause.teamId = { in: accessScope.teamIds };
       } else {
         // User can only see themselves
         whereClause.id = currentUser.id;

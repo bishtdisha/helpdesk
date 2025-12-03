@@ -88,8 +88,8 @@ export const ROLE_PERMISSIONS: Record<RoleType, RBACPermission[]> = {
     // Team management - read only for assigned teams
     { action: PERMISSION_ACTIONS.READ, resource: RESOURCE_TYPES.TEAMS, scope: PERMISSION_SCOPES.TEAM },
     
-    // Analytics - team specific
-    { action: PERMISSION_ACTIONS.READ, resource: RESOURCE_TYPES.ANALYTICS, scope: PERMISSION_SCOPES.TEAM },
+    // Analytics - NO ACCESS (removed for Team Leader role)
+    // Team Leaders cannot access analytics module
     
     // Tickets - team scope
     { action: PERMISSION_ACTIONS.CREATE, resource: RESOURCE_TYPES.TICKETS, scope: PERMISSION_SCOPES.TEAM },
@@ -284,8 +284,8 @@ export const TICKET_PERMISSIONS = {
       remove: 'team' as TicketAccessScope,
     },
     analytics: {
-      view: 'team' as AnalyticsAccessScope,
-      export: true,
+      view: 'none' as AnalyticsAccessScope,
+      export: false,
       viewComparative: false,
     },
     sla: {

@@ -8,6 +8,7 @@ import { TicketPriority } from '@prisma/client';
 import { useRouter } from 'next/navigation';
 import { useTicketMutations } from '@/lib/hooks/use-ticket-mutations';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 import {
   Form,
@@ -70,9 +71,16 @@ interface TicketCreateFormProps {
 
 export function TicketCreateForm({ onSuccess, onCancel }: TicketCreateFormProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { createTicket } = useTicketMutations();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TicketTemplate | undefined>();
+
+  // Determine if user is Team Leader
+  const isTeamLeader = user?.role?.name === 'Team Leader';
+  
+  // Auto-populate customer field with logged-in user for Team Leaders
+  const defaultCustomerId = isTeamLeader && user?.id ? user.id : '';
 
   // Initialize form with React Hook Form and Zod validation
   const form = useForm<TicketFormValues>({
@@ -82,7 +90,7 @@ export function TicketCreateForm({ onSuccess, onCancel }: TicketCreateFormProps)
       description: '',
       priority: TicketPriority.MEDIUM,
       category: '',
-      customerId: '',
+      customerId: defaultCustomerId,
     },
   });
 
@@ -324,15 +332,30 @@ export function TicketCreateForm({ onSuccess, onCancel }: TicketCreateFormProps)
                 <FormFieldWithHelp
                   label="Customer"
                   required
-                  helpText="Search and select the customer this ticket is for. Type their name or email to find them."
-                  helpTooltip="Start typing the customer's name or email address. If they're not found, they may need to be added to the system first."
+                  helpText={isTeamLeader 
+                    ? "Tickets created by Team Leaders are automatically assigned to your account."
+                    : "Search and select the customer this ticket is for. Type their name or email to find them."
+                  }
+                  helpTooltip={isTeamLeader 
+                    ? "As a Team Leader, all tickets you create are automatically assigned to your account."
+                    : "Start typing the customer's name or email address. If they're not found, they may need to be added to the system first."
+                  }
                   error={form.formState.errors.customerId?.message}
                 >
-                  <CustomerSelector
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={isSubmitting}
-                  />
+                  {isTeamLeader ? (
+                    <Input
+                      value={user?.name || ''}
+                      disabled={true}
+                      className="bg-muted cursor-not-allowed"
+                      aria-readonly="true"
+                    />
+                  ) : (
+                    <CustomerSelector
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  )}
                 </FormFieldWithHelp>
               )}
             />

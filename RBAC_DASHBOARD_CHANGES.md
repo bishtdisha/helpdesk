@@ -21,7 +21,23 @@ Implemented role-based access control (RBAC) for Team Leaders to restrict their 
 
 ---
 
-### 2. Dashboard API Role-Based Filtering
+### 2. Analytics Module Access Restriction
+
+#### Updated Files:
+- `lib/rbac/permissions.ts`
+- `components/rbac/role-based-navigation.tsx`
+
+#### Changes:
+- **Removed Team Leader access to Analytics module**
+  - Removed READ permission for ANALYTICS resource from Team Leader role
+  - Set analytics view to `'none'` and export to `false` in ticket permissions
+  - Updated navigation menu to require Admin/Manager role only for Analytics
+
+**Result:** Team Leaders can no longer see or access the Analytics module in the navigation menu.
+
+---
+
+### 3. Dashboard API Role-Based Filtering
 
 #### New Helper File:
 - `lib/dashboard-helpers.ts`
@@ -83,7 +99,12 @@ All dashboard endpoints now filter data based on user role:
 - Verify "User Management" menu item is NOT visible in navigation
 - Attempt to access `/helpdesk/users` directly - should be blocked
 
-### 2. Test Dashboard Data Filtering
+### 2. Test Analytics Access
+- Login as Team Leader
+- Verify "Analytics" menu item is NOT visible in navigation
+- Attempt to access `/helpdesk/analytics` directly - should be blocked
+
+### 3. Test Dashboard Data Filtering
 
 #### As Admin/Manager:
 - Should see all tickets, users, and statistics across the organization
@@ -105,7 +126,7 @@ All dashboard endpoints now filter data based on user role:
   - Tickets they created
   - Their own statistics
 
-### 3. Verify Team Leadership
+### 4. Verify Team Leadership
 - Create a Team Leader user
 - Assign them to lead one or more teams
 - Verify they can see data from all teams they lead

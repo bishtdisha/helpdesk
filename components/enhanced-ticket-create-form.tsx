@@ -36,6 +36,7 @@ import { CacheManager } from '@/lib/performance/caching';
 import { mutate } from 'swr';
 import { Loader2 } from 'lucide-react';
 import { announceToScreenReader } from '@/components/accessibility/aria-live-announcer';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 // Zod validation schema for enhanced ticket creation
 const enhancedTicketFormSchema = z.object({
@@ -97,11 +98,18 @@ export function EnhancedTicketCreateForm({
   isEditMode = false
 }: EnhancedTicketCreateFormProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [initialComment, setInitialComment] = useState('');
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [screenReaderMessage, setScreenReaderMessage] = useState<string>('');
+
+  // Determine if user is Team Leader
+  const isTeamLeader = user?.role?.name === 'Team Leader';
+  
+  // Auto-populate customer field with logged-in user for Team Leaders
+  const defaultCustomerId = !isEditMode && isTeamLeader && user?.id ? user.id : '';
 
   // Initialize form with React Hook Form and Zod validation
   const form = useForm<EnhancedTicketFormValues>({
@@ -123,7 +131,7 @@ export function EnhancedTicketCreateForm({
       priority: TicketPriority.MEDIUM,
       category: '',
       status: initialStatus,
-      customerId: '',
+      customerId: defaultCustomerId,
       teamId: '',
       assignedTo: '',
     },
@@ -561,18 +569,32 @@ export function EnhancedTicketCreateForm({
                   <FormItem>
                     <FormLabel>Customer *</FormLabel>
                     <FormControl>
-                      <SimpleSelect
-                        endpoint="/api/users?simple=true&limit=200"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Search for a customer..."
-                        disabled={isSubmitting}
-                        responseKey="users"
-                        labelKey="name"
-                        valueKey="id"
-                        searchPlaceholder="Search users..."
-                      />
+                      {isTeamLeader && !isEditMode ? (
+                        <Input
+                          value={user?.name || ''}
+                          disabled={true}
+                          className="bg-muted cursor-not-allowed"
+                          aria-readonly="true"
+                        />
+                      ) : (
+                        <SimpleSelect
+                          endpoint="/api/users?simple=true&limit=200"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Search for a customer..."
+                          disabled={isSubmitting}
+                          responseKey="users"
+                          labelKey="name"
+                          valueKey="id"
+                          searchPlaceholder="Search users..."
+                        />
+                      )}
                     </FormControl>
+                    {isTeamLeader && !isEditMode && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tickets created by Team Leaders are automatically assigned to your account.
+                      </p>
+                    )}
                     <FormMessage id="customerId-error" />
                   </FormItem>
                 )}
@@ -612,7 +634,7 @@ export function EnhancedTicketCreateForm({
                     <FormLabel>Assigned To</FormLabel>
                     <FormControl>
                       <SimpleSelect
-                        endpoint="/api/users?simple=true&limit=200"
+                        endpoint="/api/users?simple=true&limit=200&forAssignment=true"
                         value={field.value}
                         onValueChange={field.onChange}
                         placeholder="Assign to a user..."
