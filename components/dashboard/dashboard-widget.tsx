@@ -10,6 +10,23 @@ import useSWR from 'swr';
 const WeeklyActivityChart = lazy(() => import('./charts/weekly-activity-chart').then(mod => ({ default: mod.WeeklyActivityChart })));
 const StatusDistributionChart = lazy(() => import('./charts/status-distribution-chart').then(mod => ({ default: mod.StatusDistributionChart })));
 
+// Import new KPI widgets
+import { TotalTicketsKPI } from './widgets/total-tickets-kpi';
+import { SLAComplianceKPI } from './widgets/sla-compliance-kpi';
+import { AvgResolutionKPI } from './widgets/avg-resolution-kpi';
+import { CSATScoreKPI } from './widgets/csat-score-kpi';
+import { MyTicketsSummary } from './widgets/my-tickets-summary';
+import { SLABreachAlerts } from './widgets/sla-breach-alerts';
+import { TodayPerformance } from './widgets/today-performance';
+import { WeekPerformance } from './widgets/week-performance';
+import { DailyTarget } from './widgets/daily-target';
+import { TicketTrendChart } from './widgets/ticket-trend-chart';
+import { ResolutionTrendChart } from './widgets/resolution-trend-chart';
+import { SLATrendChart } from './widgets/sla-trend-chart';
+import { WorkloadByStatus } from './widgets/workload-by-status';
+import { AssignedTicketsList } from './widgets/assigned-tickets-list';
+import { TopCategories } from './widgets/top-categories';
+
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface DashboardWidgetProps {
@@ -307,9 +324,59 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
           </Card>
         );
 
+      // New KPI Widgets
+      case 'TotalTicketsKPI':
+        return <TotalTicketsKPI />;
+      
+      case 'SLAComplianceKPI':
+        return <SLAComplianceKPI />;
+      
+      case 'AvgResolutionKPI':
+        return <AvgResolutionKPI />;
+      
+      case 'CSATScoreKPI':
+        return <CSATScoreKPI />;
+
+      // New Summary Widgets
+      case 'MyTicketsSummary':
+        return <MyTicketsSummary />;
+      
+      case 'SLABreachAlerts':
+        return <SLABreachAlerts />;
+
+      // Performance Widgets
+      case 'TodayPerformance':
+        return <TodayPerformance />;
+      
+      case 'WeekPerformance':
+        return <WeekPerformance />;
+      
+      case 'DailyTarget':
+        return <DailyTarget />;
+
+      // Trend Charts
+      case 'TicketTrendChart':
+        return <TicketTrendChart />;
+      
+      case 'ResolutionTrendChart':
+        return <ResolutionTrendChart />;
+      
+      case 'SLATrendChart':
+        return <SLATrendChart />;
+
+      // Extras
+      case 'WorkloadByStatus':
+        return <WorkloadByStatus />;
+      
+      case 'AssignedTicketsList':
+        return <AssignedTicketsList />;
+      
+      case 'TopCategories':
+        return <TopCategories />;
+
       default:
         return (
-          <Card className="hover:shadow-md transition-shadow">
+          <Card className="hover:shadow-md transition-shadow h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{title}</CardTitle>

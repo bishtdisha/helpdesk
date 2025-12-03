@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getUserIdFromMiddleware } from '@/lib/server-auth';
+import { getTicketFilterForUser, getUserFilterForUser } from '@/lib/dashboard-helpers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 15; // More frequent updates for recent activity
@@ -14,10 +15,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get recent tickets and user updates
+    // Get role-based filters
+    const ticketFilter = await getTicketFilterForUser(userId);
+    const userFilter = await getUserFilterForUser(userId);
+
+    // Get recent tickets and user updates (filtered by role)
     const [recentTickets, recentUserUpdates] = await Promise.all([
       prisma.ticket.findMany({
         take: 3,
+        where: ticketFilter,
         orderBy: { updatedAt: 'desc' },
         select: {
           id: true,
@@ -34,12 +40,13 @@ export async function GET(request: NextRequest) {
       }),
       prisma.user.findMany({
         take: 2,
-        orderBy: { updatedAt: 'desc' },
         where: {
+          ...userFilter,
           updatedAt: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
           }
         },
+        orderBy: { updatedAt: 'desc' },
         select: {
           id: true,
           name: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getUserIdFromMiddleware } from '@/lib/server-auth';
+import { getTicketFilterForUser } from '@/lib/dashboard-helpers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 30;
@@ -14,11 +15,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get last 7 days of ticket activity
+    // Get role-based filter
+    const ticketFilter = await getTicketFilterForUser(userId);
+
+    // Get last 7 days of ticket activity (filtered by role)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     
     const tickets = await prisma.ticket.findMany({
       where: {
+        ...ticketFilter,
         createdAt: { gte: sevenDaysAgo }
       },
       select: {

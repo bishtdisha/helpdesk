@@ -41,13 +41,8 @@ export function CustomizableDashboard() {
   }, [availableWidgets, visibleWidgets]);
 
   return (
-    <main id="main-content" className="space-y-4" role="main" aria-label="Dashboard">
-      {/* Dashboard Header - Compact */}
-      <header className="mb-2">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-      </header>
-
-      {/* Dashboard Grid - Simple CSS Grid (No react-grid-layout) */}
+    <main id="main-content" className="space-y-6" role="main" aria-label="Dashboard">
+      {/* Dashboard Grid - Simple CSS Grid */}
       <section 
         className="dashboard-grid-simple" 
         role="region" 
@@ -56,23 +51,11 @@ export function CustomizableDashboard() {
         aria-atomic="false"
       >
         {widgetsToShow.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-auto">
-            {/* Welcome Widget - Full Width */}
-            {visibleWidgets.includes('welcome') && (
-              <div className="col-span-1 md:col-span-2 lg:col-span-4">
-                <DashboardWidget
-                  id="welcome"
-                  title="Welcome"
-                  component="WelcomeWidget"
-                  user={user}
-                />
-              </div>
-            )}
-            
-            {/* Metric Widgets - 4 columns on desktop, 2 on tablet, 1 on mobile */}
-            {['open-tickets', 'resolved-today', 'avg-response-time', 'active-customers'].map(widgetId => 
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 auto-rows-auto">
+            {/* Section 1: High-Level KPIs - 4 cards in a row */}
+            {['total-tickets-kpi', 'sla-compliance-kpi', 'avg-resolution-kpi', 'csat-kpi'].map(widgetId => 
               visibleWidgets.includes(widgetId) && (
-                <div key={widgetId} className="col-span-1">
+                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-3">
                   <DashboardWidget
                     id={widgetId}
                     title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
@@ -83,57 +66,104 @@ export function CustomizableDashboard() {
               )
             )}
             
-            {/* Chart Widgets - 2 columns each on desktop, full width on mobile */}
-            {visibleWidgets.includes('weekly-activity') && (
-              <div className="col-span-1 md:col-span-2 lg:col-span-2 min-h-[380px]">
+            {/* Section 2: My Tickets Summary - Full Width */}
+            {visibleWidgets.includes('my-tickets-summary') && (
+              <div className="col-span-1 md:col-span-2 lg:col-span-12">
                 <DashboardWidget
-                  id="weekly-activity"
-                  title="Weekly Ticket Activity"
-                  component="WeeklyActivityChart"
+                  id="my-tickets-summary"
+                  title="My Tickets"
+                  component="MyTicketsSummary"
                   user={user}
                 />
               </div>
             )}
             
-            {visibleWidgets.includes('status-distribution') && (
-              <div className="col-span-1 md:col-span-2 lg:col-span-2 min-h-[380px]">
+            {/* Section 3: SLA Breach Alerts - Full Width */}
+            {visibleWidgets.includes('sla-breach-alerts') && (
+              <div className="col-span-1 md:col-span-2 lg:col-span-12">
                 <DashboardWidget
-                  id="status-distribution"
-                  title="Ticket Status Distribution"
-                  component="StatusDistributionChart"
+                  id="sla-breach-alerts"
+                  title="SLA / Priority Breakdown"
+                  component="SLABreachAlerts"
                   user={user}
                 />
               </div>
             )}
             
-            {/* Recent Activity - Full Width */}
-            {visibleWidgets.includes('recent-activity') && (
-              <div className="col-span-1 md:col-span-2 lg:col-span-4">
-                <DashboardWidget
-                  id="recent-activity"
-                  title="Recent Activity"
-                  component="RecentActivityWidget"
-                  user={user}
-                />
-              </div>
+            {/* Section 4: Performance - 3 cards */}
+            {['today-performance', 'week-performance', 'daily-target'].map(widgetId => 
+              visibleWidgets.includes(widgetId) && (
+                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-4">
+                  <DashboardWidget
+                    id={widgetId}
+                    title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
+                    component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
+                    user={user}
+                  />
+                </div>
+              )
+            )}
+            
+            {/* Section 5: Trends - 3 charts */}
+            {['ticket-trend', 'resolution-trend', 'sla-trend'].map(widgetId => 
+              visibleWidgets.includes(widgetId) && (
+                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-4">
+                  <DashboardWidget
+                    id={widgetId}
+                    title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
+                    component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
+                    user={user}
+                  />
+                </div>
+              )
+            )}
+            
+            {/* Section 6: Extras - 3 cards */}
+            {['workload-by-status', 'assigned-tickets-list', 'top-categories'].map(widgetId => 
+              visibleWidgets.includes(widgetId) && (
+                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-4">
+                  <DashboardWidget
+                    id={widgetId}
+                    title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
+                    component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
+                    user={user}
+                  />
+                </div>
+              )
             )}
           </div>
         ) : (
-          // Show compact skeleton while layout initializes
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="col-span-1 md:col-span-2 lg:col-span-4 h-16 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 h-32 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 h-32 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 h-32 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 h-32 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 md:col-span-2 lg:col-span-2 h-80 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 md:col-span-2 lg:col-span-2 h-80 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 md:col-span-2 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
+          // Show skeleton while layout initializes
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+            {/* KPI Cards */}
+            <div className="col-span-1 md:col-span-1 lg:col-span-3 h-28 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-3 h-28 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-3 h-28 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-3 h-28 bg-muted/50 animate-pulse rounded-lg" />
+            
+            {/* My Tickets Summary */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-12 h-40 bg-muted/50 animate-pulse rounded-lg" />
+            
+            {/* SLA Alerts */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-12 h-48 bg-muted/50 animate-pulse rounded-lg" />
+            
+            {/* Performance Cards */}
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
+            
+            {/* Trend Charts */}
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
+            
+            {/* Extras */}
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
           </div>
         )}
       </section>
-
-
 
       {/* Custom CSS for simple grid layout */}
       <style jsx global>{`

@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Download } from "lucide-react";
-import { OrganizationDashboard } from './organization-dashboard';
 import { TeamDashboard } from './team-dashboard';
 import { ComparativeAnalysisComponent } from './comparative-analysis';
 import { ReportExportDialog } from './report-export-dialog';
@@ -20,7 +18,6 @@ export function AnalyticsPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
 
   const isAdmin = user?.role?.name === 'Admin/Manager';
   const isTeamLeader = user?.role?.name === 'Team Leader';
@@ -129,25 +126,9 @@ export function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* Admin View - Tabs for Organization, Comparative Analysis */}
+      {/* Admin View - Comparative Analysis Only */}
       {isAdmin && (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="dashboard">Organization Dashboard</TabsTrigger>
-            <TabsTrigger value="comparative">Comparative Analysis</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="dashboard" className="mt-6">
-            <OrganizationDashboard 
-              dateRange={dateRange}
-              onDateRangeChange={handleDateRangeChange}
-            />
-          </TabsContent>
-          
-          <TabsContent value="comparative" className="mt-6">
-            <ComparativeAnalysisComponent dateRange={dateRange} />
-          </TabsContent>
-        </Tabs>
+        <ComparativeAnalysisComponent dateRange={dateRange} />
       )}
 
       {/* Team Leader View - Team Dashboard with Team Selector */}

@@ -82,9 +82,8 @@ export const ROLE_PERMISSIONS: Record<RoleType, RBACPermission[]> = {
   ],
   
   'Team Leader': [
-    // User management - team scope only
-    { action: PERMISSION_ACTIONS.READ, resource: RESOURCE_TYPES.USERS, scope: PERMISSION_SCOPES.TEAM },
-    { action: PERMISSION_ACTIONS.UPDATE, resource: RESOURCE_TYPES.USERS, scope: PERMISSION_SCOPES.TEAM },
+    // User management - NO ACCESS (removed for Team Leader role)
+    // Team Leaders cannot access user management module
     
     // Team management - read only for assigned teams
     { action: PERMISSION_ACTIONS.READ, resource: RESOURCE_TYPES.TEAMS, scope: PERMISSION_SCOPES.TEAM },
@@ -136,8 +135,8 @@ export const ROLE_ACCESS_SCOPES: Record<RoleType, AccessScope> = {
   },
   
   'Team Leader': {
-    canViewUsers: true,
-    canEditUsers: true,
+    canViewUsers: false,
+    canEditUsers: false,
     canCreateUsers: false,
     canDeleteUsers: false,
     canManageRoles: false,

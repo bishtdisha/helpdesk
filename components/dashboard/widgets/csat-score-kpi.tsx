@@ -1,0 +1,125 @@
+'use client';
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Star, TrendingUp, TrendingDown } from "lucide-react";
+import useSWR from 'swr';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+export function CSATScoreKPI() {
+  const { data, isLoading, error } = useSWR('/api/dashboard/kpis/csat', fetcher, {
+    refreshInterval: 60000,
+    revalidateOnFocus: false,
+  });
+
+  if (error) {
+    return (
+      <Card className="hover:shadow-md transition-shadow h-full border-red-200 bg-red-50/50">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Customer Satisfaction</CardTitle>
+          <Star className="h-4 w-4 text-red-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-red-600">Error</div>
+          <p className="text-xs text-red-500 mt-1">Failed to load</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isLoading || !data) {
+    return (
+      <Card className="hover:shadow-md transition-shadow h-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Customer Satisfaction</CardTitle>
+          <Star className="h-4 w-4 text-purple-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-8 w-20 bg-muted animate-pulse rounded" />
+          <div className="h-4 w-24 bg-muted animate-pulse rounded mt-2" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { score, totalResponses, trend } = data;
+  const rating = score || 0;
+  const trendValue = trend || 0;
+  const isPositive = trendValue > 0;
+
+  // Determine status
+  const getStatusInfo = () => {
+    if (rating >= 4.5) {
+      return {
+        label: 'Excellent',
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-100',
+        borderColor: 'border-purple-200',
+        gradientFrom: 'from-purple-50/50',
+        badgeVariant: 'default' as const,
+      };
+    } else if (rating >= 4.0) {
+      return {
+        label: 'Good',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100',
+        borderColor: 'border-blue-200',
+        gradientFrom: 'from-blue-50/50',
+        badgeVariant: 'secondary' as const,
+      };
+    } else if (rating >= 3.5) {
+      return {
+        label: 'Fair',
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-100',
+        borderColor: 'border-yellow-200',
+        gradientFrom: 'from-yellow-50/50',
+        badgeVariant: 'secondary' as const,
+      };
+    } else {
+      return {
+        label: 'Poor',
+        color: 'text-red-600',
+        bgColor: 'bg-red-100',
+        borderColor: 'border-red-200',
+        gradientFrom: 'from-red-50/50',
+        badgeVariant: 'destructive' as const,
+      };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
+
+  return (
+    <Card className={`hover:shadow-md transition-shadow h-full ${statusInfo.borderColor} bg-gradient-to-br ${statusInfo.gradientFrom} to-background`}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">Customer Satisfaction</CardTitle>
+        <div className={`p-2 rounded-lg ${statusInfo.bgColor}`}>
+          <Star className={`h-4 w-4 ${statusInfo.color}`} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className={`text-3xl font-bold ${statusInfo.color}`}>
+          {rating.toFixed(1)}<span className="text-xl text-muted-foreground">/5</span>
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          <Badge variant={statusInfo.badgeVariant} className="text-xs">
+            {statusInfo.label}
+          </Badge>
+          {totalResponses > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {totalResponses} {totalResponses === 1 ? 'response' : 'responses'}
+            </span>
+          )}
+        </div>
+        {trendValue !== 0 && (
+          <div className={`flex items-center gap-1 mt-1 text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            <span>{Math.abs(trendValue).toFixed(2)} from last period</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

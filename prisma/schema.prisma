@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+                    // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -43,6 +43,7 @@ model User {
   notificationPreference NotificationPreferences?
   createdTemplates       TicketTemplate[]
   ticketFeedback         TicketFeedback[]  // Feedback given by user
+  passwordResetTokens    PasswordResetToken[]
 
   @@map("users")
 }
@@ -482,6 +483,23 @@ model TicketTemplate {
   @@index([category])
   @@index([isGlobal])
   @@map("ticket_templates")
+}
+
+// Password Reset Tokens
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 // System Settings

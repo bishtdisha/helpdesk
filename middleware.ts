@@ -15,8 +15,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/register', '/welcome', '/']
-  const isPublicRoute = publicRoutes.includes(pathname)
+  const publicRoutes = ['/login', '/register', '/welcome', '/forgot-password', '/reset-password', '/']
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')
 
   // If user is on a public route, let them through
   if (isPublicRoute) {
@@ -47,8 +47,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - login, register (public pages)
+     * - login, register, forgot-password, reset-password (public pages)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|login|register).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|login|register|forgot-password|reset-password).*)',
   ],
 }

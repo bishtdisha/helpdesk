@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getUserIdFromMiddleware } from '@/lib/server-auth';
+import { getTicketFilterForUser, getUserFilterForUser } from '@/lib/dashboard-helpers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 30; // Cache for 30 seconds
@@ -14,16 +15,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get role-based filters
+    const ticketFilter = await getTicketFilterForUser(userId);
+    const userFilter = await getUserFilterForUser(userId);
+
     // Parallel queries for better performance
     const [openTickets, resolvedToday, avgResponseTime, activeCustomers] = await Promise.all([
-      // Open tickets count
+      // Open tickets count (filtered by role)
       prisma.ticket.count({
-        where: { status: { in: ['OPEN', 'IN_PROGRESS'] } }
+        where: { 
+          ...ticketFilter,
+          status: { in: ['OPEN', 'IN_PROGRESS'] } 
+        }
       }),
       
-      // Resolved today count
+      // Resolved today count (filtered by role)
       prisma.ticket.count({
         where: {
+          ...ticketFilter,
           status: 'RESOLVED',
           updatedAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0))
@@ -31,9 +40,10 @@ export async function GET(request: NextRequest) {
         }
       }),
       
-      // Average response time (in hours)
+      // Average response time (in hours) (filtered by role)
       prisma.ticket.aggregate({
         where: {
+          ...ticketFilter,
           status: { in: ['RESOLVED', 'CLOSED'] },
           updatedAt: {
             gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
@@ -44,9 +54,10 @@ export async function GET(request: NextRequest) {
         }
       }),
       
-      // Active customers (users with tickets in last 30 days)
+      // Active customers (users with tickets in last 30 days) (filtered by role)
       prisma.user.count({
         where: {
+          ...userFilter,
           customerTickets: {
             some: {
               createdAt: {

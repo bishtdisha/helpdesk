@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getUserIdFromMiddleware } from '@/lib/server-auth';
+import { getTicketFilterForUser } from '@/lib/dashboard-helpers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 30;
@@ -14,9 +15,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get ticket counts by status
+    // Get role-based filter
+    const ticketFilter = await getTicketFilterForUser(userId);
+
+    // Get ticket counts by status (filtered by role)
     const statusCounts = await prisma.ticket.groupBy({
       by: ['status'],
+      where: ticketFilter,
       _count: {
         id: true
       }
