@@ -147,6 +147,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login function
   const login = useCallback(async (email: string, password: string) => {
     try {
+      // Clear any existing cached data before login
+      localStorage.removeItem(SESSION_CACHE_KEY);
+      setUser(null);
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -159,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Fetch user data after successful login
+        // Fetch fresh user data after successful login
         await fetchUser();
         return { success: true };
       } else {
@@ -180,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout function
   const logout = useCallback(async () => {
     try {
+      // Call logout API
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
@@ -187,9 +192,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Clear all user data
       setUser(null);
       cacheUser(null);
+      
+      // Clear all localStorage
+      try {
+        localStorage.clear();
+      } catch (e) {
+        console.error('Error clearing localStorage:', e);
+      }
+      
+      // Clear all sessionStorage
+      try {
+        sessionStorage.clear();
+      } catch (e) {
+        console.error('Error clearing sessionStorage:', e);
+      }
+      
+      // Force redirect to login
       router.push('/login');
+      
+      // Force page reload to clear any remaining state
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 100);
     }
   }, [router, cacheUser]);
 

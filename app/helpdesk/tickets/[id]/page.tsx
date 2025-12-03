@@ -34,23 +34,14 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Back button */}
-      <Button
-        variant="ghost"
-        onClick={handleBack}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Tickets
-      </Button>
-
-      {/* Ticket Detail */}
+    <div className="container mx-auto py-6">
+      {/* Ticket Detail - Read Only */}
       <TicketDetail
         ticketId={params.id}
         onBack={handleBack}
         onAssign={handleAssign}
         onManageFollowers={handleManageFollowers}
+        readOnly={true}
       />
 
       {/* Assignment Dialog */}

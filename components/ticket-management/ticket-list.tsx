@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { Pagination } from './pagination';
 import { TicketListSkeleton } from './ticket-list-skeleton';
@@ -98,8 +98,9 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
               <TableRow 
                 key={ticket.id} 
                 className={`cursor-pointer hover:bg-muted/50 ${isOverdue ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
+                onClick={() => handleTicketClick(ticket.id)}
               >
-                <TableCell className="font-medium">{ticket.id.slice(0, 8)}</TableCell>
+                <TableCell className="font-medium">#{String(ticket.ticketNumber).padStart(5, '0')}</TableCell>
                 <TableCell className="max-w-md truncate">{ticket.title}</TableCell>
                 <TableCell className="max-w-xs truncate">
                   {ticket.customer?.name || 'Unknown Customer'}
@@ -122,14 +123,27 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
                   <TableCell>{ticket.team?.name || 'No Team'}</TableCell>
                 )}
                 <TableCell>{format(new Date(ticket.createdAt), 'MMM d, yyyy')}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTicketClick(ticket.id)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleTicketClick(ticket.id)}
+                      title="View ticket"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        window.location.href = `/helpdesk/tickets/${ticket.id}/edit`
+                      }}
+                      title="Edit ticket"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             );
@@ -155,11 +169,15 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">
-                      {ticket.id.slice(0, 8)}
+                      #{String(ticket.ticketNumber).padStart(5, '0')}
                     </p>
                     <h3 className="font-semibold">{ticket.title}</h3>
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Eye className="h-4 w-4" />
                   </Button>
                 </div>

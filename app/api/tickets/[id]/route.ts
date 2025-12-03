@@ -92,7 +92,7 @@ export async function PUT(
 
     // Parse request body
     const body = await request.json();
-    const { title, description, status, priority, category, assignedTo, teamId } = body;
+    const { title, description, status, priority, category, assignedTo, teamId, customerId, phone } = body;
 
     // Validate title if provided
     if (title !== undefined) {
@@ -179,6 +179,8 @@ export async function PUT(
     if (category !== undefined) updateData.category = category?.trim() || undefined;
     if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
     if (teamId !== undefined) updateData.teamId = teamId;
+    if (customerId !== undefined) updateData.customerId = customerId;
+    if (phone !== undefined) updateData.phone = phone?.trim() || undefined;
 
     // Check if there's anything to update
     if (Object.keys(updateData).length === 0) {

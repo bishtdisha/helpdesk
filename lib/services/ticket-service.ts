@@ -42,6 +42,8 @@ export interface UpdateTicketData {
   category?: string;
   assignedTo?: string;
   teamId?: string;
+  customerId?: string;
+  phone?: string;
 }
 
 export interface TicketFilters {
@@ -103,9 +105,27 @@ export class TicketAssignmentDeniedError extends PermissionError {
 }
 
 export class InvalidTicketStatusTransitionError extends Error {
-  constructor(from: TicketStatus, to: TicketStatus) {
-    super(`Invalid status transition from ${from} to ${to}`);
+  public code = 'INVALID_STATUS_TRANSITION';
+  public from: TicketStatus;
+  public to: TicketStatus;
+  public allowedTransitions: TicketStatus[];
+
+  constructor(from: TicketStatus, to: TicketStatus, allowedTransitions: TicketStatus[]) {
+    const fromFormatted = from.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    const toFormatted = to.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    const allowedFormatted = allowedTransitions
+      .map(s => s.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()))
+      .join(', ');
+    
+    super(
+      `Cannot change status from "${fromFormatted}" to "${toFormatted}". ` +
+      `Valid next statuses are: ${allowedFormatted}. ` +
+      `Please update the status to one of these options first.`
+    );
     this.name = 'InvalidTicketStatusTransitionError';
+    this.from = from;
+    this.to = to;
+    this.allowedTransitions = allowedTransitions;
   }
 }
 
@@ -559,7 +579,8 @@ export class TicketService {
       );
       
       if (!isValidTransition) {
-        throw new InvalidTicketStatusTransitionError(currentTicket.status, data.status);
+        const allowedTransitions = ticketAccessControl.getValidStatusTransitions(currentTicket.status);
+        throw new InvalidTicketStatusTransitionError(currentTicket.status, data.status, allowedTransitions);
       }
     }
 
@@ -585,6 +606,30 @@ export class TicketService {
         newValue: data.category || '' 
       });
     }
+    if (data.customerId && data.customerId !== currentTicket.customerId) {
+      changes.push({ field: 'customerId', oldValue: currentTicket.customerId, newValue: data.customerId });
+    }
+    if (data.phone !== undefined && data.phone !== currentTicket.phone) {
+      changes.push({ 
+        field: 'phone', 
+        oldValue: currentTicket.phone || '', 
+        newValue: data.phone || '' 
+      });
+    }
+    if (data.assignedTo !== undefined && data.assignedTo !== currentTicket.assignedTo) {
+      changes.push({ 
+        field: 'assignedTo', 
+        oldValue: currentTicket.assignedTo || 'Unassigned', 
+        newValue: data.assignedTo || 'Unassigned' 
+      });
+    }
+    if (data.teamId !== undefined && data.teamId !== currentTicket.teamId) {
+      changes.push({ 
+        field: 'teamId', 
+        oldValue: currentTicket.teamId || 'No Team', 
+        newValue: data.teamId || 'No Team' 
+      });
+    }
 
     // Update the ticket
     const updateData: Prisma.TicketUpdateInput = {
@@ -593,7 +638,41 @@ export class TicketService {
       status: data.status,
       priority: data.priority,
       category: data.category,
+      phone: data.phone,
     };
+
+    // Handle customer change
+    if (data.customerId) {
+      updateData.customer = {
+        connect: { id: data.customerId }
+      };
+    }
+
+    // Handle assignee change
+    if (data.assignedTo !== undefined) {
+      if (data.assignedTo) {
+        updateData.assignedUser = {
+          connect: { id: data.assignedTo }
+        };
+      } else {
+        updateData.assignedUser = {
+          disconnect: true
+        };
+      }
+    }
+
+    // Handle team change
+    if (data.teamId !== undefined) {
+      if (data.teamId) {
+        updateData.team = {
+          connect: { id: data.teamId }
+        };
+      } else {
+        updateData.team = {
+          disconnect: true
+        };
+      }
+    }
 
     // Handle status-specific timestamps
     if (data.status === TicketStatus.RESOLVED && currentTicket.status !== TicketStatus.RESOLVED) {
@@ -703,7 +782,8 @@ export class TicketService {
     );
 
     if (!isValidTransition) {
-      throw new InvalidTicketStatusTransitionError(currentTicket.status, TicketStatus.CLOSED);
+      const allowedTransitions = ticketAccessControl.getValidStatusTransitions(currentTicket.status);
+      throw new InvalidTicketStatusTransitionError(currentTicket.status, TicketStatus.CLOSED, allowedTransitions);
     }
 
     // Update ticket to closed
@@ -780,7 +860,8 @@ export class TicketService {
     );
 
     if (!isValidTransition) {
-      throw new InvalidTicketStatusTransitionError(currentTicket.status, newStatus);
+      const allowedTransitions = ticketAccessControl.getValidStatusTransitions(currentTicket.status);
+      throw new InvalidTicketStatusTransitionError(currentTicket.status, newStatus, allowedTransitions);
     }
 
     // Prepare update data

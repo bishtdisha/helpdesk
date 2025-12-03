@@ -127,8 +127,9 @@ export class TicketAccessControl {
         return leaderTeams.includes(ticket.teamId);
 
       case ROLE_TYPES.USER_EMPLOYEE:
-        // Can access if they created it or are a follower
+        // Can access if they created it, are assigned to it, or are a follower
         if (ticket.createdBy === userId) return true;
+        if (ticket.assignedTo === userId) return true;
         const isFollower = await this.isTicketFollower(ticketId, userId);
         return isFollower;
 
@@ -162,11 +163,12 @@ export class TicketAccessControl {
         return { teamId: { in: teamIds } };
 
       case ROLE_TYPES.USER_EMPLOYEE:
-        // Only tickets they created or are following
+        // Only tickets they created, are assigned to, or are following
         const followedTicketIds = await this.getFollowedTicketIds(userId);
         return {
           OR: [
             { createdBy: userId },
+            { assignedTo: userId },
             { id: { in: followedTicketIds } },
           ],
         };
@@ -292,21 +294,29 @@ export class TicketAccessControl {
   }
 
   /**
+   * Get valid status transitions for a given status
+   */
+  getValidStatusTransitions(currentStatus: TicketStatus): TicketStatus[] {
+    const validTransitions: Record<TicketStatus, TicketStatus[]> = {
+      OPEN: ['IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'CLOSED'],
+      IN_PROGRESS: ['WAITING_FOR_CUSTOMER', 'RESOLVED', 'OPEN', 'CLOSED'],
+      WAITING_FOR_CUSTOMER: ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
+      RESOLVED: ['CLOSED', 'IN_PROGRESS', 'OPEN'],
+      CLOSED: ['IN_PROGRESS', 'OPEN'], // Can reopen if needed
+    };
+
+    return validTransitions[currentStatus] ?? [];
+  }
+
+  /**
    * Validate ticket status transition
    */
   validateStatusTransition(
     currentStatus: TicketStatus,
     newStatus: TicketStatus
   ): boolean {
-    const validTransitions: Record<TicketStatus, TicketStatus[]> = {
-      OPEN: ['IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'CLOSED'],
-      IN_PROGRESS: ['WAITING_FOR_CUSTOMER', 'RESOLVED', 'OPEN'],
-      WAITING_FOR_CUSTOMER: ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
-      RESOLVED: ['CLOSED', 'IN_PROGRESS'],
-      CLOSED: ['IN_PROGRESS'], // Can reopen if needed
-    };
-
-    return validTransitions[currentStatus]?.includes(newStatus) ?? false;
+    const validTransitions = this.getValidStatusTransitions(currentStatus);
+    return validTransitions.includes(newStatus);
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Clock, AlertTriangle } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TicketStatus } from '@prisma/client';
 
@@ -19,8 +19,26 @@ export function SLACountdownTimer({ slaDueAt, createdAt, status, className }: SL
   const [urgencyLevel, setUrgencyLevel] = useState<'safe' | 'warning' | 'critical'>('safe');
 
   useEffect(() => {
-    // Don't show timer for closed or resolved tickets
+    // For closed or resolved tickets, show total resolution time
     if (status === TicketStatus.CLOSED || status === TicketStatus.RESOLVED) {
+      const now = new Date();
+      const ticketCreated = new Date(createdAt);
+      const totalDiff = now.getTime() - ticketCreated.getTime();
+      
+      const days = Math.floor(totalDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((totalDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((totalDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (days > 0) {
+        setTimeRemaining(`${days}d ${hours}h`);
+      } else if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m`);
+      } else {
+        setTimeRemaining(`${minutes}m`);
+      }
+      
+      setIsOverdue(false);
+      setUrgencyLevel('safe');
       return;
     }
 
@@ -82,9 +100,21 @@ export function SLACountdownTimer({ slaDueAt, createdAt, status, className }: SL
     return () => clearInterval(interval);
   }, [slaDueAt, createdAt, status]);
 
-  // Don't render for closed/resolved tickets
+  // For closed/resolved tickets, show resolution time in green with checkmark
   if (status === TicketStatus.CLOSED || status === TicketStatus.RESOLVED) {
-    return null;
+    return (
+      <Badge 
+        variant="outline" 
+        className={cn(
+          'text-xs flex items-center gap-1',
+          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800',
+          className
+        )}
+      >
+        <CheckCircle className="h-3 w-3" />
+        {timeRemaining}
+      </Badge>
+    );
   }
 
   if (!slaDueAt) {

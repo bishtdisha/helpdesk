@@ -85,25 +85,38 @@ export interface EnhancedTicketCreateFormProps {
   onSuccess?: (ticketId: string) => void;
   onCancel?: () => void;
   initialStatus?: TicketStatus;
+  initialData?: any;
+  isEditMode?: boolean;
 }
 
 export function EnhancedTicketCreateForm({ 
   onSuccess, 
   onCancel,
-  initialStatus = TicketStatus.OPEN 
+  initialStatus = TicketStatus.OPEN,
+  initialData,
+  isEditMode = false
 }: EnhancedTicketCreateFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [initialComment, setInitialComment] = useState('');
-  const [isInternalComment, setIsInternalComment] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [screenReaderMessage, setScreenReaderMessage] = useState<string>('');
 
   // Initialize form with React Hook Form and Zod validation
   const form = useForm<EnhancedTicketFormValues>({
     resolver: zodResolver(enhancedTicketFormSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      title: initialData.title || '',
+      description: initialData.description || '',
+      phone: initialData.phone || '',
+      priority: initialData.priority || TicketPriority.MEDIUM,
+      category: initialData.category || '',
+      status: initialData.status || initialStatus,
+      customerId: initialData.customerId || '',
+      teamId: initialData.teamId || '',
+      assignedTo: initialData.assignedTo || '',
+    } : {
       title: '',
       description: '',
       phone: '',
@@ -163,8 +176,9 @@ export function EnhancedTicketCreateForm({
     let uploadToastId: string | number | undefined;
 
     try {
-      // Step 1: Create the ticket
-      toast.loading('Creating ticket...', { id: 'ticket-creation' });
+      // Step 1: Create or update the ticket
+      const actionText = isEditMode ? 'Updating' : 'Creating';
+      toast.loading(`${actionText} ticket...`, { id: 'ticket-operation' });
       
       const ticketPayload = {
         title: data.title,
@@ -178,17 +192,22 @@ export function EnhancedTicketCreateForm({
         assignedTo: data.assignedTo || undefined,
       };
 
-      const ticketResponse = await apiClient.post<{ ticket: { id: string } }>(
-        '/api/tickets',
-        ticketPayload
-      );
+      const ticketResponse = isEditMode
+        ? await apiClient.put<{ ticket: { id: string; ticketNumber?: number } }>(
+            `/api/tickets/${initialData?.id}`,
+            ticketPayload
+          )
+        : await apiClient.post<{ ticket: { id: string; ticketNumber?: number } }>(
+            '/api/tickets',
+            ticketPayload
+          );
 
       if (!ticketResponse?.ticket?.id) {
         throw new Error('Invalid response: ticket ID not returned');
       }
 
       const ticketId = ticketResponse.ticket.id;
-      toast.dismiss('ticket-creation');
+      toast.dismiss('ticket-operation');
 
       // Step 2: Upload attachments if present
       if (attachments.length > 0) {
@@ -254,7 +273,7 @@ export function EnhancedTicketCreateForm({
         try {
           await apiClient.post(`/api/tickets/${ticketId}/comments`, {
             content: initialComment,
-            isInternal: isInternalComment,
+            isInternal: false,
           });
         } catch (commentError) {
           console.error('Error creating initial comment:', commentError);
@@ -288,10 +307,16 @@ export function EnhancedTicketCreateForm({
         { revalidate: true }
       );
 
-      // Show success message with ticket ID
-      const successMessage = `Ticket created successfully. Ticket ID: ${ticketId.slice(0, 8)}`;
-      toast.success('Ticket created successfully', {
-        description: `Ticket #${ticketId.slice(0, 8)} has been created.`,
+      // Show success message with ticket number
+      const ticketNumber = ticketResponse.ticket.ticketNumber || initialData?.ticketNumber || 'N/A';
+      const formattedNumber = typeof ticketNumber === 'number' ? String(ticketNumber).padStart(5, '0') : ticketNumber;
+      const successMessage = isEditMode 
+        ? `Ticket updated successfully. Ticket #${formattedNumber}`
+        : `Ticket created successfully. Ticket #${formattedNumber}`;
+      toast.success(isEditMode ? 'Ticket updated successfully' : 'Ticket created successfully', {
+        description: isEditMode 
+          ? `Ticket #${formattedNumber} has been updated.`
+          : `Ticket #${formattedNumber} has been created.`,
         duration: 5000,
       });
       
@@ -310,12 +335,12 @@ export function EnhancedTicketCreateForm({
       form.reset();
       setAttachments([]);
       setInitialComment('');
-      setIsInternalComment(false);
       setUploadProgress(0);
     } catch (error) {
       console.error('Error creating ticket:', error);
       
       // Dismiss any pending toasts
+      toast.dismiss('ticket-operation');
       toast.dismiss('ticket-creation');
       if (uploadToastId) {
         toast.dismiss('file-upload');
@@ -339,7 +364,7 @@ export function EnhancedTicketCreateForm({
         }
       }
 
-      toast.error('Failed to create ticket', {
+      toast.error(isEditMode ? 'Failed to update ticket' : 'Failed to create ticket', {
         description: errorMessage,
         duration: 7000,
       });
@@ -627,11 +652,8 @@ export function EnhancedTicketCreateForm({
                 <CommentInput
                   value={initialComment}
                   onChange={setInitialComment}
-                  isInternal={isInternalComment}
-                  onIsInternalChange={setIsInternalComment}
                   placeholder="Add an initial comment or note (optional)..."
                   disabled={isSubmitting}
-                  showInternalOption={true}
                   id="initial-comment"
                 />
               </div>
@@ -650,9 +672,12 @@ export function EnhancedTicketCreateForm({
                   Cancel
                 </Button>
               )}
-              <Button type="submit" disabled={isSubmitting} title="Create ticket (Enter)">
+              <Button type="submit" disabled={isSubmitting} title={isEditMode ? "Update ticket (Enter)" : "Create ticket (Enter)"}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Creating...' : 'Create Ticket'}
+                {isSubmitting 
+                  ? (isEditMode ? 'Updating...' : 'Creating...') 
+                  : (isEditMode ? 'Update Ticket' : 'Create Ticket')
+                }
               </Button>
             </div>
           </form>

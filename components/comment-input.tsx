@@ -54,31 +54,12 @@ export function CommentInput({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        {showInternalOption && onIsInternalChange && (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="comment-internal"
-              checked={isInternal}
-              onCheckedChange={onIsInternalChange}
-              disabled={disabled}
-              aria-label="Mark as internal comment"
-            />
-            <Label
-              htmlFor="comment-internal"
-              className="text-sm font-normal cursor-pointer flex items-center gap-1.5"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              Internal Note
-            </Label>
-          </div>
-        )}
-
-        {maxLength && (
+      {maxLength && (
+        <div className="flex justify-end">
           <div
             id={`${id ? id + '-' : ''}comment-character-count`}
             className={cn(
-              'text-xs text-muted-foreground ml-auto',
+              'text-xs text-muted-foreground',
               isNearLimit && !isOverLimit && 'text-yellow-600 dark:text-yellow-500',
               isOverLimit && 'text-destructive font-medium'
             )}
@@ -86,8 +67,8 @@ export function CommentInput({
           >
             {characterCount} / {maxLength}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

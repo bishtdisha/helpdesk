@@ -27,15 +27,14 @@ interface TicketDetailProps {
   ticketId: string
   onBack?: () => void
   onAssign?: (ticketId: string) => void
-  onManageFollowers?: (ticketId: string) => void
+  readOnly?: boolean
 }
 
-export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: TicketDetailProps) {
+export function TicketDetail({ ticketId, onBack, onAssign, readOnly = true }: TicketDetailProps) {
   const { user } = useAuth()
   const [ticket, setTicket] = useState<TicketWithRelations | null>(null)
   const [loading, setLoading] = useState(true)
   const [newComment, setNewComment] = useState("")
-  const [isInternal, setIsInternal] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
 
   // Fetch ticket details
@@ -49,7 +48,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
       }
 
       const data = await response.json()
-      setTicket(data)
+      setTicket(data.ticket || data)
     } catch (error) {
       console.error('Error fetching ticket:', error)
     } finally {
@@ -71,7 +70,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           content: newComment,
-          isInternal: isInternal 
+          isInternal: false 
         }),
       })
 
@@ -82,7 +81,6 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
 
       // Clear input after successful submission
       setNewComment("")
-      setIsInternal(false)
       
       // Update comment list immediately on success
       await fetchTicket()
@@ -147,10 +145,12 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
   }
 
   const formatStatus = (status: TicketStatus) => {
+    if (!status) return 'Unknown'
     return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
   }
 
   const formatPriority = (priority: TicketPriority) => {
+    if (!priority) return 'Unknown'
     return priority.charAt(0) + priority.slice(1).toLowerCase()
   }
 
@@ -193,24 +193,26 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
           <div>
             <h2 className="text-2xl font-bold">{ticket.title}</h2>
             <p className="text-muted-foreground">
-              Ticket ID: {ticket.id} • Created {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+              Ticket #{ticket.ticketNumber ? String(ticket.ticketNumber).padStart(5, '0') : 'N/A'} • Created {ticket.createdAt ? formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true }) : 'Unknown'}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          {canAssignTicket() && (
-            <Button onClick={() => onAssign?.(ticket.id)} variant="outline" size="sm">
-              <User className="h-4 w-4 mr-2" />
-              Assign
-            </Button>
-          )}
-          {canCloseTicket() && ticket.status !== TicketStatus.CLOSED && (
-            <Button onClick={handleCloseTicket} variant="outline" size="sm">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Close Ticket
-            </Button>
-          )}
-        </div>
+        {!readOnly && (
+          <div className="flex gap-2">
+            {canAssignTicket() && (
+              <Button onClick={() => onAssign?.(ticket.id)} variant="outline" size="sm">
+                <User className="h-4 w-4 mr-2" />
+                Assign
+              </Button>
+            )}
+            {canCloseTicket() && ticket.status !== TicketStatus.CLOSED && (
+              <Button onClick={handleCloseTicket} variant="outline" size="sm">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Close Ticket
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Ticket Metadata */}
@@ -220,8 +222,11 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
             <CardTitle className="text-sm font-medium text-muted-foreground">Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge variant={getStatusColor(ticket.status)} className="text-sm">
-              {formatStatus(ticket.status)}
+            <Badge 
+              variant={getStatusColor(ticket.status)} 
+              className={`text-sm ${ticket.status === TicketStatus.RESOLVED ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800' : ''}`}
+            >
+              {ticket.status ? formatStatus(ticket.status) : 'Unknown'}
             </Badge>
           </CardContent>
         </Card>
@@ -231,7 +236,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
           </CardHeader>
           <CardContent>
             <Badge variant={getPriorityColor(ticket.priority)} className="text-sm">
-              {formatPriority(ticket.priority)}
+              {ticket.priority ? formatPriority(ticket.priority) : 'Unknown'}
             </Badge>
           </CardContent>
         </Card>
@@ -268,7 +273,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
                   <>
                     <Clock className="h-4 w-4 text-green-600" />
                     <span className="text-sm">
-                      {formatDistanceToNow(new Date(ticket.slaDueAt), { addSuffix: true })}
+                      {ticket.slaDueAt ? formatDistanceToNow(new Date(ticket.slaDueAt), { addSuffix: true }) : 'No SLA'}
                     </span>
                   </>
                 )}
@@ -327,8 +332,8 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
                           if (user?.role?.name === 'Admin/Manager' || user?.role?.name === 'Team Leader') {
                             return true;
                           }
-                          // Show only non-internal comments to other users
-                          return !comment.isInternal;
+                          // Show all comments
+                          return true;
                         })
                         .map((comment) => (
                         <div key={comment.id} className="flex gap-3 p-4 bg-muted rounded-lg">
@@ -340,11 +345,8 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium">{comment.author.name}</span>
-                              {comment.isInternal && (
-                                <Badge variant="secondary" className="text-xs">Internal</Badge>
-                              )}
                               <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                                {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : 'Unknown'}
                               </span>
                             </div>
                             <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
@@ -358,26 +360,25 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
                     )}
                   </div>
 
-                  {/* Add Comment */}
-                  <div className="space-y-2">
-                    <CommentInput
-                      value={newComment}
-                      onChange={setNewComment}
-                      isInternal={isInternal}
-                      onIsInternalChange={setIsInternal}
-                      placeholder="Add a comment..."
-                      disabled={submittingComment}
-                      showInternalOption={user?.role?.name === 'Admin/Manager' || user?.role?.name === 'Team Leader'}
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={handleAddComment}
-                        disabled={!newComment.trim() || submittingComment}
-                      >
-                        {submittingComment ? 'Adding...' : 'Add Comment'}
-                      </Button>
+                  {/* Add Comment - Only show in edit mode */}
+                  {!readOnly && (
+                    <div className="space-y-2">
+                      <CommentInput
+                        value={newComment}
+                        onChange={setNewComment}
+                        placeholder="Add a comment..."
+                        disabled={submittingComment}
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={handleAddComment}
+                          disabled={!newComment.trim() || submittingComment}
+                        >
+                          {submittingComment ? 'Adding...' : 'Add Comment'}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="attachments">
@@ -453,49 +454,9 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <div className="font-medium">{ticket.customer.name}</div>
-                <div className="text-sm text-muted-foreground">{ticket.customer.email}</div>
-                {ticket.customer.phone && (
-                  <div className="text-sm text-muted-foreground">{ticket.customer.phone}</div>
-                )}
+                <div className="font-medium">{ticket.customer?.name || 'Unknown'}</div>
+                <div className="text-sm text-muted-foreground">{ticket.customer?.email || 'No email'}</div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Followers */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Followers ({ticket.followers?.length || 0})
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onManageFollowers?.(ticket.id)}
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {ticket.followers && ticket.followers.length > 0 ? (
-                <div className="space-y-2">
-                  {ticket.followers.map((follower) => (
-                    <div key={follower.id} className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <div className="bg-primary text-primary-foreground flex items-center justify-center h-full text-xs">
-                          {follower.user.name?.charAt(0) || 'U'}
-                        </div>
-                      </Avatar>
-                      <span className="text-sm">{follower.user.name}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">No followers</div>
-              )}
             </CardContent>
           </Card>
 
@@ -519,18 +480,18 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers }: 
               )}
               <div>
                 <div className="text-muted-foreground">Created By</div>
-                <div className="font-medium">{ticket.creator.name}</div>
+                <div className="font-medium">{ticket.creator?.name || 'Unknown'}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Created At</div>
                 <div className="font-medium">
-                  {format(new Date(ticket.createdAt), 'MMM d, yyyy HH:mm')}
+                  {ticket.createdAt ? format(new Date(ticket.createdAt), 'MMM d, yyyy HH:mm') : 'Unknown'}
                 </div>
               </div>
               <div>
                 <div className="text-muted-foreground">Last Updated</div>
                 <div className="font-medium">
-                  {format(new Date(ticket.updatedAt), 'MMM d, yyyy HH:mm')}
+                  {ticket.updatedAt ? format(new Date(ticket.updatedAt), 'MMM d, yyyy HH:mm') : 'Unknown'}
                 </div>
               </div>
               {ticket.resolvedAt && (
