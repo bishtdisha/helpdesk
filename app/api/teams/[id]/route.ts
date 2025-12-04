@@ -22,6 +22,91 @@ interface RouteParams {
 }
 
 /**
+ * GET /api/teams/[id] - Get team by ID
+ */
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    const { id: teamId } = params;
+
+    // Check if user has permission to view teams
+    const hasPermission = await permissionEngine.checkPermission(
+      currentUser.id,
+      PERMISSION_ACTIONS.READ,
+      RESOURCE_TYPES.TEAMS
+    );
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        {
+          error: 'Insufficient permissions',
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You do not have permission to view teams',
+          requiredPermission: 'teams:read',
+        },
+        { status: 403 }
+      );
+    }
+
+    // Fetch team with members and leaders
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        members: {
+          include: {
+            role: true,
+          },
+        },
+        teamLeaders: {
+          include: {
+            user: {
+              include: {
+                role: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!team) {
+      return NextResponse.json(
+        { error: 'Team not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user can access this team
+    const canAccessTeam = await permissionEngine.canAccessTeamData(currentUser.id, teamId);
+    if (!canAccessTeam) {
+      return NextResponse.json(
+        {
+          error: 'Access denied',
+          code: 'TEAM_ACCESS_DENIED',
+          message: 'You do not have permission to view this team',
+        },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json({ team });
+  } catch (error) {
+    console.error('Error fetching team:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * PUT /api/teams/[id] - Update team (Admin only)
  * 
  * Request body:

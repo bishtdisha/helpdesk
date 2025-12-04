@@ -5,11 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-  Star, 
   Clock, 
   User, 
   Plus,
-  ArrowLeft,
   Loader2 
 } from 'lucide-react';
 import { TeamWithMembers } from '@/lib/types/rbac';
@@ -45,13 +43,6 @@ const statusColumns = [
   { key: 'CLOSED', label: 'Closed', color: 'bg-gray-500' },
 ];
 
-const priorityStars = {
-  URGENT: 4,
-  HIGH: 3,
-  MEDIUM: 2,
-  LOW: 1,
-};
-
 export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,16 +57,66 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
       setLoading(true);
       setError(null);
       
+      console.log('=== FETCHING TEAM TICKETS ===');
+      console.log('Team ID:', team.id);
+      console.log('Team Name:', team.name);
+      console.log('API URL:', `/api/tickets?teamId=${team.id}&limit=1000`);
+      
+      // Try fetching with teamId filter first
       const response = await fetch(`/api/tickets?teamId=${team.id}&limit=1000`, {
         credentials: 'include',
       });
+      
+      // Also try fetching all tickets to see what's available (for debugging)
+      const allTicketsResponse = await fetch(`/api/tickets?limit=1000`, {
+        credentials: 'include',
+      });
+      const allTicketsData = await allTicketsResponse.json();
+      const allTicketsArray = allTicketsData.tickets || allTicketsData.data || [];
+      console.log('=== ALL TICKETS (for debugging) ===');
+      console.log('Total tickets in system:', allTicketsArray.length);
+      if (allTicketsArray.length > 0) {
+        const ticketsWithTeam = allTicketsArray.filter((t: any) => t.team);
+        console.log('Tickets with team info:', ticketsWithTeam.length);
+        console.log('Team names in system:', [...new Set(ticketsWithTeam.map((t: any) => t.team?.name))]);
+        console.log('Tickets for this team (by name):', allTicketsArray.filter((t: any) => t.team?.name === team.name).length);
+        console.log('Tickets for this team (by ID):', allTicketsArray.filter((t: any) => t.teamId === team.id).length);
+      }
+
+      console.log('Response status:', response.status);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch team tickets');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API error:', errorData);
+        throw new Error(errorData.message || `Failed to fetch team tickets (${response.status})`);
       }
 
       const data = await response.json();
-      setTickets(data.tickets || []);
+      console.log('=== API RESPONSE ===');
+      console.log('Full response:', data);
+      
+      // Handle different response structures
+      const ticketsArray = data.tickets || data.data || [];
+      console.log('Total tickets received:', ticketsArray.length);
+      
+      if (ticketsArray.length > 0) {
+        console.log('Sample ticket:', ticketsArray[0]);
+        console.log('Ticket statuses:', ticketsArray.map((t: any) => ({ 
+          id: t.ticketNumber, 
+          status: t.status,
+          priority: t.priority 
+        })));
+        console.log('Status breakdown:', {
+          OPEN: ticketsArray.filter((t: any) => t.status === 'OPEN').length,
+          IN_PROGRESS: ticketsArray.filter((t: any) => t.status === 'IN_PROGRESS').length,
+          WAITING_FOR_CUSTOMER: ticketsArray.filter((t: any) => t.status === 'WAITING_FOR_CUSTOMER').length,
+          RESOLVED: ticketsArray.filter((t: any) => t.status === 'RESOLVED').length,
+          CLOSED: ticketsArray.filter((t: any) => t.status === 'CLOSED').length,
+          OTHER: ticketsArray.filter((t: any) => !['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'RESOLVED', 'CLOSED'].includes(t.status)).length
+        });
+      }
+      
+      setTickets(ticketsArray);
     } catch (err) {
       console.error('Error fetching team tickets:', err);
       setError(err instanceof Error ? err.message : 'Failed to load tickets');
@@ -88,18 +129,18 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
     return tickets.filter(ticket => ticket.status === status);
   };
 
-  const getPriorityColor = (priority: TicketPriority) => {
+  const getPriorityBorderColor = (priority: TicketPriority) => {
     switch (priority) {
       case 'URGENT':
-        return 'text-red-500';
+        return '#ef4444'; // red-500
       case 'HIGH':
-        return 'text-orange-500';
+        return '#f97316'; // orange-500
       case 'MEDIUM':
-        return 'text-yellow-500';
+        return '#eab308'; // yellow-500
       case 'LOW':
-        return 'text-blue-500';
+        return '#3b82f6'; // blue-500
       default:
-        return 'text-gray-500';
+        return '#6b7280'; // gray-500
     }
   };
 
@@ -133,16 +174,16 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold">{team.name}</h2>
-            <p className="text-sm text-muted-foreground">
-              {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} • {team.members?.length || 0} member{team.members?.length !== 1 ? 's' : ''}
+        <div>
+          <h2 className="text-2xl font-bold">{team.name}</h2>
+          <p className="text-sm text-muted-foreground">
+            {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} • {team.members?.length || 0} member{team.members?.length !== 1 ? 's' : ''}
+          </p>
+          {tickets.length === 0 && !loading && (
+            <p className="text-xs text-amber-600 mt-1">
+              No tickets found for this team. Check browser console for details.
             </p>
-          </div>
+          )}
         </div>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
@@ -179,16 +220,22 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
 
               {/* Ticket Cards */}
               <div className="space-y-3 min-h-[200px]">
+                {columnTickets.length === 0 && (
+                  <div className="text-center py-8 text-sm text-muted-foreground">
+                    No tickets
+                  </div>
+                )}
                 {columnTickets.map((ticket) => (
                   <Card
                     key={ticket.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    className="cursor-pointer hover:shadow-md transition-shadow border-l-4"
+                    style={{ borderLeftColor: getPriorityBorderColor(ticket.priority) }}
                     onClick={() => window.location.href = `/helpdesk/tickets/${ticket.id}`}
                   >
-                    <CardContent className="p-4 space-y-3">
-                      {/* Ticket Number */}
+                    <CardContent className="p-3 space-y-2">
+                      {/* Header: Ticket Number and SLA */}
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono text-muted-foreground">
+                        <span className="text-xs font-mono font-semibold text-foreground">
                           {formatTicketNumber(ticket.ticketNumber)}
                         </span>
                         {isOverdue(ticket.slaDueAt) && (
@@ -197,37 +244,27 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
                       </div>
 
                       {/* Title */}
-                      <p className="text-sm font-medium line-clamp-2">
+                      <p className="text-sm font-medium line-clamp-2 leading-tight">
                         {ticket.title}
                       </p>
 
-                      {/* Customer */}
-                      {ticket.customer && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <User className="w-3 h-3" />
-                          <span className="truncate">{ticket.customer.name}</span>
-                        </div>
-                      )}
+                      {/* Footer: Customer and Assignee */}
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        {/* Customer */}
+                        {ticket.customer && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                            <User className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{ticket.customer.name}</span>
+                          </div>
+                        )}
 
-                      {/* Priority Stars */}
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: priorityStars[ticket.priority] }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={cn(
-                              "w-3 h-3 fill-current",
-                              getPriorityColor(ticket.priority)
-                            )}
-                          />
-                        ))}
+                        {/* Assigned User */}
+                        {ticket.assignedUser && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0 h-5 flex-shrink-0">
+                            {ticket.assignedUser.name.split(' ')[0]}
+                          </Badge>
+                        )}
                       </div>
-
-                      {/* Assigned User Badge */}
-                      {ticket.assignedUser && (
-                        <Badge variant="outline" className="text-xs">
-                          {ticket.assignedUser.name.split(' ')[0]}
-                        </Badge>
-                      )}
                     </CardContent>
                   </Card>
                 ))}

@@ -29,6 +29,12 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
   const { user, isAuthenticated, isLoading, logout } = useAuth()
   const router = useRouter()
 
+  // Check if we're on the dashboard page
+  const isDashboard = typeof window !== 'undefined' && 
+    (window.location.pathname === '/dashboard' || 
+     window.location.pathname === '/helpdesk/dashboard' ||
+     window.location.pathname.endsWith('/dashboard'));
+
   // Get user initials for avatar
   const getUserInitials = (name?: string | null, email?: string) => {
     if (name) {
@@ -85,15 +91,17 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
   return (
     <header id="navigation" className="bg-card border-b border-border px-6 py-3 flex items-center justify-between h-[56px]" role="banner">
       <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="flex items-center hover:bg-accent"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        {!isDashboard && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="flex items-center hover:bg-accent"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
         <h1 className="text-xl font-semibold text-foreground">{title}</h1>
       </div>
       
