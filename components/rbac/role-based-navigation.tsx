@@ -89,6 +89,8 @@ const menuItems: MenuItem[] = [
     id: "users", 
     label: "User Management", 
     icon: UserCog,
+    action: PERMISSION_ACTIONS.READ,
+    resource: RESOURCE_TYPES.USERS,
     requireRole: ROLE_TYPES.ADMIN_MANAGER
   },
   

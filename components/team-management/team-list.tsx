@@ -34,15 +34,17 @@ import {
   Crown,
   Loader2,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TeamListProps {
   onCreateTeam: () => void;
   onEditTeam: (team: TeamWithMembers) => void;
   onDeleteTeam: (team: TeamWithMembers) => void;
   onViewMembers: (team: TeamWithMembers) => void;
+  onViewTeamBoard?: (team: TeamWithMembers) => void;
 }
 
-export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers }: TeamListProps) {
+export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers, onViewTeamBoard }: TeamListProps) {
   const { user: currentUser } = useAuth();
   const [teams, setTeams] = useState<TeamWithMembers[]>([]);
   const [loading, setLoading] = useState(true);
@@ -236,7 +238,14 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                   const isLeader = currentUser && team.teamLeaders?.some(tl => tl.user.id === currentUser.id);
                   
                   return (
-                    <TableRow key={team.id} className={isLeader ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
+                    <TableRow 
+                      key={team.id} 
+                      className={cn(
+                        "cursor-pointer hover:bg-muted/50 transition-colors",
+                        isLeader ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''
+                      )}
+                      onClick={() => onViewTeamBoard && onViewTeamBoard(team)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="font-medium">{team.name}</div>
@@ -273,7 +282,7 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                           {new Date(team.createdAt).toLocaleDateString()}
                         </div>
                       </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">

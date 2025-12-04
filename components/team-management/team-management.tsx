@@ -6,6 +6,7 @@ import { TeamList } from './team-list';
 import { TeamForm } from './team-form';
 import { TeamMembersList } from './team-members-list';
 import { TeamAssignment } from './team-assignment';
+import { TeamKanbanBoard } from './team-kanban-board';
 import { Button } from '@/components/ui/button';
 import { 
   Dialog,
@@ -27,6 +28,7 @@ type DialogState = {
 export function TeamManagement() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [deletingTeam, setDeletingTeam] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<TeamWithMembers | null>(null);
   
   const [dialogs, setDialogs] = useState<DialogState>({
     teamForm: { isOpen: false, team: null, mode: 'create' },
@@ -83,6 +85,15 @@ export function TeamManagement() {
   const handleViewMembers = (team: TeamWithMembers) => {
     updateDialog('teamMembers', { isOpen: true, team });
   };
+
+  const handleViewTeamBoard = (team: TeamWithMembers) => {
+    setSelectedTeam(team);
+  };
+
+  const handleBackToList = () => {
+    setSelectedTeam(null);
+    refreshData();
+  };
   
   // Team Members handlers
   const handleRemoveMember = (user: SafeUserWithRole) => {
@@ -124,14 +135,22 @@ export function TeamManagement() {
   
   return (
     <div className="space-y-6">
-      {/* Main Team List */}
-      <TeamList
-        key={refreshTrigger} // Force re-render when data changes
-        onCreateTeam={handleCreateTeam}
-        onEditTeam={handleEditTeam}
-        onDeleteTeam={handleDeleteTeam}
-        onViewMembers={handleViewMembers}
-      />
+      {/* Show Kanban Board if team is selected, otherwise show Team List */}
+      {selectedTeam ? (
+        <TeamKanbanBoard
+          team={selectedTeam}
+          onBack={handleBackToList}
+        />
+      ) : (
+        <TeamList
+          key={refreshTrigger} // Force re-render when data changes
+          onCreateTeam={handleCreateTeam}
+          onEditTeam={handleEditTeam}
+          onDeleteTeam={handleDeleteTeam}
+          onViewMembers={handleViewMembers}
+          onViewTeamBoard={handleViewTeamBoard}
+        />
+      )}
       
       {/* Team Form Dialog */}
       <TeamForm
