@@ -1027,6 +1027,12 @@ export class TicketService {
     // Get role-based filters
     const roleFilters = await ticketAccessControl.getTicketFilters(userId);
 
+    console.log('🔍 listTickets called:', {
+      userId,
+      roleFilters: JSON.stringify(roleFilters, null, 2),
+      filters
+    });
+
     // Build where clause
     const where: Prisma.TicketWhereInput = {
       AND: [
@@ -1072,6 +1078,8 @@ export class TicketService {
     // Get total count
     const total = await prisma.ticket.count({ where });
 
+    console.log('🔍 Ticket count:', total);
+
     // Get tickets
     const tickets = await prisma.ticket.findMany({
       where,
@@ -1116,6 +1124,12 @@ export class TicketService {
           },
         },
       },
+    });
+
+    console.log('🔍 Tickets found:', {
+      count: tickets.length,
+      ticketIds: tickets.map(t => t.id),
+      ticketTitles: tickets.map(t => t.title)
     });
 
     const totalPages = Math.ceil(total / limit);

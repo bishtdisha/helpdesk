@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import { prisma } from './db';
 import { performanceMonitor } from './performance-monitor';
 import { userCache } from './cache/user-cache';
+import { JWTUtils } from './jwt-utils';
 
 // Password hashing utilities
 export class PasswordUtils {
@@ -46,7 +47,7 @@ export class SessionUtils {
   }
 
   /**
-   * Create a new user session
+   * Create a new user session with JWT token
    */
   static async createSession(
     userId: string,
@@ -57,6 +58,7 @@ export class SessionUtils {
     const token = this.generateToken();
     const expiresAt = this.getExpiryDate(expiryHours);
 
+    // Create session in database
     const session = await prisma.userSession.create({
       data: {
         userId,
@@ -65,9 +67,47 @@ export class SessionUtils {
         ipAddress,
         userAgent,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            roleId: true,
+            teamId: true,
+            role: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    return session;
+    // Generate JWT token with user data for fast validation
+    const jwtToken = JWTUtils.generateToken({
+      userId: session.user.id,
+      email: session.user.email,
+      name: session.user.name,
+      roleId: session.user.roleId,
+      roleName: session.user.role?.name || null,
+      teamId: session.user.teamId,
+      teamName: session.user.team?.name || null,
+      sessionId: session.id,
+    });
+
+    return {
+      ...session,
+      jwtToken, // Return JWT token for cookie
+    };
   }
 
   /**
@@ -194,6 +234,17 @@ export class SessionUtils {
 
     endTimer({ source: 'database', hasRole: !!user.role, hasTeam: !!user.team });
     return finalResult;
+  }
+
+  /**
+   * Fast JWT validation - validates token without database query
+   * Returns user data from JWT payload (0.5-2ms vs 100-200ms for DB query)
+   */
+  static validateJWT(token: string) {
+    const endTimer = performanceMonitor.startTimer('jwt_validation');
+    const payload = JWTUtils.verifyToken(token);
+    endTimer({ found: !!payload });
+    return payload;
   }
 
   /**

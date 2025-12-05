@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
-import { Download, Trash2, File, FileText, Image, FileArchive } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, Trash2, File, FileText, Image, FileArchive, Eye, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // File type icons mapping
 const getFileIcon = (mimeType: string) => {
@@ -43,6 +44,16 @@ interface AttachmentListProps {
   isLoading?: boolean;
 }
 
+// Check if file type can be previewed
+const canPreview = (mimeType: string): boolean => {
+  return (
+    mimeType.startsWith('image/') ||
+    mimeType === 'application/pdf' ||
+    mimeType.startsWith('text/') ||
+    mimeType === 'application/json'
+  );
+};
+
 export function AttachmentList({
   attachments,
   onDownload,
@@ -50,6 +61,63 @@ export function AttachmentList({
   canDelete,
   isLoading = false,
 }: AttachmentListProps) {
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const handlePreview = (attachment: Attachment) => {
+    setPreviewAttachment(attachment);
+    setIsPreviewOpen(true);
+  };
+
+  const handleDownload = async (attachment: Attachment, e?: React.MouseEvent) => {
+    // Prevent event bubbling if called from button
+    e?.stopPropagation();
+    
+    if (onDownload) {
+      onDownload(attachment);
+      return;
+    }
+    
+    // Direct download without opening new tab
+    try {
+      const response = await fetch(`/api/attachments/${attachment.id}`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Download failed');
+      }
+      
+      // Get the blob
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.fileName;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+    } catch (error) {
+      console.error('Download error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download file';
+      // Use a more user-friendly notification instead of alert
+      if (typeof window !== 'undefined' && 'toast' in window) {
+        // @ts-ignore
+        window.toast?.error?.(errorMessage);
+      } else {
+        alert(errorMessage);
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -87,7 +155,15 @@ export function AttachmentList({
         return (
           <div
             key={attachment.id}
-            className="flex items-center gap-3 p-3 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-3 p-3 border rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+            onClick={() => {
+              // Click anywhere to preview if supported, otherwise download
+              if (canPreview(attachment.mimeType || '')) {
+                handlePreview(attachment);
+              } else {
+                handleDownload(attachment);
+              }
+            }}
           >
             <FileIcon className="h-8 w-8 text-gray-400 flex-shrink-0" />
 
@@ -117,21 +193,35 @@ export function AttachmentList({
             </div>
 
             <div className="flex items-center gap-1 flex-shrink-0">
-              {onDownload && (
+              {canPreview(attachment.mimeType || '') && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onDownload(attachment)}
-                  title="Download"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreview(attachment);
+                  }}
+                  title="Preview"
                 >
-                  <Download className="h-4 w-4" />
+                  <Eye className="h-4 w-4" />
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => handleDownload(attachment, e)}
+                title="Download"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
               {showDelete && onDelete && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onDelete(attachment)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(attachment);
+                  }}
                   title="Delete"
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
@@ -142,6 +232,72 @@ export function AttachmentList({
           </div>
         );
       })}
+
+      {/* Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{previewAttachment?.fileName}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsPreviewOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {previewAttachment && (
+            <div className="mt-4">
+              {previewAttachment.mimeType?.startsWith('image/') && (
+                <img
+                  src={`/api/attachments/${previewAttachment.id}/preview`}
+                  alt={previewAttachment.fileName}
+                  className="w-full h-auto rounded-lg"
+                />
+              )}
+              
+              {previewAttachment.mimeType === 'application/pdf' && (
+                <iframe
+                  src={`/api/attachments/${previewAttachment.id}/preview`}
+                  className="w-full h-[70vh] rounded-lg border"
+                  title={previewAttachment.fileName}
+                />
+              )}
+              
+              {(previewAttachment.mimeType?.startsWith('text/') || 
+                previewAttachment.mimeType === 'application/json') && (
+                <iframe
+                  src={`/api/attachments/${previewAttachment.id}/preview`}
+                  className="w-full h-[70vh] rounded-lg border bg-white"
+                  title={previewAttachment.fileName}
+                />
+              )}
+              
+              <div className="mt-4 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(previewAttachment);
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsPreviewOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

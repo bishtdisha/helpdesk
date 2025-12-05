@@ -165,12 +165,26 @@ export class TicketAccessControl {
       case ROLE_TYPES.USER_EMPLOYEE:
         // Only tickets they created, are assigned to, or are following
         const followedTicketIds = await this.getFollowedTicketIds(userId);
+        
+        // Build OR conditions - only include followed tickets if there are any
+        const orConditions: any[] = [
+          { createdBy: userId },
+          { assignedTo: userId },
+        ];
+        
+        // Only add the follower condition if there are followed tickets
+        if (followedTicketIds.length > 0) {
+          orConditions.push({ id: { in: followedTicketIds } });
+        }
+        
+        console.log('🔍 Employee Ticket Filters:', {
+          userId,
+          followedTicketIds,
+          orConditions
+        });
+        
         return {
-          OR: [
-            { createdBy: userId },
-            { assignedTo: userId },
-            { id: { in: followedTicketIds } },
-          ],
+          OR: orConditions,
         };
 
       default:

@@ -46,7 +46,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 // Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Changed to false - don't block rendering
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const router = useRouter();
 
   // Load cached user data
@@ -110,38 +110,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load cached user immediately, only fetch if needed
   useEffect(() => {
-    // Try to load from cache first (instant)
-    const hasCached = loadCachedUser();
+    const initAuth = async () => {
+      // Try to load from cache first (instant)
+      const hasCached = loadCachedUser();
+      
+      if (hasCached) {
+        // Cache hit - stop loading immediately
+        setIsLoading(false);
+        
+        // Validate in background after 30 seconds
+        const validationTimer = setTimeout(() => {
+          fetchUser();
+        }, 30000); // 30 seconds delay
+        
+        return () => clearTimeout(validationTimer);
+      } else {
+        // No cache - fetch immediately
+        await fetchUser();
+        setIsLoading(false);
+      }
+    };
     
-    if (hasCached) {
-      // Cache hit - validate in background after 30 seconds
-      const validationTimer = setTimeout(() => {
-        fetchUser();
-      }, 30000); // 30 seconds delay
-      
-      return () => clearTimeout(validationTimer);
-    } else {
-      // No cache - fetch immediately but don't block rendering
-      setUser({
-        id: 'loading',
-        email: 'loading@example.com',
-        name: 'Loading...',
-        roleId: null,
-        teamId: null,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        role: {
-          id: 'loading',
-          name: 'Admin/Manager', // Default to show dashboard
-          description: null,
-        },
-        team: null,
-      });
-      
-      // Fetch user data
-      setTimeout(() => fetchUser(), 0);
-    }
+    initAuth();
   }, [loadCachedUser, fetchUser]);
 
   // Login function
@@ -181,10 +171,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchUser]);
 
-  // Logout function
+  // Logout function - completely clear all user data
   const logout = useCallback(async () => {
     try {
-      // Call logout API
+      // Call logout API to invalidate server session
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
@@ -192,33 +182,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear all user data
+      // 1. Clear React state immediately
       setUser(null);
-      cacheUser(null);
+      setIsLoading(false);
       
-      // Clear all localStorage
+      // 2. Clear all localStorage (including cached user data)
       try {
         localStorage.clear();
       } catch (e) {
         console.error('Error clearing localStorage:', e);
       }
       
-      // Clear all sessionStorage
+      // 3. Clear all sessionStorage
       try {
         sessionStorage.clear();
       } catch (e) {
         console.error('Error clearing sessionStorage:', e);
       }
       
-      // Force redirect to login
-      router.push('/login');
+      // 4. Clear all cookies (client-side accessible ones)
+      try {
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+      } catch (e) {
+        console.error('Error clearing cookies:', e);
+      }
       
-      // Force page reload to clear any remaining state
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 100);
+      // 5. Clear browser cache for this origin (if supported)
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            caches.delete(name);
+          });
+        });
+      }
+      
+      // 6. Force hard reload to login page (clears all in-memory state)
+      window.location.href = '/login';
     }
-  }, [router, cacheUser]);
+  }, []);
 
   // Refresh user data
   const refreshUser = useCallback(async () => {

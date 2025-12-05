@@ -26,9 +26,9 @@ export default function TicketsLayout({
 
   const handleModuleChange = (module: string) => {
     setActiveModule(module);
-    // Navigate to dashboard with the selected module
+    // Navigate to helpdesk with the selected module
     if (module !== 'tickets') {
-      window.location.href = '/dashboard';
+      window.location.href = '/helpdesk/dashboard';
       setTimeout(() => {
         const event = new CustomEvent('setActiveModule', { detail: module });
         window.dispatchEvent(event);

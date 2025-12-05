@@ -29,8 +29,16 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Clear the session cookie regardless of whether session existed in database
+    // Clear both session and JWT cookies
     response.cookies.set('session-token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0, // Expire immediately
+      path: '/',
+    });
+
+    response.cookies.set('auth-token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -51,8 +59,16 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Clear the session cookie
+    // Clear both cookies
     response.cookies.set('session-token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+
+    response.cookies.set('auth-token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

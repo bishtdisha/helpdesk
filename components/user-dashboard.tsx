@@ -47,8 +47,18 @@ export function UserDashboard() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'open' | 'in_progress' | 'resolved'>('all');
 
   // Fetch user's tickets (created by user)
-  const { tickets: myTickets, isLoading: myTicketsLoading } = useTickets({
+  const { tickets: myTickets, isLoading: myTicketsLoading, error } = useTickets({
     // The API will automatically filter by createdBy for User_Employee
+  });
+
+  // Debug logging
+  console.log('🔍 UserDashboard Debug:', {
+    user,
+    role,
+    myTickets,
+    myTicketsLoading,
+    error,
+    ticketsCount: myTickets.length
   });
 
   // Calculate statistics from tickets
@@ -66,21 +76,9 @@ export function UserDashboard() {
   // In a real implementation, this would be a separate API call
   const followedTickets = myTickets.filter(t => t.followers && t.followers.length > 0);
 
-  if (role !== 'User_Employee') {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Denied</CardTitle>
-            <CardDescription className="text-center">
-              This dashboard is only available for User_Employee role.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
+  // No access check needed - DashboardRouter handles role-based routing
+  // This dashboard shows user-specific data regardless of role
+  
   return (
     <div className="space-y-6">
       {/* Welcome Message */}

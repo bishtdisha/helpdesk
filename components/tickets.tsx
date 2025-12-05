@@ -22,7 +22,7 @@ export function Tickets() {
       category: 'Tickets',
       handler: () => {
         if (permissions.canCreateTicket()) {
-          router.push('/dashboard/tickets/new')
+          router.push('/helpdesk/tickets/new')
         }
       },
     },
@@ -38,7 +38,7 @@ export function Tickets() {
   ])
 
   const handleCreateTicket = () => {
-    router.push('/dashboard/tickets/new')
+    router.push('/helpdesk/tickets/new')
   }
 
   return (

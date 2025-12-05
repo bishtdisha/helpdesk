@@ -3,7 +3,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 
-// Allowed file types
+// Allowed file types - Allow most common file types
 const ALLOWED_MIME_TYPES = [
   // Images
   'image/jpeg',
@@ -11,23 +11,53 @@ const ALLOWED_MIME_TYPES = [
   'image/png',
   'image/gif',
   'image/webp',
-  // Documents
+  'image/bmp',
+  'image/svg+xml',
+  'image/tiff',
+  // Documents - PDF
   'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  // Text
+  // Documents - Microsoft Office (old formats)
+  'application/msword', // .doc
+  'application/vnd.ms-excel', // .xls
+  'application/vnd.ms-powerpoint', // .ppt
+  // Documents - Microsoft Office (new formats)
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  // Documents - OpenOffice/LibreOffice
+  'application/vnd.oasis.opendocument.text', // .odt
+  'application/vnd.oasis.opendocument.spreadsheet', // .ods
+  'application/vnd.oasis.opendocument.presentation', // .odp
+  // Text files
   'text/plain',
   'text/csv',
   'text/html',
+  'text/xml',
   'text/markdown',
+  'text/rtf',
+  'application/rtf',
+  'application/json',
+  'application/xml',
   // Archives
   'application/zip',
   'application/x-zip-compressed',
   'application/x-rar-compressed',
+  'application/x-7z-compressed',
+  'application/x-tar',
+  'application/gzip',
+  // Audio
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/ogg',
+  // Video
+  'video/mp4',
+  'video/mpeg',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/webm',
+  // Other common types
+  'application/octet-stream', // Generic binary file
 ];
 
 // File size limits (in bytes)
@@ -104,35 +134,61 @@ export class FileUploadService {
     subDirectory: string = 'general',
     options?: FileValidationOptions
   ): Promise<UploadedFileInfo> {
+    console.log('📁 uploadFile called:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      subDirectory,
+      uploadDir: this.uploadDir
+    });
+
     // Validate the file
+    console.log('✓ Validating file...');
     this.validateFile(file, options);
+    console.log('✓ File validation passed');
 
     // Generate unique filename
     const uniqueFileName = this.generateUniqueFileName(file.name);
+    console.log('✓ Generated unique filename:', uniqueFileName);
 
     // Create upload directory if it doesn't exist
     const targetDir = path.join(this.uploadDir, subDirectory);
+    console.log('✓ Target directory:', targetDir);
     await this.ensureDirectoryExists(targetDir);
+    console.log('✓ Directory ensured');
 
     // Get file path
     const filePath = path.join(targetDir, uniqueFileName);
     const relativePath = path.join(subDirectory, uniqueFileName);
+    console.log('✓ File paths:', { filePath, relativePath });
 
-    // Convert File to Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    try {
+      // Convert File to Buffer
+      console.log('✓ Converting file to buffer...');
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      console.log('✓ Buffer created, size:', buffer.length);
 
-    // Write file to disk
-    await writeFile(filePath, buffer);
+      // Write file to disk
+      console.log('✓ Writing file to disk...');
+      await writeFile(filePath, buffer);
+      console.log('✅ File written successfully');
 
-    return {
-      fileName: uniqueFileName,
-      originalFileName: file.name,
-      filePath: relativePath,
-      fileSize: file.size,
-      mimeType: file.type,
-      uploadedAt: new Date(),
-    };
+      return {
+        fileName: uniqueFileName,
+        originalFileName: file.name,
+        filePath: relativePath,
+        fileSize: file.size,
+        mimeType: file.type,
+        uploadedAt: new Date(),
+      };
+    } catch (error) {
+      console.error('❌ Error writing file:', error);
+      throw new FileUploadError(
+        `Failed to write file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'FILE_WRITE_ERROR'
+      );
+    }
   }
 
   /**
@@ -237,9 +293,20 @@ export class FileUploadService {
       throw new FileSizeError(file.size, maxSize);
     }
 
-    // Validate file type
+    // Validate file type - be lenient, only block dangerous file types
+    const dangerousExtensions = ['.exe', '.bat', '.cmd', '.com', '.scr', '.vbs', '.js', '.jar', '.msi', '.app', '.deb', '.rpm'];
+    const fileExtension = this.getFileExtension(file.name);
+    
+    if (dangerousExtensions.includes(fileExtension.toLowerCase())) {
+      throw new FileUploadError(
+        `File type ${fileExtension} is not allowed for security reasons`,
+        'FILE_TYPE_DANGEROUS'
+      );
+    }
+    
+    // If MIME type is provided and not in allowed list, show warning but allow
     if (file.type && !allowedMimeTypes.includes(file.type)) {
-      throw new FileTypeError(file.type);
+      console.warn(`⚠️  File type ${file.type} is not in the standard allowed list, but will be accepted`);
     }
 
     // Additional validation for file extensions if provided

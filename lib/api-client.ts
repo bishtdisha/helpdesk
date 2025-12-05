@@ -104,11 +104,15 @@ export class APIClient {
   ): Promise<T> {
     const startTime = performance.now();
     
-    // Add default headers
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+    // Add default headers only if not FormData
+    // For FormData, let the browser set the Content-Type with boundary
+    const isFormData = options.body instanceof FormData;
+    const headers: HeadersInit = isFormData 
+      ? { ...options.headers } 
+      : {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        };
 
     try {
       const response = await fetch(url, {
@@ -149,19 +153,27 @@ export class APIClient {
    */
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     const url = this.buildURL(endpoint, params);
-    return this.request<T>(url, {
+    console.log('🔍 API Client GET:', { endpoint, params, url });
+    const result = await this.request<T>(url, {
       method: 'GET',
     });
+    console.log('🔍 API Client Response:', { endpoint, result });
+    return result;
   }
 
   /**
    * POST request
    */
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any, options?: { headers?: HeadersInit }): Promise<T> {
     const url = this.buildURL(endpoint);
+    
+    // Check if data is FormData - if so, don't stringify and don't set Content-Type
+    const isFormData = data instanceof FormData;
+    
     return this.request<T>(url, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      headers: isFormData ? options?.headers : { 'Content-Type': 'application/json', ...options?.headers },
     });
   }
 

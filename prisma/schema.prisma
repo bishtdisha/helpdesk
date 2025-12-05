@@ -37,7 +37,7 @@ model User {
   comments            Comment[]
   teamLeaderships     TeamLeader[]       // Teams this user leads
   ticketFollowers     TicketFollower[]
-  uploadedAttachments    TicketAttachment[]
+  uploadedAttachments    TicketAttachment[] @relation("UploadedAttachments")
   ticketHistory          TicketHistory[]
   notifications          Notification[]
   notificationPreference NotificationPreferences?
@@ -45,6 +45,8 @@ model User {
   ticketFeedback         TicketFeedback[]  // Feedback given by user
   passwordResetTokens    PasswordResetToken[]
 
+  @@index([roleId])
+  @@index([teamId])
   @@map("users")
 }
 
@@ -296,7 +298,7 @@ model TicketAttachment {
 
   // Relationships
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  uploader User   @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploader User   @relation("UploadedAttachments", fields: [uploadedBy], references: [id], onDelete: Cascade)
 
   @@map("ticket_attachments")
 }

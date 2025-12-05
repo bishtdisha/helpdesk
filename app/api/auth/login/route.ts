@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Set secure httpOnly cookie with session token
+    // Set secure httpOnly cookies with both session token and JWT
     if (result.session) {
+      // Legacy session token (for backward compatibility)
       response.cookies.set('session-token', result.session.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -71,6 +72,17 @@ export async function POST(request: NextRequest) {
         maxAge: 24 * 60 * 60, // 24 hours in seconds
         path: '/',
       });
+
+      // JWT token for fast validation (primary method)
+      if (result.session.jwtToken) {
+        response.cookies.set('auth-token', result.session.jwtToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 24 * 60 * 60, // 24 hours in seconds
+          path: '/',
+        });
+      }
     }
 
     return response;

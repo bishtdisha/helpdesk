@@ -235,22 +235,10 @@ export function EnhancedTicketCreateForm({
           // Simulate progress updates for better UX
           setUploadProgress(10);
           
+          // Don't set Content-Type header - let the browser set it with boundary
           await apiClient.post(
             `/api/tickets/${ticketId}/attachments`,
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-              onUploadProgress: (progressEvent) => {
-                if (progressEvent.total) {
-                  const percentCompleted = Math.round(
-                    (progressEvent.loaded * 100) / progressEvent.total
-                  );
-                  setUploadProgress(percentCompleted);
-                }
-              },
-            }
+            formData
           );
           
           setUploadProgress(100);

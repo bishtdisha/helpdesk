@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CommentInput } from "@/components/comment-input"
+import { AttachmentList } from "@/components/attachment-list"
 import {
   Clock,
   User,
@@ -27,10 +28,11 @@ interface TicketDetailProps {
   ticketId: string
   onBack?: () => void
   onAssign?: (ticketId: string) => void
+  onManageFollowers?: () => void
   readOnly?: boolean
 }
 
-export function TicketDetail({ ticketId, onBack, onAssign, readOnly = true }: TicketDetailProps) {
+export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers, readOnly = true }: TicketDetailProps) {
   const { user } = useAuth()
   const [ticket, setTicket] = useState<TicketWithRelations | null>(null)
   const [loading, setLoading] = useState(true)
@@ -382,34 +384,37 @@ export function TicketDetail({ ticketId, onBack, onAssign, readOnly = true }: Ti
                 </TabsContent>
 
                 <TabsContent value="attachments">
-                  {ticket.attachments && ticket.attachments.length > 0 ? (
-                    <div className="space-y-2">
-                      {ticket.attachments.map((attachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Paperclip className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium">{attachment.fileName}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {(attachment.fileSize / 1024).toFixed(2)} KB • Uploaded by{' '}
-                                {attachment.uploader.name}
-                              </div>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            Download
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No attachments
-                    </div>
-                  )}
+                  <AttachmentList
+                    attachments={ticket.attachments || []}
+                    onDelete={async (attachment) => {
+                      if (!confirm(`Are you sure you want to delete "${attachment.fileName}"?`)) {
+                        return;
+                      }
+                      
+                      try {
+                        const response = await fetch(`/api/attachments/${attachment.id}`, {
+                          method: 'DELETE',
+                          credentials: 'include',
+                        });
+                        
+                        if (!response.ok) {
+                          const error = await response.json();
+                          throw new Error(error.message || 'Failed to delete attachment');
+                        }
+                        
+                        toast.success('Attachment deleted successfully');
+                        // Refresh ticket data to update attachments list
+                        fetchTicket();
+                      } catch (error) {
+                        console.error('Delete error:', error);
+                        toast.error(error instanceof Error ? error.message : 'Failed to delete attachment');
+                      }
+                    }}
+                    canDelete={(attachment) => {
+                      // User can delete if they uploaded it or are admin
+                      return attachment.uploader?.id === user?.id || user?.role === 'Admin/Manager';
+                    }}
+                  />
                 </TabsContent>
 
                 <TabsContent value="history">

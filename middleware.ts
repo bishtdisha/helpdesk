@@ -15,19 +15,25 @@ export async function middleware(request: NextRequest) {
   }
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/register', '/welcome', '/forgot-password', '/reset-password', '/']
+  const publicRoutes = ['/login', '/register', '/welcome', '/forgot-password', '/reset-password', '/logout', '/']
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')
+
+  // If user is not authenticated and trying to access a protected route
+  if (!sessionToken && !isPublicRoute) {
+    // Redirect to login page
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // If user is authenticated and on public route (except welcome), redirect to helpdesk
+  if (sessionToken && isPublicRoute && pathname !== '/welcome' && pathname !== '/') {
+    const helpdeskUrl = new URL('/helpdesk/dashboard', request.url)
+    return NextResponse.redirect(helpdeskUrl)
+  }
 
   // If user is on a public route, let them through
   if (isPublicRoute) {
     return NextResponse.next()
-  }
-
-  // If user is not authenticated and trying to access a protected route
-  if (!sessionToken) {
-    // Redirect to login page
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
   }
 
   // Session token exists - pass it to API routes via header

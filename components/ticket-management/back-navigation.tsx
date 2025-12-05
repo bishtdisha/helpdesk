@@ -43,7 +43,7 @@ interface BackNavigationProps {
  */
 export function BackNavigation({ 
   label, 
-  fallbackUrl = '/dashboard',
+  fallbackUrl = '/helpdesk/dashboard',
   className = ''
 }: BackNavigationProps) {
   const router = useRouter();

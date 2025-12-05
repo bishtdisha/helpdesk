@@ -73,6 +73,13 @@ export async function GET(request: NextRequest) {
     // Get tickets with role-based filtering
     const result = await ticketService.listTickets(filters, currentUser.id);
 
+    console.log('🔍 API Response:', {
+      userId: currentUser.id,
+      userName: currentUser.name,
+      ticketsCount: result.data.length,
+      total: result.pagination.total
+    });
+
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching tickets:', error);

@@ -30,7 +30,7 @@ export default function LoginPage() {
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState(false)
-  const [redirectTo, setRedirectTo] = useState<string>("/dashboard")
+  const [redirectTo, setRedirectTo] = useState<string>("/helpdesk/dashboard")
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
@@ -80,6 +80,14 @@ export default function LoginPage() {
     setErrors({})
 
     try {
+      // Clear any residual data from previous sessions BEFORE login
+      try {
+        localStorage.clear()
+        sessionStorage.clear()
+      } catch (e) {
+        console.error('Error clearing storage before login:', e)
+      }
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -94,10 +102,10 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // Redirect to dashboard after successful login
-        const dashboardUrl = redirectTo === "/" ? "/dashboard" : redirectTo
-        router.push(dashboardUrl)
-        // Force a page refresh to ensure auth state is updated
+        // Redirect to helpdesk dashboard after successful login
+        const dashboardUrl = redirectTo === "/" ? "/helpdesk/dashboard" : redirectTo
+        
+        // Force a hard reload to ensure completely fresh state
         window.location.href = dashboardUrl
       } else {
         // Handle API authentication errors

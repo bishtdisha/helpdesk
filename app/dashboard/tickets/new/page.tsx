@@ -33,7 +33,7 @@ export default function NewTicketPage() {
    * @param ticketId - The ID of the newly created ticket
    */
   const handleSuccess = (ticketId: string) => {
-    router.push(`/dashboard/tickets/${ticketId}`);
+    router.push(`/helpdesk/tickets/${ticketId}`);
   };
 
   /**
@@ -45,8 +45,8 @@ export default function NewTicketPage() {
     if (window.history.length > 1) {
       router.back();
     } else {
-      // Fallback to dashboard if no history
-      router.push('/dashboard');
+      // Fallback to helpdesk if no history
+      router.push('/helpdesk/dashboard');
       setTimeout(() => {
         const event = new CustomEvent('setActiveModule', { detail: 'tickets' });
         window.dispatchEvent(event);

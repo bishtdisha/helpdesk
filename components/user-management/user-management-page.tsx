@@ -28,7 +28,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Users, Plus, Edit, Trash2, Loader2, AlertTriangle, CheckCircle2, 
-  Search, Filter, X
+  Search, Filter, X, Eye, EyeOff
 } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 
@@ -79,8 +79,12 @@ export function UserManagementPage() {
     name: "",
     email: "",
     password: "",
+    confirmPassword: "",
     roleId: "",
+    teamId: "none",
   })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [editFormData, setEditFormData] = useState({
     roleId: "",
     teamId: "",
@@ -199,11 +203,37 @@ export function UserManagementPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Validate password length
+    if (formData.password.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive",
+      })
+      return
+    }
+    
     try {
       const response = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          roleId: formData.roleId || undefined,
+          teamId: formData.teamId === "none" ? undefined : formData.teamId,
+        }),
       })
 
       if (!response.ok) {
@@ -217,7 +247,9 @@ export function UserManagementPage() {
       })
 
       setIsDialogOpen(false)
-      setFormData({ name: "", email: "", password: "", roleId: "" })
+      setFormData({ name: "", email: "", password: "", confirmPassword: "", roleId: "", teamId: "none" })
+      setShowPassword(false)
+      setShowConfirmPassword(false)
       fetchUsers()
     } catch (error: any) {
       toast({
@@ -342,33 +374,82 @@ export function UserManagementPage() {
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div>
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name">Full Name *</Label>
                       <Input
                         id="name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Enter full name"
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">Email *</Label>
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="Enter email address"
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        required
-                      />
+                      <Label htmlFor="password">Password *</Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          placeholder="Enter password (min 8 characters)"
+                          className="pr-10"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Password must be at least 8 characters long
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={formData.confirmPassword}
+                          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                          placeholder="Re-enter password"
+                          className="pr-10"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="role">Role</Label>
@@ -383,6 +464,25 @@ export function UserManagementPage() {
                           {roles.map((role) => (
                             <SelectItem key={role.id} value={role.id}>
                               {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="team">Team</Label>
+                      <Select
+                        value={formData.teamId}
+                        onValueChange={(value) => setFormData({ ...formData, teamId: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a team (optional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No team</SelectItem>
+                          {teams.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>
+                              {team.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -761,3 +861,4 @@ export function UserManagementPage() {
     </>
   )
 }
+

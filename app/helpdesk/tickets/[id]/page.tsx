@@ -36,13 +36,24 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   return (
     <div className="container mx-auto py-6">
       {/* Ticket Detail - Read Only */}
-      <TicketDetail
-        ticketId={params.id}
-        onBack={handleBack}
-        onAssign={handleAssign}
-        onManageFollowers={handleManageFollowers}
-        readOnly={true}
-      />
+      <div className="space-y-4">
+        <Button
+          variant="ghost"
+          onClick={handleBack}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Tickets
+        </Button>
+        
+        <TicketDetail
+          ticketId={params.id}
+          onBack={handleBack}
+          onAssign={handleAssign}
+          onManageFollowers={handleManageFollowers}
+          readOnly={true}
+        />
+      </div>
 
       {/* Assignment Dialog */}
       <TicketAssignmentDialog

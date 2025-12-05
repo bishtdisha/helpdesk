@@ -1,24 +1,16 @@
-"use client"
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+export default async function HomePage() {
+  // Check for session token server-side
+  const cookieStore = await cookies()
+  const sessionToken = cookieStore.get('session-token')
 
-export default function HomePage() {
-  const router = useRouter()
+  // If authenticated, redirect to helpdesk
+  if (sessionToken) {
+    redirect('/helpdesk/dashboard')
+  }
 
-  useEffect(() => {
-    // Immediately redirect to login page without any authentication checks
-    router.replace('/login')
-  }, [router])
-
-  // Show simple loading while redirecting to login
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Redirecting to login...</p>
-      </div>
-    </div>
-  )
+  // If not authenticated, redirect to login
+  redirect('/login')
 }

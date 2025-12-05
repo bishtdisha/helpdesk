@@ -72,6 +72,15 @@ export function useTickets(options: UseTicketsOptions = {}): UseTicketsReturn {
     await mutate();
   };
 
+  // Debug logging
+  console.log('🔍 useTickets hook:', {
+    cacheKey,
+    data,
+    ticketsCount: data?.data?.length || 0,
+    isLoading,
+    error
+  });
+
   return {
     tickets: data?.data || [],
     pagination: data?.pagination || {

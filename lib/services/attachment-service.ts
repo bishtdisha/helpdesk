@@ -57,8 +57,17 @@ export class AttachmentService {
     file: File,
     userId: string
   ): Promise<AttachmentWithUploader> {
+    console.log('📎 uploadAttachment called:', {
+      ticketId,
+      userId,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+
     // Check if user can access this ticket
     const canAccess = await ticketAccessControl.canAccessTicket(userId, ticketId);
+    console.log('🔐 Access check:', { canAccess });
 
     if (!canAccess) {
       throw new AttachmentPermissionDeniedError(
@@ -71,15 +80,19 @@ export class AttachmentService {
     const ticket = await prisma.ticket.findUnique({
       where: { id: ticketId },
     });
+    console.log('🎫 Ticket check:', { exists: !!ticket });
 
     if (!ticket) {
       throw new Error(`Ticket not found: ${ticketId}`);
     }
 
     try {
+      console.log('📤 Starting file upload...');
       // Upload the file
       const uploadedFile = await fileUploadService.uploadTicketAttachment(file, ticketId);
+      console.log('✅ File uploaded:', uploadedFile);
 
+      console.log('💾 Creating attachment record...');
       // Create the attachment record
       const attachment = await prisma.ticketAttachment.create({
         data: {
@@ -90,17 +103,28 @@ export class AttachmentService {
           fileSize: uploadedFile.fileSize,
           mimeType: uploadedFile.mimeType,
         },
-        include: {
-          uploader: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
+      });
+      console.log('✅ Attachment record created:', attachment.id);
+      
+      // Fetch the uploader details separately to avoid relation issues
+      console.log('👤 Fetching uploader details...');
+      const uploader = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       });
+      console.log('✅ Uploader details fetched');
+      
+      // Combine the data
+      const attachmentWithUploader = {
+        ...attachment,
+        uploader: uploader!,
+      };
 
+      console.log('📝 Creating history entry...');
       // Create history entry
       await this.createAttachmentHistoryEntry(
         ticketId,
@@ -108,9 +132,11 @@ export class AttachmentService {
         'attachment_added',
         attachment.fileName
       );
+      console.log('✅ History entry created');
 
-      return attachment;
+      return attachmentWithUploader as AttachmentWithUploader;
     } catch (error) {
+      console.error('❌ Error in uploadAttachment:', error);
       if (error instanceof FileUploadError) {
         throw error;
       }

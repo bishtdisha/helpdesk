@@ -190,7 +190,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
     if (onTicketClick) {
       onTicketClick(ticketId);
     } else {
-      router.push(`/dashboard/tickets/${ticketId}`);
+      router.push(`/helpdesk/tickets/${ticketId}`);
     }
   }, [markTicketAsSeen, onTicketClick, router]);
 
