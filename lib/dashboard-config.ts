@@ -121,17 +121,6 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Resolution time efficiency trend',
   },
-  {
-    id: 'sla-trend',
-    title: 'SLA Trend',
-    component: 'SLATrendChart',
-    defaultSize: { w: 4, h: 5 },
-    minSize: { w: 3, h: 4 },
-    category: 'trends',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
-    description: 'SLA compliance trend with warnings',
-  },
-
   // ⭐ Section 6: Helpful Extras
   {
     id: 'workload-by-status',
@@ -142,26 +131,6 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     category: 'extras',
     roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Tickets by status breakdown',
-  },
-  {
-    id: 'assigned-tickets-list',
-    title: 'Tickets Assigned to Me',
-    component: 'AssignedTicketsList',
-    defaultSize: { w: 4, h: 5 },
-    minSize: { w: 3, h: 4 },
-    category: 'extras',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
-    description: 'Quick access list with urgent highlights',
-  },
-  {
-    id: 'top-categories',
-    title: 'Top Issue Categories',
-    component: 'TopCategories',
-    defaultSize: { w: 4, h: 5 },
-    minSize: { w: 3, h: 4 },
-    category: 'extras',
-    roles: ['Admin/Manager', 'Team Leader'],
-    description: 'Most common issue categories with percentages',
   },
 ];
 
@@ -221,11 +190,8 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       // Section 5: Trends
       'ticket-trend',
       'resolution-trend',
-      'sla-trend',
       // Section 6: Extras
       'workload-by-status',
-      'assigned-tickets-list',
-      'top-categories',
     ],
     layout: [
       // Row 1: High-Level KPIs (4 cards)
@@ -245,15 +211,12 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       { i: 'week-performance', x: 4, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
       { i: 'daily-target', x: 8, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
       
-      // Row 5: Trends (3 charts)
-      { i: 'ticket-trend', x: 0, y: 16, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'resolution-trend', x: 4, y: 16, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'sla-trend', x: 8, y: 16, w: 4, h: 5, minW: 3, minH: 4 },
+      // Row 5: Trends (2 charts)
+      { i: 'ticket-trend', x: 0, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'resolution-trend', x: 6, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
       
-      // Row 6: Extras (3 cards)
-      { i: 'workload-by-status', x: 0, y: 21, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'assigned-tickets-list', x: 4, y: 21, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'top-categories', x: 8, y: 21, w: 4, h: 5, minW: 3, minH: 4 },
+      // Row 6: Extras
+      { i: 'workload-by-status', x: 0, y: 21, w: 12, h: 5, minW: 6, minH: 4 },
     ],
   },
   {
@@ -273,10 +236,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       'daily-target',
       'ticket-trend',
       'resolution-trend',
-      'sla-trend',
       'workload-by-status',
-      'assigned-tickets-list',
-      'top-categories',
     ],
     layout: [
       { i: 'total-tickets-kpi', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
@@ -288,12 +248,9 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       { i: 'today-performance', x: 0, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
       { i: 'week-performance', x: 4, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
       { i: 'daily-target', x: 8, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'ticket-trend', x: 0, y: 16, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'resolution-trend', x: 4, y: 16, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'sla-trend', x: 8, y: 16, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'workload-by-status', x: 0, y: 21, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'assigned-tickets-list', x: 4, y: 21, w: 4, h: 5, minW: 3, minH: 4 },
-      { i: 'top-categories', x: 8, y: 21, w: 4, h: 5, minW: 3, minH: 4 },
+      { i: 'ticket-trend', x: 0, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'resolution-trend', x: 6, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'workload-by-status', x: 0, y: 21, w: 12, h: 5, minW: 6, minH: 4 },
     ],
   },
   {
@@ -315,7 +272,6 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       'resolution-trend',
       'sla-trend',
       'workload-by-status',
-      'assigned-tickets-list',
     ],
     layout: [
       { i: 'total-tickets-kpi', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
@@ -329,8 +285,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       { i: 'daily-target', x: 8, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
       { i: 'ticket-trend', x: 0, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
       { i: 'resolution-trend', x: 6, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
-      { i: 'workload-by-status', x: 0, y: 21, w: 6, h: 5, minW: 4, minH: 4 },
-      { i: 'assigned-tickets-list', x: 6, y: 21, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'workload-by-status', x: 0, y: 21, w: 12, h: 5, minW: 6, minH: 4 },
     ],
   },
 ];

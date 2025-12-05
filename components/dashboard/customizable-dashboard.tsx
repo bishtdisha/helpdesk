@@ -104,32 +104,38 @@ export function CustomizableDashboard() {
               )
             )}
             
-            {/* Section 5: Trends - 3 charts */}
-            {['ticket-trend', 'resolution-trend', 'sla-trend'].map(widgetId => 
-              visibleWidgets.includes(widgetId) && (
-                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-4">
-                  <DashboardWidget
-                    id={widgetId}
-                    title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
-                    component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
-                    user={user}
-                  />
-                </div>
-              )
+            {/* Section 5: Trends & Workload - 3 cards in a row */}
+            {visibleWidgets.includes('ticket-trend') && (
+              <div className="col-span-1 md:col-span-1 lg:col-span-4">
+                <DashboardWidget
+                  id="ticket-trend"
+                  title="Ticket Trend (30 Days)"
+                  component="TicketTrendChart"
+                  user={user}
+                />
+              </div>
             )}
             
-            {/* Section 6: Extras - 3 cards */}
-            {['workload-by-status', 'assigned-tickets-list', 'top-categories'].map(widgetId => 
-              visibleWidgets.includes(widgetId) && (
-                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-4">
-                  <DashboardWidget
-                    id={widgetId}
-                    title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
-                    component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
-                    user={user}
-                  />
-                </div>
-              )
+            {visibleWidgets.includes('workload-by-status') && (
+              <div className="col-span-1 md:col-span-1 lg:col-span-4">
+                <DashboardWidget
+                  id="workload-by-status"
+                  title="Pending Workload"
+                  component="WorkloadByStatus"
+                  user={user}
+                />
+              </div>
+            )}
+            
+            {visibleWidgets.includes('resolution-trend') && (
+              <div className="col-span-1 md:col-span-1 lg:col-span-4">
+                <DashboardWidget
+                  id="resolution-trend"
+                  title="Resolution Time Trend"
+                  component="ResolutionTrendChart"
+                  user={user}
+                />
+              </div>
             )}
           </div>
         ) : (
@@ -152,12 +158,7 @@ export function CustomizableDashboard() {
             <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
             <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
             
-            {/* Trend Charts */}
-            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
-            
-            {/* Extras */}
+            {/* Trends & Workload - 3 cards in a row */}
             <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
             <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
             <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />
