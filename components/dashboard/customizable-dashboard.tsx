@@ -90,10 +90,10 @@ export function CustomizableDashboard() {
               </div>
             )}
             
-            {/* Section 4: Performance - 3 cards */}
-            {['today-performance', 'week-performance', 'daily-target'].map(widgetId => 
+            {/* Section 4: Performance - 2 cards */}
+            {['today-performance', 'week-performance'].map(widgetId => 
               visibleWidgets.includes(widgetId) && (
-                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-4">
+                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-6">
                   <DashboardWidget
                     id={widgetId}
                     title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
@@ -154,9 +154,8 @@ export function CustomizableDashboard() {
             <div className="col-span-1 md:col-span-2 lg:col-span-12 h-48 bg-muted/50 animate-pulse rounded-lg" />
             
             {/* Performance Cards */}
-            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
-            <div className="col-span-1 md:col-span-1 lg:col-span-4 h-40 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-6 h-40 bg-muted/50 animate-pulse rounded-lg" />
+            <div className="col-span-1 md:col-span-1 lg:col-span-6 h-40 bg-muted/50 animate-pulse rounded-lg" />
             
             {/* Trends & Workload - 3 cards in a row */}
             <div className="col-span-1 md:col-span-1 lg:col-span-4 h-64 bg-muted/50 animate-pulse rounded-lg" />

@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -45,7 +45,19 @@ export function TicketTrendChart() {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={data.chartData}>
+          <AreaChart data={data.chartData}>
+            <defs>
+              {/* Gradient for Created tickets */}
+              <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+              </linearGradient>
+              {/* Gradient for Resolved tickets */}
+              <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis 
               dataKey="date" 
@@ -61,31 +73,34 @@ export function TicketTrendChart() {
                 backgroundColor: 'white', 
                 border: '1px solid #e5e7eb',
                 borderRadius: '8px',
-                fontSize: '12px'
+                fontSize: '12px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
               }}
             />
             <Legend 
               wrapperStyle={{ fontSize: '12px' }}
             />
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="created" 
               stroke="#3b82f6" 
               strokeWidth={2}
+              fill="url(#colorCreated)"
               name="Created"
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              dot={{ r: 3, fill: '#3b82f6' }}
+              activeDot={{ r: 5, fill: '#3b82f6' }}
             />
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="resolved" 
               stroke="#10b981" 
               strokeWidth={2}
+              fill="url(#colorResolved)"
               name="Resolved"
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              dot={{ r: 3, fill: '#10b981' }}
+              activeDot={{ r: 5, fill: '#10b981' }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

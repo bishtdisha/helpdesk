@@ -89,17 +89,6 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Weekly performance metrics',
   },
-  {
-    id: 'daily-target',
-    title: 'Daily Target',
-    component: 'DailyTarget',
-    defaultSize: { w: 4, h: 4 },
-    minSize: { w: 3, h: 3 },
-    category: 'performance',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
-    description: 'Target vs achieved with progress bar',
-  },
-
   // ⭐ Section 5: Trend Insights
   {
     id: 'ticket-trend',
@@ -186,7 +175,6 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       // Section 4: Performance
       'today-performance',
       'week-performance',
-      'daily-target',
       // Section 5: Trends
       'ticket-trend',
       'resolution-trend',
@@ -206,10 +194,9 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       // Row 3: SLA Breakdown
       { i: 'sla-breach-alerts', x: 0, y: 7, w: 12, h: 5, minW: 6, minH: 4 },
       
-      // Row 4: Performance (3 cards)
-      { i: 'today-performance', x: 0, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'week-performance', x: 4, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'daily-target', x: 8, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
+      // Row 4: Performance (2 cards)
+      { i: 'today-performance', x: 0, y: 12, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'week-performance', x: 6, y: 12, w: 6, h: 4, minW: 4, minH: 3 },
       
       // Row 5: Trends (2 charts)
       { i: 'ticket-trend', x: 0, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
