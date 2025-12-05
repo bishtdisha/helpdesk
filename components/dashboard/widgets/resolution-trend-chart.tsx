@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -47,7 +47,15 @@ export function ResolutionTrendChart() {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={chartData}>
+          <AreaChart data={chartData}>
+            <defs>
+              {/* Gradient for Resolution Time - Green to Yellow to Orange */}
+              <linearGradient id="colorResolutionTime" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                <stop offset="50%" stopColor="#fbbf24" stopOpacity={0.4}/>
+                <stop offset="100%" stopColor="#fef3c7" stopOpacity={0.1}/>
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis 
               dataKey="date" 
@@ -64,29 +72,38 @@ export function ResolutionTrendChart() {
                 backgroundColor: 'white', 
                 border: '1px solid #e5e7eb',
                 borderRadius: '8px',
-                fontSize: '12px'
+                fontSize: '12px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
               }}
-              formatter={(value: number) => [`${value.toFixed(1)}h`, 'Avg Time']}
+              formatter={(value: number) => [`${value.toFixed(1)}h`, 'Avg Resolution Time']}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} />
             {targetHours && (
               <ReferenceLine 
                 y={targetHours} 
                 stroke="#ef4444" 
-                strokeDasharray="3 3"
-                label={{ value: 'Target', position: 'right', fontSize: 11 }}
+                strokeDasharray="5 5"
+                strokeWidth={2}
+                label={{ 
+                  value: `Target: ${targetHours}h`, 
+                  position: 'right', 
+                  fontSize: 11,
+                  fill: '#ef4444',
+                  fontWeight: 600
+                }}
               />
             )}
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="avgResolutionTime" 
               stroke="#f59e0b" 
-              strokeWidth={2}
+              strokeWidth={2.5}
+              fill="url(#colorResolutionTime)"
               name="Avg Resolution Time"
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              dot={{ r: 3, fill: '#f59e0b', strokeWidth: 2, stroke: '#fff' }}
+              activeDot={{ r: 6, fill: '#f59e0b', strokeWidth: 2, stroke: '#fff' }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
