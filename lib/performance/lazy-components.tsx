@@ -239,12 +239,6 @@ export const LazyReports = lazy(() =>
   }))
 );
 
-export const LazySettings = lazy(() => 
-  import('@/components/settings').then(module => ({ 
-    default: module.default 
-  }))
-);
-
 export const LazySLAManagement = lazy(() => 
   import('@/components/sla-management').then(module => ({ 
     default: module.default 
@@ -265,6 +259,5 @@ export const TeamDashboardWithSuspense = withLazyLoading(LazyTeamDashboard, Anal
 export const UserDashboardWithSuspense = withLazyLoading(LazyUserDashboard, DashboardSkeleton);
 export const AnalyticsPageWithSuspense = withLazyLoading(LazyAnalyticsPage, AnalyticsSkeleton);
 export const ReportsWithSuspense = withLazyLoading(LazyReports, LoadingSpinner);
-export const SettingsWithSuspense = withLazyLoading(LazySettings, LoadingSpinner);
 export const SLAManagementWithSuspense = withLazyLoading(LazySLAManagement, LoadingSpinner);
 export const EscalationManagementWithSuspense = withLazyLoading(LazyEscalationManagement, LoadingSpinner);

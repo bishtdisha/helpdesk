@@ -18,6 +18,12 @@ interface Customer {
   email: string
 }
 
+interface User {
+  id: string
+  name: string
+  email: string
+}
+
 interface KBArticle {
   id: string
   title: string
@@ -36,17 +42,21 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
     priority: TicketPriority.MEDIUM,
     category: "",
     customerId: "",
+    assignedTo: "",
+    followerIds: [],
   })
   
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [suggestedArticles, setSuggestedArticles] = useState<KBArticle[]>([])
   const [loadingCustomers, setLoadingCustomers] = useState(true)
+  const [loadingUsers, setLoadingUsers] = useState(true)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [attachments, setAttachments] = useState<File[]>([])
 
-  // Fetch customers
+  // Fetch customers and users
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -62,7 +72,22 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
       }
     }
 
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users')
+        if (response.ok) {
+          const data = await response.json()
+          setUsers(data)
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error)
+      } finally {
+        setLoadingUsers(false)
+      }
+    }
+
     fetchCustomers()
+    fetchUsers()
   }, [])
 
   // Fetch KB article suggestions when title or description changes
@@ -125,13 +150,15 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
       return
     }
 
-    if (!formData.customerId) {
-      setError('Please select a customer')
-      return
-    }
+
 
     if (!formData.priority) {
       setError('Please select a priority')
+      return
+    }
+
+    if (!formData.assignedTo) {
+      setError('Please select an assignee')
       return
     }
 
@@ -148,6 +175,8 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
           priority: formData.priority,
           category: formData.category?.trim() || undefined,
           customerId: formData.customerId,
+          assignedTo: formData.assignedTo,
+          followerIds: formData.followerIds || [],
         }),
       })
 
@@ -229,7 +258,7 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
 
               {/* Customer */}
               <div className="space-y-2">
-                <Label htmlFor="customer">Customer *</Label>
+                <Label htmlFor="customer">Customer</Label>
                 <Select
                   value={formData.customerId}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, customerId: value }))}
@@ -246,6 +275,78 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Assignee */}
+              <div className="space-y-2">
+                <Label htmlFor="assignee">Assignee *</Label>
+                <Select
+                  value={formData.assignedTo}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, assignedTo: value }))}
+                  disabled={loadingUsers}
+                  required
+                >
+                  <SelectTrigger id="assignee">
+                    <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select an assignee"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Followers */}
+              <div className="space-y-2">
+                <Label>Followers (Optional)</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Followers can view and comment on the ticket
+                </p>
+                {loadingUsers ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                    {users.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-2">No users available</p>
+                    ) : (
+                      users.map((user) => (
+                        <label
+                          key={user.id}
+                          className="flex items-center gap-2 p-2 hover:bg-muted rounded cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.followerIds?.includes(user.id) || false}
+                            onChange={(e) => {
+                              const isChecked = e.target.checked
+                              setFormData(prev => ({
+                                ...prev,
+                                followerIds: isChecked
+                                  ? [...(prev.followerIds || []), user.id]
+                                  : (prev.followerIds || []).filter(id => id !== user.id)
+                              }))
+                            }}
+                            className="h-4 w-4"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">{user.name}</div>
+                            <div className="text-xs text-muted-foreground">{user.email}</div>
+                          </div>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                )}
+                {formData.followerIds && formData.followerIds.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formData.followerIds.length} follower(s) selected
+                  </p>
+                )}
               </div>
 
               {/* Priority and Category */}

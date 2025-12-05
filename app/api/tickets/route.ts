@@ -128,15 +128,15 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { title, description, priority, category, customerId, teamId, phone, status, assignedTo } = body;
+    const { title, description, priority, category, customerId, teamId, phone, status, assignedTo, followerIds } = body;
 
     // Validate required fields
-    if (!title || !description || !priority || !customerId) {
+    if (!title || !description || !priority || !assignedTo) {
       return NextResponse.json(
         {
           error: 'Validation error',
           code: 'VALIDATION_ERROR',
-          message: 'Title, description, priority, and customerId are required',
+          message: 'Title, description, priority, and assignedTo are required',
         },
         { status: 400 }
       );
@@ -240,6 +240,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate followerIds if provided
+    if (followerIds && !Array.isArray(followerIds)) {
+      return NextResponse.json(
+        {
+          error: 'Validation error',
+          code: 'VALIDATION_ERROR',
+          message: 'followerIds must be an array',
+        },
+        { status: 400 }
+      );
+    }
+
     // Create ticket data
     const ticketData: CreateTicketData = {
       title: title.trim(),
@@ -251,6 +263,7 @@ export async function POST(request: NextRequest) {
       assignedTo: assignedTo || undefined,
       phone: phone?.trim() || undefined,
       status: status || undefined,
+      followerIds: followerIds || undefined,
     };
 
     // Create the ticket

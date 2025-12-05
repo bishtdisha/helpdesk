@@ -78,8 +78,10 @@ export interface CreateTicketData {
   description: string;
   priority: TicketPriority;
   category?: string;
-  customerId: string;
+  customerId?: string;
+  assignedTo: string;
   teamId?: string;
+  followerIds?: string[];
 }
 
 // Ticket update data

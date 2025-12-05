@@ -9,7 +9,6 @@ import {
   Users, 
   BarChart3, 
   BookOpen, 
-  Settings, 
   LogIn, 
   UserPlus, 
   Home,
@@ -110,14 +109,6 @@ const menuItems: MenuItem[] = [
     label: "SLA Management", 
     icon: Clock,
     requireRole: ROLE_TYPES.ADMIN_MANAGER
-  },
-  
-  // Settings - available to all authenticated users
-  { 
-    id: "settings", 
-    label: "Settings", 
-    icon: Settings,
-    public: true
   },
 ]
 

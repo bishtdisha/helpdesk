@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 import { HelpSidebar } from "@/components/help-sidebar"
-import { LogOut, User, LogIn, UserPlus, Settings, UserCog, HelpCircle, ArrowLeft } from "lucide-react"
+import { LogOut, User, LogIn, UserPlus, UserCog, HelpCircle, ArrowLeft } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { UserRoleBadge } from "@/components/rbac/user-role-badge"
 import { ActionButton } from "@/components/rbac/action-button"

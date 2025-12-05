@@ -191,8 +191,8 @@ model Ticket {
   status       TicketStatus   @default(OPEN)
   priority     TicketPriority @default(MEDIUM)
   category     String?
-  customerId   String         // User who created/raised the ticket
-  assignedTo   String?        // User assigned to handle the ticket
+  customerId   String?        // User who created/raised the ticket (optional)
+  assignedTo   String         // User assigned to handle the ticket (required)
   teamId       String?
   createdBy    String         // Same as customerId or auditor
   slaDueAt     DateTime?
@@ -202,8 +202,8 @@ model Ticket {
   updatedAt    DateTime       @updatedAt
 
   // Relationships
-  customer       User               @relation("TicketCustomer", fields: [customerId], references: [id], onDelete: Cascade)
-  assignedUser   User?              @relation("AssignedTickets", fields: [assignedTo], references: [id], onDelete: SetNull)
+  customer       User?              @relation("TicketCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  assignedUser   User               @relation("AssignedTickets", fields: [assignedTo], references: [id], onDelete: Cascade)
   creator        User               @relation("CreatedTickets", fields: [createdBy], references: [id], onDelete: Cascade)
   team           Team?              @relation("TeamTickets", fields: [teamId], references: [id], onDelete: SetNull)
   comments       Comment[]

@@ -7,7 +7,7 @@ import { Tickets } from "@/components/tickets"
 import { Customers } from "@/components/customers"
 import { Reports } from "@/components/reports"
 import { KnowledgeBase } from "@/components/knowledge-base"
-import { Settings } from "@/components/settings"
+
 import { NavigationHeader } from "@/components/navigation-header"
 import { UserManagementPage } from "@/components/user-management/user-management-page"
 import { TeamManagement } from "@/components/team-management/team-management"
@@ -43,8 +43,6 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
         return <Reports />
       case "knowledge-base":
         return <KnowledgeBase />
-      case "settings":
-        return <Settings />
 
       default:
         return <Dashboard />
@@ -65,8 +63,6 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
         return "Reports"
       case "knowledge-base":
         return "Knowledge Base"
-      case "settings":
-        return "Settings"
 
       default:
         return "Dashboard"

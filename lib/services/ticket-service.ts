@@ -12,11 +12,12 @@ export interface CreateTicketData {
   description: string;
   priority: TicketPriority;
   category?: string;
-  customerId: string;
+  customerId?: string;
   teamId?: string;
-  assignedTo?: string;
+  assignedTo: string;
   phone?: string;
   status?: TicketStatus;
+  followerIds?: string[];
 }
 
 export interface CreateTicketWithAttachmentsAndCommentsData {
@@ -24,14 +25,15 @@ export interface CreateTicketWithAttachmentsAndCommentsData {
   description: string;
   priority: TicketPriority;
   category?: string;
-  customerId: string;
+  customerId?: string;
   teamId?: string;
-  assignedTo?: string;
+  assignedTo: string;
   phone?: string;
   status?: TicketStatus;
   attachments?: File[];
   initialComment?: string;
   isCommentInternal?: boolean;
+  followerIds?: string[];
 }
 
 export interface UpdateTicketData {
@@ -182,8 +184,8 @@ export class TicketService {
     if (!data.priority) {
       throw new Error('Priority is required');
     }
-    if (!data.customerId) {
-      throw new Error('Customer ID is required');
+    if (!data.assignedTo) {
+      throw new Error('Assignee is required');
     }
 
     // Validate foreign key references
@@ -224,6 +226,32 @@ export class TicketService {
       },
     });
 
+    // Add followers if provided
+    if (data.followerIds && data.followerIds.length > 0) {
+      await prisma.ticketFollower.createMany({
+        data: data.followerIds.map(followerId => ({
+          ticketId: ticket.id,
+          userId: followerId,
+        })),
+        skipDuplicates: true,
+      });
+
+      // Create history entry for followers
+      const followerUsers = await prisma.user.findMany({
+        where: { id: { in: data.followerIds } },
+        select: { name: true },
+      });
+      const followerNames = followerUsers.map(u => u.name).join(', ');
+      await this.createHistoryEntry(
+        ticket.id,
+        userId,
+        'followers_added',
+        null,
+        null,
+        `Added followers: ${followerNames}`
+      );
+    }
+
     // Create history entry
     await this.createHistoryEntry(ticket.id, userId, 'created', null, null, null);
 
@@ -248,8 +276,8 @@ export class TicketService {
     if (!data.priority) {
       throw new Error('Priority is required');
     }
-    if (!data.customerId) {
-      throw new Error('Customer ID is required');
+    if (!data.assignedTo) {
+      throw new Error('Assignee is required');
     }
 
     // Validate foreign key references

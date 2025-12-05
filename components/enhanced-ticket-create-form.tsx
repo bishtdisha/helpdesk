@@ -69,15 +69,15 @@ const enhancedTicketFormSchema = z.object({
   }),
   customerId: z
     .string()
-    .min(1, 'Customer is required'),
+    .optional()
+    .or(z.literal('')),
   teamId: z
     .string()
     .optional()
     .or(z.literal('')),
   assignedTo: z
     .string()
-    .optional()
-    .or(z.literal('')),
+    .min(1, 'Assignee is required'),
 });
 
 type EnhancedTicketFormValues = z.infer<typeof enhancedTicketFormSchema>;
@@ -104,6 +104,9 @@ export function EnhancedTicketCreateForm({
   const [initialComment, setInitialComment] = useState('');
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [screenReaderMessage, setScreenReaderMessage] = useState<string>('');
+  const [followers, setFollowers] = useState<string[]>([]);
+  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
 
   // Determine if user is Team Leader
   const isTeamLeader = user?.role?.name === 'Team Leader';
@@ -136,6 +139,27 @@ export function EnhancedTicketCreateForm({
       assignedTo: '',
     },
   });
+
+  // Fetch users for followers selection
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users?limit=200');
+        if (response.ok) {
+          const data = await response.json();
+          // API returns { users: [...], total, page, limit }
+          setUsers(Array.isArray(data.users) ? data.users : []);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setUsers([]);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   // Handle keyboard navigation
   React.useEffect(() => {
@@ -197,7 +221,8 @@ export function EnhancedTicketCreateForm({
         status: data.status,
         customerId: data.customerId,
         teamId: data.teamId || undefined,
-        assignedTo: data.assignedTo || undefined,
+        assignedTo: data.assignedTo,
+        followerIds: followers.length > 0 ? followers : undefined,
       };
 
       const ticketResponse = isEditMode
@@ -280,6 +305,30 @@ export function EnhancedTicketCreateForm({
           
           toast.warning('Ticket created but initial comment failed to save', {
             description: `Error: ${commentErrorMsg}. You can add comments from the ticket detail page.`,
+          });
+        }
+      }
+
+      // Step 4: Add followers if present
+      if (followers.length > 0 && !isEditMode) {
+        try {
+          await Promise.all(
+            followers.map(followerId =>
+              apiClient.post(`/api/tickets/${ticketId}/followers`, {
+                userId: followerId,
+              })
+            )
+          );
+          console.log(`Added ${followers.length} follower(s) to ticket`);
+        } catch (followerError) {
+          console.error('Error adding followers:', followerError);
+          
+          const followerErrorMsg = followerError instanceof Error
+            ? followerError.message
+            : 'Unknown error occurred';
+          
+          toast.warning('Ticket created but some followers failed to be added', {
+            description: `Error: ${followerErrorMsg}. You can add followers from the ticket detail page.`,
           });
         }
       }
@@ -555,7 +604,7 @@ export function EnhancedTicketCreateForm({
                 name="customerId"
                 render={({ field, fieldState }) => (
                   <FormItem>
-                    <FormLabel>Customer *</FormLabel>
+                    <FormLabel>Customer</FormLabel>
                     <FormControl>
                       {isTeamLeader && !isEditMode ? (
                         <Input
@@ -619,7 +668,9 @@ export function EnhancedTicketCreateForm({
                 name="assignedTo"
                 render={({ field, fieldState }) => (
                   <FormItem>
-                    <FormLabel>Assigned To</FormLabel>
+                    <FormLabel>
+                      Assigned To *
+                    </FormLabel>
                     <FormControl>
                       <SimpleSelect
                         endpoint="/api/users?simple=true&limit=200&forAssignment=true"
@@ -631,12 +682,66 @@ export function EnhancedTicketCreateForm({
                         labelKey="name"
                         valueKey="id"
                         searchPlaceholder="Search users..."
+                        aria-required="true"
+                        aria-invalid={!!fieldState.error}
+                        aria-describedby={fieldState.error ? "assignedTo-error" : undefined}
                       />
                     </FormControl>
                     <FormMessage id="assignedTo-error" />
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Followers Selection - Full width */}
+            <div className="space-y-2">
+              <FormLabel>Followers</FormLabel>
+              <p className="text-sm text-muted-foreground">
+                Add users who should be notified about this ticket. Followers can view and comment but cannot edit the ticket.
+              </p>
+              {loadingUsers ? (
+                <div className="flex items-center justify-center py-4 border rounded-lg">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
+                  <span className="text-sm text-muted-foreground">Loading users...</span>
+                </div>
+              ) : (
+                <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                  {!Array.isArray(users) || users.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">No users available</p>
+                  ) : (
+                    users.map((user) => (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-2 p-2 hover:bg-muted rounded cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={followers.includes(user.id)}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            setFollowers(prev =>
+                              isChecked
+                                ? [...prev, user.id]
+                                : prev.filter(id => id !== user.id)
+                            );
+                          }}
+                          disabled={isSubmitting}
+                          className="h-4 w-4"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{user.name}</div>
+                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              )}
+              {followers.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {followers.length} follower(s) selected
+                </p>
+              )}
             </div>
 
             {/* File Attachments */}
