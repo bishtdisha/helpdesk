@@ -58,11 +58,7 @@ const enhancedTicketFormSchema = z.object({
     required_error: 'Priority is required',
     invalid_type_error: 'Invalid priority value',
   }),
-  category: z
-    .string()
-    .max(100, 'Category cannot exceed 100 characters')
-    .optional()
-    .or(z.literal('')),
+
   status: z.nativeEnum(TicketStatus, {
     required_error: 'Status is required',
     invalid_type_error: 'Invalid status value',
@@ -122,7 +118,7 @@ export function EnhancedTicketCreateForm({
       description: initialData.description || '',
       phone: initialData.phone || '',
       priority: initialData.priority || TicketPriority.MEDIUM,
-      category: initialData.category || '',
+
       status: initialData.status || initialStatus,
       customerId: initialData.customerId || '',
       teamId: initialData.teamId || '',
@@ -132,7 +128,7 @@ export function EnhancedTicketCreateForm({
       description: '',
       phone: '',
       priority: TicketPriority.MEDIUM,
-      category: '',
+
       status: initialStatus,
       customerId: defaultCustomerId,
       teamId: '',
@@ -217,7 +213,7 @@ export function EnhancedTicketCreateForm({
         description: data.description,
         phone: data.phone || undefined,
         priority: data.priority,
-        category: data.category || undefined,
+
         status: data.status,
         customerId: data.customerId,
         teamId: data.teamId || undefined,
@@ -432,14 +428,13 @@ export function EnhancedTicketCreateForm({
       </div>
       
       <Form {...form}>
-        <div className="w-full">
-          {/* Header section with status */}
-          <div className="mb-6 pb-4 border-b">
+        <Card className="shadow-sm border">
+          <CardHeader className="border-b bg-gray-50/50 dark:bg-gray-900/50">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
+                <CardDescription className="text-sm">
                   Submit a new support ticket with all necessary details. Fields marked with * are required.
-                </p>
+                </CardDescription>
               </div>
               
               {/* Status dropdown in top corner */}
@@ -472,7 +467,8 @@ export function EnhancedTicketCreateForm({
                 />
               </div>
             </div>
-          </div>
+          </CardHeader>
+          <CardContent className="pt-6">
         
           {/* Form content */}
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -573,27 +569,6 @@ export function EnhancedTicketCreateForm({
                       </SelectContent>
                     </Select>
                     <FormMessage id="priority-error" />
-                  </FormItem>
-                )}
-              />
-
-              {/* Category Field */}
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Technical Support, Billing"
-                        {...field}
-                        disabled={isSubmitting}
-                        aria-invalid={fieldState.invalid}
-                        aria-describedby={fieldState.error ? 'category-error' : undefined}
-                      />
-                    </FormControl>
-                    <FormMessage id="category-error" />
                   </FormItem>
                 )}
               />
@@ -796,7 +771,8 @@ export function EnhancedTicketCreateForm({
               </Button>
             </div>
           </form>
-        </div>
+          </CardContent>
+        </Card>
       </Form>
     </>
   );

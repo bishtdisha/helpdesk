@@ -142,34 +142,124 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Team Management</h2>
-          <p className="text-muted-foreground">
-            Manage teams and their members across your organization
-          </p>
+      {/* Header with Gradient */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg p-6 border border-blue-100 dark:border-blue-900">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Team Management</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Manage teams and their members across your organization
+              </p>
+            </div>
+          </div>
+          
+          {canCreateTeams && (
+            <Button onClick={onCreateTeam} size="lg" className="shadow-md">
+              <Plus className="h-5 w-5 mr-2" />
+              Create Team
+            </Button>
+          )}
         </div>
-        {canCreateTeams && (
-          <Button onClick={onCreateTeam}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Team
-          </Button>
-        )}
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Teams</p>
+                <p className="text-2xl font-bold mt-1">{total}</p>
+              </div>
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Teams</p>
+                <p className="text-2xl font-bold mt-1 text-blue-600">{teams.length}</p>
+              </div>
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+                <UserCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Members</p>
+                <p className="text-2xl font-bold mt-1">{teams.reduce((sum, team) => sum + (team.members?.length || 0), 0)}</p>
+              </div>
+              <div className="p-2 bg-cyan-100 dark:bg-cyan-900 rounded-lg">
+                <Users className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Team Leaders</p>
+                <p className="text-2xl font-bold mt-1">{teams.reduce((sum, team) => sum + (team.teamLeaders?.length || 0), 0)}</p>
+              </div>
+              <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search */}
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search teams..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+      <Card className="shadow-sm">
+        <CardContent className="p-5">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded">
+                <Search className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              </div>
+              <span className="text-base font-semibold">Search Teams</span>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search teams by name..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10 h-10"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Teams Table */}
+      <Card className="shadow-sm">
+        <CardHeader className="border-b bg-gray-50/50 dark:bg-gray-900/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Teams Directory</CardTitle>
+              <CardDescription className="mt-1">
+                {total > 0 ? `Showing ${teams.length} of ${total} teams` : 'No teams found'}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
 
       {/* Error message */}
       {error && (
@@ -188,21 +278,7 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
         </Card>
       )}
 
-      {/* Teams Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Teams ({total})
-          </CardTitle>
-          <CardDescription>
-            {currentUser?.role?.name === 'Admin/Manager' 
-              ? 'All teams in your organization'
-              : 'Teams you have access to'
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {teams.length === 0 ? (
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -223,58 +299,88 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Team Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Leaders</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="w-[70px]">Actions</TableHead>
+                <TableRow className="hover:bg-transparent border-b-2">
+                  <TableHead className="font-semibold w-16">#</TableHead>
+                  <TableHead className="font-semibold">Team Name</TableHead>
+                  <TableHead className="font-semibold">Description</TableHead>
+                  <TableHead className="font-semibold text-center">Members</TableHead>
+                  <TableHead className="font-semibold text-center">Leaders</TableHead>
+                  <TableHead className="font-semibold text-center">Open Tickets</TableHead>
+                  <TableHead className="font-semibold">Created</TableHead>
+                  <TableHead className="text-center font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teams.map((team) => {
+                {teams.map((team, index) => {
                   // Check if current user leads this team
                   const isLeader = currentUser && team.teamLeaders?.some(tl => tl.user.id === currentUser.id);
+                  const serialNumber = (page - 1) * limit + index + 1;
                   
                   return (
                     <TableRow 
                       key={team.id} 
                       className={cn(
-                        "cursor-pointer hover:bg-muted/50 transition-colors",
-                        isLeader ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''
+                        "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors group",
+                        isLeader ? 'bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40' : ''
                       )}
                       onClick={() => onViewTeamBoard && onViewTeamBoard(team)}
                     >
                       <TableCell>
+                        <div className="text-sm font-medium text-muted-foreground">{serialNumber}</div>
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="font-medium">{team.name}</div>
+                          <div className="font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{team.name}</div>
                           {isLeader && (
-                            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">
+                            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800 text-xs">
                               <Crown className="w-3 h-3 mr-1" />
-                              You lead this team
+                              You lead
                             </Badge>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="max-w-xs truncate text-muted-foreground">
+                        <div className="max-w-xs truncate text-sm text-muted-foreground">
                           {team.description || 'No description'}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">
-                            {team.members?.length || 0} members
+                        <div className="flex items-center justify-center">
+                          <Badge 
+                            variant="secondary"
+                            className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800 text-base font-semibold"
+                          >
+                            {team.members?.length || 0}
                           </Badge>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Crown className="w-4 h-4 text-yellow-500" />
-                          <span className="text-sm text-muted-foreground">
-                            {getTeamLeaderNames(team)}
-                          </span>
+                        <div className="flex items-center justify-center">
+                          {(team.teamLeaders?.length || 0) > 0 ? (
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {team.teamLeaders?.map((leader, index) => (
+                                <Badge 
+                                  key={leader.id} 
+                                  variant="secondary"
+                                  className="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800"
+                                >
+                                  {leader.user.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No leaders</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center">
+                          <Badge 
+                            variant="secondary"
+                            className="bg-green-100 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-400 dark:border-green-800 text-base font-semibold"
+                          >
+                            {team._count?.tickets || 0}
+                          </Badge>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -283,42 +389,17 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                         </div>
                       </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {canViewMembers && (
-                            <DropdownMenuItem onClick={() => onViewMembers(team)}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Members
-                            </DropdownMenuItem>
-                          )}
-                          {canManageTeam(team) && (
-                            <>
-                              <DropdownMenuSeparator />
-                              {canEditTeams && (
-                                <DropdownMenuItem onClick={() => onEditTeam(team)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Team
-                                </DropdownMenuItem>
-                              )}
-                              {canDeleteTeams && (
-                                <DropdownMenuItem 
-                                  onClick={() => onDeleteTeam(team)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete Team
-                                </DropdownMenuItem>
-                              )}
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      </TableCell>
+                      <div className="flex justify-center">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => onViewTeamBoard && onViewTeamBoard(team)}
+                          className="hover:bg-blue-50 dark:hover:bg-blue-950"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                     </TableRow>
                   );
                 })}

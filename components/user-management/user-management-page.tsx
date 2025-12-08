@@ -28,7 +28,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Users, Plus, Edit, Trash2, Loader2, AlertTriangle, CheckCircle2, 
-  Search, Filter, X, Eye, EyeOff
+  Search, Filter, X, Eye, EyeOff, Shield
 } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 
@@ -350,22 +350,28 @@ export function UserManagementPage() {
 
   return (
     <>
-      <div className="space-y-4">
-        {/* Header Section */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage user accounts and roles
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add User
-              </Button>
-            </DialogTrigger>
+      <div className="space-y-6">
+        {/* Header Section with Gradient */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg p-6 border border-blue-100 dark:border-blue-900">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">User Management</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Manage user accounts, roles, and permissions
+                </p>
+              </div>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="shadow-md">
+                  <Plus className="mr-2 h-5 w-5" />
+                  Add User
+                </Button>
+              </DialogTrigger>
               <DialogContent>
                 <form onSubmit={handleCreateUser}>
                   <DialogHeader>
@@ -498,29 +504,92 @@ export function UserManagementPage() {
                 </form>
               </DialogContent>
             </Dialog>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                  <p className="text-2xl font-bold mt-1">{users.length}</p>
+                </div>
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Active Users</p>
+                  <p className="text-2xl font-bold mt-1 text-green-600">{users.filter(u => u.isActive).length}</p>
+                </div>
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Roles</p>
+                  <p className="text-2xl font-bold mt-1">{roles.length}</p>
+                </div>
+                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                  <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Teams</p>
+                  <p className="text-2xl font-bold mt-1">{teams.length}</p>
+                </div>
+                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters & Search Section */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-3">
+        <Card className="shadow-sm">
+          <CardContent className="p-5">
+            <div className="space-y-4">
               {/* Header with Clear Button */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Filters & Search</span>
+                  <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded">
+                    <Filter className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <span className="text-base font-semibold">Filters & Search</span>
                 </div>
                 {(filters.search || filters.roleId !== "all" || filters.teamId !== "all" || filters.status !== "all") && (
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="text-xs font-normal">
-                      {filteredUsers.length} of {users.length}
+                      {filteredUsers.length} of {users.length} users
                     </Badge>
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={clearFilters}
-                      className="h-7 px-2 text-xs"
+                      className="h-8 px-3 text-xs"
                     >
+                      <X className="h-3 w-3 mr-1" />
                       Clear
                     </Button>
                   </div>
@@ -536,7 +605,7 @@ export function UserManagementPage() {
                     placeholder="Search users by name or email..."
                     value={filters.search}
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                    className="pl-9 h-9"
+                    className="pl-10 h-10"
                   />
                 </div>
 
@@ -545,7 +614,7 @@ export function UserManagementPage() {
                   value={filters.roleId}
                   onValueChange={(value) => setFilters({ ...filters, roleId: value })}
                 >
-                  <SelectTrigger className="h-9 w-full md:w-[160px]">
+                  <SelectTrigger className="h-10 w-full md:w-[170px]">
                     <SelectValue placeholder="All Roles" />
                   </SelectTrigger>
                   <SelectContent>
@@ -564,7 +633,7 @@ export function UserManagementPage() {
                   value={filters.teamId}
                   onValueChange={(value) => setFilters({ ...filters, teamId: value })}
                 >
-                  <SelectTrigger className="h-9 w-full md:w-[160px]">
+                  <SelectTrigger className="h-10 w-full md:w-[170px]">
                     <SelectValue placeholder="All Teams" />
                   </SelectTrigger>
                   <SelectContent>
@@ -583,7 +652,7 @@ export function UserManagementPage() {
                   value={filters.status}
                   onValueChange={(value) => setFilters({ ...filters, status: value })}
                 >
-                  <SelectTrigger className="h-9 w-full md:w-[140px]">
+                  <SelectTrigger className="h-10 w-full md:w-[150px]">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -598,7 +667,17 @@ export function UserManagementPage() {
         </Card>
 
         {/* Users Table Card */}
-        <Card>
+        <Card className="shadow-sm">
+          <CardHeader className="border-b bg-gray-50/50 dark:bg-gray-900/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Users Directory</CardTitle>
+                <CardDescription className="mt-1">
+                  {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'} found
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
           <CardContent className="p-0">
 
             {loading ? (
@@ -640,17 +719,25 @@ export function UserManagementPage() {
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50">
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{user.name || "N/A"}</span>
-                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-sm">
+                          {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-sm">{user.name || "N/A"}</span>
+                          <span className="text-xs text-muted-foreground">{user.email}</span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       {user.role ? (
-                        <Badge variant={user.role.name === "Admin_Manager" ? "default" : "secondary"} className="font-normal">
-                          {user.role.name}
+                        <Badge 
+                          variant={user.role.name === "Admin_Manager" ? "default" : "secondary"} 
+                          className="font-medium"
+                        >
+                          {user.role.name.replace(/_/g, ' ')}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="font-normal text-muted-foreground">
@@ -660,7 +747,10 @@ export function UserManagementPage() {
                     </TableCell>
                     <TableCell>
                       {user.team ? (
-                        <span className="text-sm font-medium">{user.team.name}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                          <span className="text-sm font-medium">{user.team.name}</span>
+                        </div>
                       ) : (
                         <span className="text-sm text-muted-foreground">—</span>
                       )}
@@ -668,7 +758,7 @@ export function UserManagementPage() {
                     <TableCell>
                       <Badge 
                         variant={user.isActive ? "default" : "secondary"} 
-                        className={user.isActive ? "bg-green-500 hover:bg-green-600" : ""}
+                        className={user.isActive ? "bg-green-500 hover:bg-green-600 font-medium" : "font-medium"}
                       >
                         {user.isActive ? "Active" : "Inactive"}
                       </Badge>
@@ -683,7 +773,7 @@ export function UserManagementPage() {
                           size="sm" 
                           title="Edit user"
                           onClick={() => handleEditClick(user)}
-                          className="h-8 w-8 p-0"
+                          className="h-9 w-9 p-0 hover:bg-blue-50 dark:hover:bg-blue-950"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -692,7 +782,7 @@ export function UserManagementPage() {
                           size="sm" 
                           title="Delete user"
                           onClick={() => handleDeleteClick(user)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

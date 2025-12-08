@@ -43,21 +43,30 @@ export function Tickets() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Support Tickets</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage and track all customer support tickets
-          </p>
+      {/* Header with Gradient */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 rounded-lg p-6 border border-purple-100 dark:border-purple-900">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+              <svg className="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Support Tickets</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Manage and track all customer support tickets
+              </p>
+            </div>
+          </div>
+          
+          {permissions.canCreateTicket() && (
+            <Button onClick={handleCreateTicket} size="lg" className="flex items-center gap-2 shadow-md">
+              <Plus className="h-5 w-5" />
+              New Ticket
+            </Button>
+          )}
         </div>
-        
-        {permissions.canCreateTicket() && (
-          <Button onClick={handleCreateTicket} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            New Ticket
-          </Button>
-        )}
       </div>
 
       {/* Ticket List - Now using real API data */}

@@ -1,19 +1,24 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { EnhancedTicketCreateForm } from "@/components/enhanced-ticket-create-form"
+import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-export default function EditTicketPage({ params }: { params: { id: string } }) {
+export default function TeamTicketEditPage() {
   const router = useRouter()
+  const params = useParams()
+  const teamId = params.teamId as string
+  const ticketId = params.ticketId as string
+  
   const [ticket, setTicket] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const response = await fetch(`/api/tickets/${params.id}`)
+        const response = await fetch(`/api/tickets/${ticketId}`)
         if (!response.ok) {
           throw new Error('Failed to fetch ticket')
         }
@@ -22,28 +27,29 @@ export default function EditTicketPage({ params }: { params: { id: string } }) {
       } catch (error) {
         console.error('Error fetching ticket:', error)
         toast.error('Failed to load ticket')
-        router.push('/helpdesk/tickets')
+        router.push(`/helpdesk/teams/${teamId}`)
       } finally {
         setLoading(false)
       }
     }
 
     fetchTicket()
-  }, [params.id, router])
+  }, [ticketId, teamId, router])
 
   const handleSuccess = (ticketId: string) => {
-    router.push(`/helpdesk/tickets/${ticketId}`)
+    toast.success('Ticket updated successfully')
+    router.push(`/helpdesk/teams/${teamId}`)
   }
 
   const handleCancel = () => {
-    router.push(`/helpdesk/tickets/${params.id}`)
+    router.push(`/helpdesk/teams/${teamId}`)
   }
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="w-full px-6 py-6">
         <div className="flex items-center justify-center py-12">
-          <div className="text-muted-foreground">Loading ticket...</div>
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       </div>
     )
@@ -51,7 +57,7 @@ export default function EditTicketPage({ params }: { params: { id: string } }) {
 
   if (!ticket) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="w-full px-6 py-6">
         <div className="flex items-center justify-center py-12">
           <div className="text-muted-foreground">Ticket not found</div>
         </div>

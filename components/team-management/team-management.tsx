@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { TeamWithMembers, SafeUserWithRole } from '@/lib/types/rbac';
 import { TeamList } from './team-list';
 import { TeamForm } from './team-form';
@@ -25,6 +26,7 @@ type DialogState = {
 };
 
 export function TeamManagement() {
+  const router = useRouter();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [deletingTeam, setDeletingTeam] = useState(false);
   
@@ -85,8 +87,8 @@ export function TeamManagement() {
   };
 
   const handleViewTeamBoard = (team: TeamWithMembers) => {
-    // Navigate to the team board route instead of using state
-    window.location.href = `/helpdesk/teams/${team.id}`;
+    // Use Next.js router for client-side navigation (no page reload)
+    router.push(`/helpdesk/teams/${team.id}`);
   };
   
   // Team Members handlers

@@ -484,18 +484,18 @@ export function TicketList({ onTicketClick }: TicketListProps) {
     <div className="space-y-6">
       <TicketListOnboarding />
       {/* Filters */}
-      <Card>
-        <CardHeader>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between" data-tour="ticket-list-header">
             <div className="flex items-center gap-2">
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filters & Search
-              </CardTitle>
+              <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
+                <Filter className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <CardTitle className="text-base font-semibold">Filters & Search</CardTitle>
             </div>
             {newTicketsCount > 0 && (
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 animate-pulse">
                   <Bell className="h-3 w-3" />
                   {newTicketsCount} {newTicketsCount === 1 ? 'update' : 'updates'}
                 </Badge>
@@ -503,7 +503,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                   variant="ghost" 
                   size="sm" 
                   onClick={handleMarkAllAsSeen}
-                  className="text-xs"
+                  className="text-xs h-8"
                 >
                   Clear
                 </Button>
@@ -511,7 +511,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="space-y-4">
             {/* Help message for first-time users */}
             {tickets.length === 0 && !hasActiveFilters && !isLoading && (
@@ -533,7 +533,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                 </div>
               </InlineHelp>
             )}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <div className="relative" role="search">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -546,7 +546,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                       setSearchTerm(e.target.value);
                       setActivePresetId(null);
                     }}
-                    className="pl-10"
+                    className="pl-10 h-10"
                     data-tour="search-input"
                     aria-label="Search tickets by title, customer name, or ticket ID"
                   />
@@ -559,7 +559,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                   setActivePresetId(null);
                 }}
               >
-                <SelectTrigger className="w-[180px]" data-tour="status-filter">
+                <SelectTrigger className="w-full sm:w-[180px] h-10" data-tour="status-filter">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -577,7 +577,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                   setActivePresetId(null);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px] h-10">
                   <SelectValue placeholder="Filter by priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -606,19 +606,19 @@ export function TicketList({ onTicketClick }: TicketListProps) {
       </Card>
 
       {/* Tickets Table */}
-      <Card>
-        <CardHeader>
+      <Card className="shadow-sm">
+        <CardHeader className="border-b bg-gray-50/50 dark:bg-gray-900/50">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                Support Tickets
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">Tickets Directory</CardTitle>
                 {selectedTicketIds.size > 0 && (
-                  <Badge variant="secondary">
+                  <Badge variant="default" className="bg-purple-500">
                     {selectedTicketIds.size} selected
                   </Badge>
                 )}
-              </CardTitle>
-              <CardDescription>
+              </div>
+              <CardDescription className="mt-1">
                 {pagination.total > 0
                   ? `Showing ${(pagination.page - 1) * pagination.limit + 1}-${Math.min(
                       pagination.page * pagination.limit,
@@ -629,7 +629,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {tickets.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No tickets found matching your filters.</p>
@@ -695,9 +695,9 @@ export function TicketList({ onTicketClick }: TicketListProps) {
                       return (
                         <TableRow 
                           key={ticket.id} 
-                          className={`cursor-pointer hover:bg-muted/50 ${
+                          className={`cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors ${
                             isUpdated ? 'bg-blue-50 dark:bg-blue-950/20 border-l-4 border-l-blue-500' : ''
-                          } ${isSelected ? 'bg-primary/10' : ''}`}
+                          } ${isSelected ? 'bg-purple-50 dark:bg-purple-950/20' : ''}`}
                         >
                           {canPerformBulkActions && (
                             <TableCell onClick={(e) => e.stopPropagation()}>

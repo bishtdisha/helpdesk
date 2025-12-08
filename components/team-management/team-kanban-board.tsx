@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,13 +42,19 @@ const statusColumns = [
   { key: 'IN_PROGRESS', label: 'In Progress', color: 'bg-yellow-500' },
   { key: 'WAITING_FOR_CUSTOMER', label: 'On Hold', color: 'bg-orange-500' },
   { key: 'RESOLVED', label: 'Resolved', color: 'bg-green-500' },
-  { key: 'CLOSED', label: 'Closed', color: 'bg-gray-500' },
+  { key: 'CLOSED', label: 'Cancelled', color: 'bg-gray-500' },
 ];
 
 export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Check if user is admin or team leader
+  const isAdminOrLeader = currentUser?.role?.name === 'Admin/Manager' || 
+                          currentUser?.role?.name === 'Team Leader';
 
   useEffect(() => {
     fetchTeamTickets();
@@ -185,7 +193,7 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
             </p>
           )}
         </div>
-        <Button>
+        <Button onClick={() => router.push(`/helpdesk/teams/${team.id}/tickets/new`)}>
           <Plus className="w-4 h-4 mr-2" />
           New Ticket
         </Button>
@@ -214,6 +222,7 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
                 variant="outline"
                 size="sm"
                 className="w-full justify-center border-dashed"
+                onClick={() => router.push(`/helpdesk/teams/${team.id}/tickets/new?status=${column.key}`)}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -230,7 +239,14 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
                     key={ticket.id}
                     className="cursor-pointer hover:shadow-md transition-shadow border-l-4"
                     style={{ borderLeftColor: getPriorityBorderColor(ticket.priority) }}
-                    onClick={() => window.location.href = `/helpdesk/tickets/${ticket.id}`}
+                    onClick={() => {
+                      // Admin and Team Leaders go to edit page within team context
+                      if (isAdminOrLeader) {
+                        router.push(`/helpdesk/teams/${team.id}/tickets/${ticket.id}`);
+                      } else {
+                        router.push(`/helpdesk/tickets/${ticket.id}`);
+                      }
+                    }}
                   >
                     <CardContent className="p-3 space-y-2">
                       {/* Header: Ticket Number and SLA */}

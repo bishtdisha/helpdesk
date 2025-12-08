@@ -169,6 +169,17 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        _count: {
+          select: {
+            tickets: {
+              where: {
+                status: {
+                  in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER']
+                }
+              }
+            }
+          }
+        },
       },
       orderBy: [
         { name: 'asc' },

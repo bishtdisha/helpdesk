@@ -96,32 +96,33 @@ export function TicketFilters() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Filter className="h-5 w-5" />
-          Filters & Search
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-4">
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tickets by title, ID, or customer..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+    <Card className="shadow-sm">
+      <CardContent className="p-5">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded">
+              <Filter className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            </div>
+            <span className="text-base font-semibold">Filters & Search</span>
           </div>
-
-          {/* Filter Dropdowns */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          
+          {/* Search and Filters in Single Row */}
+          <div className="flex gap-3 flex-col md:flex-row">
+            {/* Search Input - Takes remaining space */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tickets by title, ID, or customer..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-10"
+              />
+            </div>
             {/* Status Filter */}
             <Select value={status} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger className="h-10 w-full md:w-[160px]">
+                <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -135,8 +136,8 @@ export function TicketFilters() {
 
             {/* Priority Filter */}
             <Select value={priority} onValueChange={handlePriorityChange}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by priority" />
+              <SelectTrigger className="h-10 w-full md:w-[160px]">
+                <SelectValue placeholder="All Priority" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Priority</SelectItem>
@@ -150,8 +151,8 @@ export function TicketFilters() {
             {/* Team Filter - Only for Admin_Manager and Team_Leader */}
             {(permissions.canViewAllTickets() || permissions.canViewTeamTickets()) && (
               <Select value={team} onValueChange={handleTeamChange}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Filter by team" />
+                <SelectTrigger className="h-10 w-full md:w-[160px]">
+                  <SelectValue placeholder="All Teams" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Teams</SelectItem>
@@ -166,8 +167,8 @@ export function TicketFilters() {
             {/* Assignee Filter - Only for Admin_Manager and Team_Leader */}
             {(permissions.canViewAllTickets() || permissions.canViewTeamTickets()) && (
               <Select value={assignee} onValueChange={handleAssigneeChange}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Filter by assignee" />
+                <SelectTrigger className="h-10 w-full md:w-[160px]">
+                  <SelectValue placeholder="All Assignees" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Assignees</SelectItem>
