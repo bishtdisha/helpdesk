@@ -136,6 +136,25 @@ export function EnhancedTicketCreateForm({
     },
   });
 
+  // Fetch existing followers in edit mode
+  React.useEffect(() => {
+    if (isEditMode && initialData?.id) {
+      const fetchFollowers = async () => {
+        try {
+          const response = await fetch(`/api/tickets/${initialData.id}/followers`);
+          if (response.ok) {
+            const data = await response.json();
+            const followerIds = data.followers?.map((f: any) => f.userId) || [];
+            setFollowers(followerIds);
+          }
+        } catch (error) {
+          console.error('Error fetching followers:', error);
+        }
+      };
+      fetchFollowers();
+    }
+  }, [isEditMode, initialData?.id]);
+
   // Fetch users for followers selection
   React.useEffect(() => {
     const fetchUsers = async () => {
@@ -305,26 +324,59 @@ export function EnhancedTicketCreateForm({
         }
       }
 
-      // Step 4: Add followers if present
-      if (followers.length > 0 && !isEditMode) {
+      // Step 4: Update followers (both create and edit mode)
+      if (followers.length > 0 || isEditMode) {
         try {
-          await Promise.all(
-            followers.map(followerId =>
-              apiClient.post(`/api/tickets/${ticketId}/followers`, {
-                userId: followerId,
-              })
-            )
-          );
-          console.log(`Added ${followers.length} follower(s) to ticket`);
+          if (isEditMode) {
+            // In edit mode, fetch current followers and sync
+            const currentFollowersResponse = await fetch(`/api/tickets/${ticketId}/followers`);
+            const currentFollowersData = await currentFollowersResponse.json();
+            const currentFollowerIds = currentFollowersData.followers?.map((f: any) => f.userId) || [];
+            
+            // Add new followers
+            const followersToAdd = followers.filter(id => !currentFollowerIds.includes(id));
+            if (followersToAdd.length > 0) {
+              await Promise.all(
+                followersToAdd.map(followerId =>
+                  apiClient.post(`/api/tickets/${ticketId}/followers`, {
+                    userId: followerId,
+                  })
+                )
+              );
+            }
+            
+            // Remove followers that were unchecked
+            const followersToRemove = currentFollowerIds.filter((id: string) => !followers.includes(id));
+            if (followersToRemove.length > 0) {
+              await Promise.all(
+                followersToRemove.map((followerId: string) =>
+                  fetch(`/api/tickets/${ticketId}/followers/${followerId}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                  })
+                )
+              );
+            }
+          } else {
+            // In create mode, just add all followers
+            await Promise.all(
+              followers.map(followerId =>
+                apiClient.post(`/api/tickets/${ticketId}/followers`, {
+                  userId: followerId,
+                })
+              )
+            );
+          }
+          console.log(`Updated followers for ticket`);
         } catch (followerError) {
-          console.error('Error adding followers:', followerError);
+          console.error('Error updating followers:', followerError);
           
           const followerErrorMsg = followerError instanceof Error
             ? followerError.message
             : 'Unknown error occurred';
           
-          toast.warning('Ticket created but some followers failed to be added', {
-            description: `Error: ${followerErrorMsg}. You can add followers from the ticket detail page.`,
+          toast.warning(isEditMode ? 'Ticket updated but some followers failed to sync' : 'Ticket created but some followers failed to be added', {
+            description: `Error: ${followerErrorMsg}. You can manage followers from the ticket detail page.`,
           });
         }
       }

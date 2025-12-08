@@ -13,9 +13,16 @@ export default function TeamNewTicketPage() {
   
   // Get the status from query parameter (from kanban column)
   const statusParam = searchParams.get('status')
-  const initialStatus = statusParam && Object.values(TicketStatus).includes(statusParam as TicketStatus)
-    ? (statusParam as TicketStatus)
-    : TicketStatus.OPEN
+  
+  // Determine initial status - don't allow creating tickets with RESOLVED or CLOSED status
+  let initialStatus = TicketStatus.OPEN
+  if (statusParam && Object.values(TicketStatus).includes(statusParam as TicketStatus)) {
+    const status = statusParam as TicketStatus
+    // Only allow OPEN, IN_PROGRESS, and WAITING_FOR_CUSTOMER for new tickets
+    if (status === TicketStatus.OPEN || status === TicketStatus.IN_PROGRESS || status === TicketStatus.WAITING_FOR_CUSTOMER) {
+      initialStatus = status
+    }
+  }
 
   const handleSuccess = (ticketId: string) => {
     toast.success('Ticket created successfully')
