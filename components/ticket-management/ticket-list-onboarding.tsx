@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { OnboardingTour, OnboardingStep } from "@/components/onboarding-tour"
+import { OnboardingTour, OnboardingStep } from "@/components/onboarding/onboarding-tour"
 import { usePermissions } from "@/lib/hooks/use-permissions"
 
 interface TicketListOnboardingProps {

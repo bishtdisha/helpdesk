@@ -20,8 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { useTickets } from '@/lib/hooks/use-tickets';
 import { Ticket, TicketStatus, TicketPriority } from '@/lib/types/ticket';
-import { TicketStatusBadge } from './ticket-status-badge';
-import { PriorityBadge } from './priority-badge';
+import { TicketStatusBadge } from '@/components/ticket-management/ticket-status-badge';
+import { PriorityBadge } from '@/components/ticket-management/priority-badge';
 import { 
   User, 
   Ticket as TicketIcon, 

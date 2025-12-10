@@ -30,9 +30,9 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CustomerSelector } from '@/components/customer-selector';
-import { TemplateSelector } from '@/components/template-selector';
-import { SaveAsTemplateButton } from '@/components/save-as-template-button';
+import { CustomerSelector } from '@/components/user-management/customer-selector';
+import { TemplateSelector } from '@/components/templates/template-selector';
+import { SaveAsTemplateButton } from '@/components/ticket-management/save-as-template-button';
 import { FormFieldWithHelp } from '@/components/ui/form-field-with-help';
 import { TicketTemplate } from '@/lib/hooks/use-templates';
 

@@ -198,13 +198,13 @@ export function withLazyLoading<T extends ComponentType<any>>(
 
 // Lazy loaded components
 export const LazyTicketDetail = lazy(() => 
-  import('@/components/ticket-detail').then(module => ({ 
+  import('@/components/ticket-management/ticket-detail').then(module => ({ 
     default: module.TicketDetail 
   }))
 );
 
 export const LazyKnowledgeBase = lazy(() => 
-  import('@/components/knowledge-base').then(module => ({ 
+  import('@/components/knowledge-base/knowledge-base').then(module => ({ 
     default: module.KnowledgeBase 
   }))
 );
@@ -222,7 +222,7 @@ export const LazyTeamDashboard = lazy(() =>
 );
 
 export const LazyUserDashboard = lazy(() => 
-  import('@/components/user-dashboard').then(module => ({ 
+  import('@/components/dashboard/user-dashboard').then(module => ({ 
     default: module.UserDashboard 
   }))
 );
@@ -234,20 +234,20 @@ export const LazyAnalyticsPage = lazy(() =>
 );
 
 export const LazyReports = lazy(() => 
-  import('@/components/reports').then(module => ({ 
-    default: module.default 
+  import('@/components/analytics/reports').then(module => ({ 
+    default: module.Reports 
   }))
 );
 
 export const LazySLAManagement = lazy(() => 
-  import('@/components/sla-management').then(module => ({ 
-    default: module.default 
+  import('@/components/sla/sla-management').then(module => ({ 
+    default: module.SLAManagement 
   }))
 );
 
 export const LazyEscalationManagement = lazy(() => 
-  import('@/components/escalation-management').then(module => ({ 
-    default: module.default 
+  import('@/components/escalation/escalation-management').then(module => ({ 
+    default: module.EscalationManagement 
   }))
 );
 

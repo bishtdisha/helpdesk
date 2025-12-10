@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CommentInput } from "@/components/comment-input"
-import { AttachmentList } from "@/components/attachment-list"
+import { CommentInput } from "@/components/ticket-management/comment-input"
+import { AttachmentList } from "@/components/ticket-management/attachment-list"
 import {
   Clock,
   User,

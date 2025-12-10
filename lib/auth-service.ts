@@ -106,7 +106,10 @@ export class AuthService {
         };
       }
 
-      // Create session
+      // CRITICAL: Invalidate all old sessions for this user before creating new one
+      await SessionUtils.invalidateUserSessions(user.id);
+
+      // Create new session
       const session = await SessionUtils.createSession(
         user.id,
         sessionOptions?.ipAddress,

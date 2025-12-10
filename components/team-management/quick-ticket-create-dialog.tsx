@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SimpleSelect } from '@/components/simple-select';
+import { SimpleSelect } from '@/components/performance/simple-select';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 

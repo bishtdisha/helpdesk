@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sidebar } from '@/components/sidebar';
-import { NavigationHeader } from '@/components/navigation-header';
+import { Sidebar } from '@/components/layout/sidebar';
+import { NavigationHeader } from '@/components/layout/navigation-header';
 
 export default function TicketsLayout({
   children,

@@ -1,4 +1,4 @@
-import { AuditLogs } from '@/components/audit-logs';
+import { AuditLogs } from '@/components/audit/audit-logs';
 
 export default function AuditLogsPage() {
   return (

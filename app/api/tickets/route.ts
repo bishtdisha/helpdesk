@@ -266,8 +266,14 @@ export async function POST(request: NextRequest) {
       followerIds: followerIds || undefined,
     };
 
+    console.log('🌐 API: Creating ticket via POST /api/tickets');
+    console.log('   Current User:', currentUser.name, currentUser.email);
+    console.log('   Ticket Data:', { title: ticketData.title, assignedTo: ticketData.assignedTo });
+    
     // Create the ticket
     const ticket = await ticketService.createTicket(ticketData, currentUser.id);
+
+    console.log('🌐 API: Ticket created successfully, ID:', ticket.id);
 
     // Log audit entry
     await auditService.logTicketOperation(

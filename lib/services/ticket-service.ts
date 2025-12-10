@@ -5,6 +5,7 @@ import { PermissionError } from '../rbac/errors';
 
 import { slaService } from './sla-service';
 import { fileUploadService } from './file-upload-service';
+import { EmailService } from './email-service';
 
 // Types for ticket operations
 export interface CreateTicketData {
@@ -174,6 +175,14 @@ export class TicketService {
    * Create a new ticket
    */
   async createTicket(data: CreateTicketData, userId: string): Promise<Ticket> {
+    console.log('🎫 ========================================');
+    console.log('🎫 CREATING NEW TICKET');
+    console.log('🎫 ========================================');
+    console.log('   Title:', data.title);
+    console.log('   Assigned To:', data.assignedTo);
+    console.log('   Followers:', data.followerIds);
+    console.log('🎫 ========================================');
+    
     // Validate required fields
     if (!data.title || data.title.trim().length === 0) {
       throw new Error('Title is required and cannot be empty');
@@ -254,6 +263,75 @@ export class TicketService {
 
     // Create history entry
     await this.createHistoryEntry(ticket.id, userId, 'created', null, null, null);
+
+    console.log('='.repeat(60));
+    console.log('🎫 TICKET CREATED - NOW SENDING EMAIL NOTIFICATION');
+    console.log('='.repeat(60));
+
+    // Send email notification to assigned user with followers in CC
+    try {
+      console.log('📧 Attempting to send ticket assignment email...');
+      console.log('   Ticket ID:', ticket.id);
+      console.log('   Ticket Number:', ticket.ticketNumber);
+      console.log('   Assigned To ID:', data.assignedTo);
+      
+      // Get assignee details
+      const assignee = await prisma.user.findUnique({
+        where: { id: data.assignedTo },
+        select: { email: true, name: true },
+      });
+      
+      console.log('   Assignee found:', assignee ? `${assignee.name} <${assignee.email}>` : 'NOT FOUND');
+
+      if (assignee && assignee.email) {
+        console.log('   Assignee has email, proceeding with email notification...');
+        
+        // Get follower emails for CC
+        let ccEmails: string[] = [];
+        if (data.followerIds && data.followerIds.length > 0) {
+          console.log('   Fetching follower emails for CC...');
+          const followers = await prisma.user.findMany({
+            where: { 
+              id: { in: data.followerIds },
+            },
+            select: { email: true },
+          });
+          // Filter out null emails
+          ccEmails = followers
+            .map(f => f.email)
+            .filter((email): email is string => email !== null && email !== undefined);
+          console.log('   Followers for CC:', ccEmails.length > 0 ? ccEmails.join(', ') : 'None');
+        }
+
+        // Send the email
+        console.log('   Calling EmailService.sendTicketAssignmentEmail...');
+        await EmailService.sendTicketAssignmentEmail(
+          assignee.email,
+          assignee.name || 'User',
+          {
+            id: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            title: ticket.title,
+            description: ticket.description,
+            priority: ticket.priority,
+            category: ticket.category || undefined,
+            customerName: ticket.customer?.name || undefined,
+            creatorName: ticket.creator?.name || undefined,
+          },
+          ccEmails.length > 0 ? ccEmails : undefined
+        );
+
+        console.log('✅ Ticket assignment email sent to:', assignee.email);
+        if (ccEmails.length > 0) {
+          console.log('   CC:', ccEmails.join(', '));
+        }
+      } else {
+        console.log('⚠️  Assignee not found or has no email address');
+      }
+    } catch (emailError) {
+      // Log email error but don't fail ticket creation
+      console.error('⚠️  Failed to send ticket assignment email:', emailError);
+    }
 
     return ticket;
   }

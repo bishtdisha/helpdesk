@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { LoadingScreen } from "@/components/loading-screen"
+import { LoadingScreen } from "@/components/shared/loading-screen"
 
 export default function LogoutPage() {
   useEffect(() => {

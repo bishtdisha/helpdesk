@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useParams, useSearchParams } from "next/navigation"
-import { EnhancedTicketCreateForm } from "@/components/enhanced-ticket-create-form"
+import { EnhancedTicketCreateForm } from "@/components/ticket-management/enhanced-ticket-create-form"
 import { TicketStatus } from "@prisma/client"
 import { toast } from "sonner"
 

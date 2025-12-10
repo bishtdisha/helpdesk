@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { TicketFilters, TicketStatus, TicketPriority } from '@/lib/types/ticket';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { useRecentSearches } from '@/lib/hooks/use-recent-searches';
-import { CustomerSearchInput } from '@/components/customer-search-input';
+import { CustomerSearchInput } from '@/components/user-management/customer-search-input';
 import { Search, Calendar as CalendarIcon, X, Filter, ExternalLink, Clock, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';

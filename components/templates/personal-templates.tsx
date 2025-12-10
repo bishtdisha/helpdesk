@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import { useTemplates, useTemplateMutations, TicketTemplate } from '@/lib/hooks/use-templates';
-import { usePermissions } from '@/lib/hooks/use-permissions';
-import { PermissionGuard } from '@/components/rbac/permission-guard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -32,20 +30,23 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, Plus, MoreHorizontal, Edit, Trash2, Globe, User, FileText } from 'lucide-react';
+import { Loader2, Plus, MoreHorizontal, Edit, Trash2, FileText, Globe, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { TemplateForm } from '@/components/template-form';
+import { TemplateForm } from '@/components/templates/template-form';
 
-export function TemplateManagement() {
+export function PersonalTemplates() {
   const { templates, isLoading, error, refresh } = useTemplates();
   const { deleteTemplate } = useTemplateMutations();
-  const { canManageSLA } = usePermissions(); // Using SLA permission as proxy for Admin_Manager
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<TicketTemplate | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [templateToEdit, setTemplateToEdit] = useState<TicketTemplate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Filter to show only personal templates and global templates
+  const personalTemplates = templates.filter(template => !template.isGlobal);
+  const globalTemplates = templates.filter(template => template.isGlobal);
 
   const handleDeleteClick = (template: TicketTemplate) => {
     setTemplateToDelete(template);
@@ -103,30 +104,20 @@ export function TemplateManagement() {
     }
   };
 
-  return (
-    <PermissionGuard require="canManageSLA" fallback={
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>You don't have permission to manage templates.</p>
-            <p className="text-sm">Only Admin_Manager users can access this feature.</p>
+  const renderTemplateTable = (templateList: TicketTemplate[], title: string, showActions: boolean = true) => (
+    <Card className="mb-6">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">{title}</CardTitle>
+            <CardDescription>
+              {templateList.length} template{templateList.length !== 1 ? 's' : ''}
+            </CardDescription>
           </div>
-        </CardContent>
-      </Card>
-    }>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Template Management</CardTitle>
-              <CardDescription>
-                Create and manage ticket templates for faster ticket creation
-              </CardDescription>
-            </div>
+          {showActions && (
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Template
                 </Button>
@@ -138,91 +129,58 @@ export function TemplateManagement() {
                 />
               </DialogContent>
             </Dialog>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {templateList.length === 0 ? (
+          <div className="text-center p-8 text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">No {title.toLowerCase()} found</p>
+            {showActions && <p>Create your first template to get started</p>}
           </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading templates...</span>
-            </div>
-          ) : error ? (
-            <div className="text-center p-8 text-destructive">
-              <p>Failed to load templates</p>
-              <Button variant="outline" onClick={refresh} className="mt-2">
-                Try Again
-              </Button>
-            </div>
-          ) : templates.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No templates found</p>
-              <p>Create your first template to get started</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Created By</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {templates.map((template) => (
-                  <TableRow key={template.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{template.name}</div>
-                        {template.description && (
-                          <div className="text-sm text-muted-foreground">
-                            {template.description}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {template.category ? (
-                        <Badge variant="outline">{template.category}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Created</TableHead>
+                {showActions && <TableHead className="w-[50px]"></TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {templateList.map((template) => (
+                <TableRow key={template.id}>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{template.name}</div>
+                      {template.description && (
+                        <div className="text-sm text-muted-foreground">
+                          {template.description}
+                        </div>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={getPriorityColor(template.priority)}>
-                        {template.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {template.isGlobal ? (
-                          <>
-                            <Globe className="h-4 w-4 text-blue-500" />
-                            <Badge variant="secondary">Global</Badge>
-                          </>
-                        ) : (
-                          <>
-                            <User className="h-4 w-4 text-gray-500" />
-                            <Badge variant="outline">Personal</Badge>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{template.creator.name}</div>
-                        <div className="text-muted-foreground">{template.creator.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(template.createdAt).toLocaleDateString()}
-                      </div>
-                    </TableCell>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {template.category ? (
+                      <Badge variant="outline">{template.category}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={getPriorityColor(template.priority)}>
+                      {template.priority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(template.createdAt).toLocaleDateString()}
+                    </div>
+                  </TableCell>
+                  {showActions && (
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -245,13 +203,54 @@ export function TemplateManagement() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading templates...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-destructive">
+            <p>Failed to load templates</p>
+            <Button variant="outline" onClick={refresh} className="mt-2">
+              Try Again
+            </Button>
+          </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">My Templates</h2>
+        <p className="text-muted-foreground">
+          Manage your personal ticket templates and view available global templates.
+        </p>
+      </div>
+
+      {/* Personal Templates */}
+      {renderTemplateTable(personalTemplates, 'Personal Templates', true)}
+
+      {/* Global Templates */}
+      {globalTemplates.length > 0 && renderTemplateTable(globalTemplates, 'Global Templates', false)}
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -298,6 +297,6 @@ export function TemplateManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </PermissionGuard>
+    </div>
   );
 }

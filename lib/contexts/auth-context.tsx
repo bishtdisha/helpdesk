@@ -137,9 +137,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login function
   const login = useCallback(async (email: string, password: string) => {
     try {
-      // Clear any existing cached data before login
-      localStorage.removeItem(SESSION_CACHE_KEY);
+      // CRITICAL: Clear ALL cached data before login
+      localStorage.clear();
+      sessionStorage.clear();
       setUser(null);
+      setIsLoading(true);
       
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -155,8 +157,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok && data.success) {
         // Fetch fresh user data after successful login
         await fetchUser();
+        setIsLoading(false);
         return { success: true };
       } else {
+        setIsLoading(false);
         return {
           success: false,
           error: data.error || 'Login failed',
@@ -164,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Login error:', error);
+      setIsLoading(false);
       return {
         success: false,
         error: 'An error occurred during login',

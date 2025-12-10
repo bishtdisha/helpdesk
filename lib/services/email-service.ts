@@ -314,4 +314,261 @@ Cimcon Automation
       text,
     });
   }
+
+  /**
+   * Send ticket assignment notification email
+   */
+  static async sendTicketAssignmentEmail(
+    assigneeEmail: string,
+    assigneeName: string,
+    ticketData: {
+      id: string;
+      ticketNumber: number;
+      title: string;
+      description: string;
+      priority: string;
+      category?: string;
+      customerName?: string;
+      creatorName?: string;
+    },
+    ccEmails?: string[]
+  ): Promise<boolean> {
+    const ticketUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/helpdesk/tickets/${ticketData.id}`;
+    
+    const priorityColors: Record<string, string> = {
+      LOW: '#10b981',
+      MEDIUM: '#f59e0b',
+      HIGH: '#ef4444',
+      URGENT: '#dc2626',
+    };
+
+    const priorityColor = priorityColors[ticketData.priority] || '#6b7280';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #3b82f6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+          }
+          .content {
+            background-color: #f9fafb;
+            padding: 30px;
+            border: 1px solid #e5e7eb;
+          }
+          .ticket-info {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+          }
+          .info-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+          }
+          .info-row:last-child {
+            border-bottom: none;
+          }
+          .info-label {
+            font-weight: bold;
+            width: 120px;
+            color: #6b7280;
+          }
+          .info-value {
+            flex: 1;
+            color: #111827;
+          }
+          .priority-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+          }
+          .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+          }
+          .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 12px;
+          }
+          .description-box {
+            background-color: #f9fafb;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 15px 0;
+            font-style: italic;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎫 New Ticket Assigned to You</h1>
+          </div>
+          <div class="content">
+            <p>Hello ${assigneeName},</p>
+            
+            <p>A new ticket has been assigned to you. Please review the details below:</p>
+            
+            <div class="ticket-info">
+              <div class="info-row">
+                <div class="info-label">Ticket #:</div>
+                <div class="info-value"><strong>${ticketData.ticketNumber}</strong></div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Title:</div>
+                <div class="info-value"><strong>${ticketData.title}</strong></div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Priority:</div>
+                <div class="info-value">
+                  <span class="priority-badge" style="background-color: ${priorityColor};">
+                    ${ticketData.priority}
+                  </span>
+                </div>
+              </div>
+              ${ticketData.category ? `
+              <div class="info-row">
+                <div class="info-label">Category:</div>
+                <div class="info-value">${ticketData.category}</div>
+              </div>
+              ` : ''}
+              ${ticketData.customerName ? `
+              <div class="info-row">
+                <div class="info-label">Customer:</div>
+                <div class="info-value">${ticketData.customerName}</div>
+              </div>
+              ` : ''}
+              ${ticketData.creatorName ? `
+              <div class="info-row">
+                <div class="info-label">Created By:</div>
+                <div class="info-value">${ticketData.creatorName}</div>
+              </div>
+              ` : ''}
+            </div>
+            
+            <div class="description-box">
+              <strong>Description:</strong><br>
+              ${ticketData.description.replace(/\n/g, '<br>')}
+            </div>
+            
+            <center>
+              <a href="${ticketUrl}" class="button">View Ticket</a>
+            </center>
+            
+            <p>Please address this ticket according to its priority level and SLA requirements.</p>
+            
+            <p>Best regards,<br>
+            <strong>CS Support Team</strong><br>
+            Cimcon Automation</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated email from the Helpdesk System.</p>
+            <p>&copy; ${new Date().getFullYear()} Cimcon Automation. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+New Ticket Assigned to You
+
+Hello ${assigneeName},
+
+A new ticket has been assigned to you. Please review the details below:
+
+Ticket #: ${ticketData.ticketNumber}
+Title: ${ticketData.title}
+Priority: ${ticketData.priority}
+${ticketData.category ? `Category: ${ticketData.category}` : ''}
+${ticketData.customerName ? `Customer: ${ticketData.customerName}` : ''}
+${ticketData.creatorName ? `Created By: ${ticketData.creatorName}` : ''}
+
+Description:
+${ticketData.description}
+
+Please address this ticket according to its priority level and SLA requirements.
+
+View ticket: ${ticketUrl}
+
+Best regards,
+CS Support Team
+Cimcon Automation
+    `;
+
+    try {
+      // Check if SMTP is configured
+      if (!this.isConfigured()) {
+        console.warn('⚠️  SMTP not configured. Email would be sent to:', assigneeEmail);
+        if (ccEmails && ccEmails.length > 0) {
+          console.warn('⚠️  CC:', ccEmails.join(', '));
+        }
+        console.warn('⚠️  Please configure SMTP_USER and SMTP_PASSWORD in .env file');
+        // In development, we'll pretend it succeeded
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📧 [DEV MODE] Ticket assignment email simulated successfully');
+          return true;
+        }
+        return false;
+      }
+
+      const mailOptions: any = {
+        from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+        to: assigneeEmail,
+        subject: `[Ticket #${ticketData.ticketNumber}] New Ticket Assigned: ${ticketData.title}`,
+        text,
+        html,
+      };
+
+      // Add CC if provided
+      if (ccEmails && ccEmails.length > 0) {
+        mailOptions.cc = ccEmails.join(', ');
+      }
+
+      const info = await transporter.sendMail(mailOptions);
+
+      console.log('✅ Ticket assignment email sent:', info.messageId);
+      console.log('   To:', assigneeEmail);
+      if (ccEmails && ccEmails.length > 0) {
+        console.log('   CC:', ccEmails.join(', '));
+      }
+      return true;
+    } catch (error) {
+      console.error('❌ Error sending ticket assignment email:', error);
+      // In development, log the error but don't fail
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📧 [DEV MODE] Email sending failed but continuing...');
+        return true;
+      }
+      return false;
+    }
+  }
 }

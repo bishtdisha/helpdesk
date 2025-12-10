@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Sidebar } from "@/components/sidebar"
-import { NavigationHeader } from "@/components/navigation-header"
+import { Sidebar } from "@/components/layout/sidebar"
+import { NavigationHeader } from "@/components/layout/navigation-header"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/hooks/use-auth"
-import { LoadingScreen } from "@/components/loading-screen"
+import { LoadingScreen } from "@/components/shared/loading-screen"
 
 export function HelpdeskClientLayout({
   children,

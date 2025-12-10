@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { EnhancedTicketCreateForm } from "@/components/enhanced-ticket-create-form"
+import { EnhancedTicketCreateForm } from "@/components/ticket-management/enhanced-ticket-create-form"
 import { toast } from "sonner"
 
 export default function EditTicketPage({ params }: { params: { id: string } }) {

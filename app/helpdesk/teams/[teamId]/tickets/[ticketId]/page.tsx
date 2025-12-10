@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { EnhancedTicketCreateForm } from "@/components/enhanced-ticket-create-form"
+import { EnhancedTicketCreateForm } from "@/components/ticket-management/enhanced-ticket-create-form"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 

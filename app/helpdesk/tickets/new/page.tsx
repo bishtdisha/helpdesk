@@ -1,6 +1,6 @@
 "use client"
 
-import { EnhancedTicketCreateForm } from "@/components/enhanced-ticket-create-form"
+import { EnhancedTicketCreateForm } from "@/components/ticket-management/enhanced-ticket-create-form"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"

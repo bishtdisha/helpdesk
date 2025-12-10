@@ -27,10 +27,10 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DynamicDropdownSelect } from '@/components/dynamic-dropdown-select';
-import { SimpleSelect } from '@/components/simple-select';
-import { FileAttachmentUpload } from '@/components/file-attachment-upload';
-import { CommentInput } from '@/components/comment-input';
+import { DynamicDropdownSelect } from '@/components/search/dynamic-dropdown-select';
+import { SimpleSelect } from '@/components/performance/simple-select';
+import { FileAttachmentUpload } from '@/components/ticket-management/file-attachment-upload';
+import { CommentInput } from '@/components/ticket-management/comment-input';
 import { apiClient } from '@/lib/api-client';
 import { CacheManager } from '@/lib/performance/caching';
 import { mutate } from 'swr';
@@ -358,14 +358,9 @@ export function EnhancedTicketCreateForm({
               );
             }
           } else {
-            // In create mode, just add all followers
-            await Promise.all(
-              followers.map(followerId =>
-                apiClient.post(`/api/tickets/${ticketId}/followers`, {
-                  userId: followerId,
-                })
-              )
-            );
+            // In create mode, followers are already added via the ticket creation API
+            // No need to add them again here
+            console.log(`Followers already added during ticket creation`);
           }
           console.log(`Updated followers for ticket`);
         } catch (followerError) {
