@@ -54,11 +54,16 @@ export function UserDashboard() {
   // Debug logging
   console.log('🔍 UserDashboard Debug:', {
     user,
+    userId: user?.id,
+    userName: user?.name,
+    userRole: user?.role?.name,
     role,
     myTickets,
     myTicketsLoading,
     error,
-    ticketsCount: myTickets.length
+    ticketsCount: myTickets.length,
+    ticketIds: myTickets.map(t => t.id),
+    ticketTitles: myTickets.map(t => t.title)
   });
 
   // Calculate statistics from tickets
@@ -83,20 +88,23 @@ export function UserDashboard() {
     <div className="space-y-6">
       {/* Welcome Message */}
       {user && (
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-blue-900 dark:via-slate-800 dark:to-blue-900">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-100/20 to-transparent dark:via-blue-700/20"></div>
-          <CardHeader className="relative">
-            <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-gradient-to-r from-blue-900 to-blue-700 dark:from-blue-100 dark:to-blue-300 bg-clip-text text-transparent">
-              <div className="p-2 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-700 dark:to-blue-800 shadow-sm">
-                <User className="h-6 w-6 text-blue-600 dark:text-blue-300" />
-              </div>
-              Welcome back, {user.name || 'User'}!
-            </CardTitle>
-            <CardDescription className="text-base text-muted-foreground mt-2">
-              Here's an overview of your tickets and activity.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">
+                Welcome back, {user.name || 'User'}!
+              </h2>
+              <p className="text-sm text-gray-600 mt-0.5">
+                Here's an overview of your tickets and activity.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Personal Statistics - Requirement 39.1, 39.3, 39.4 */}

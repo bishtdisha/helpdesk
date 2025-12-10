@@ -42,6 +42,27 @@ export function CustomizableDashboard() {
 
   return (
     <main id="main-content" className="space-y-6" role="main" aria-label="Dashboard">
+      {/* Welcome Message */}
+      {user && (
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">
+                Welcome back, {user.name || 'User'}!
+              </h2>
+              <p className="text-sm text-gray-600 mt-0.5">
+                Here's an overview of your tickets and activity.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Dashboard Grid - Simple CSS Grid */}
       <section 
         className="dashboard-grid-simple" 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { Clock, TrendingUp, TrendingDown, Info } from "lucide-react";
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -60,7 +60,7 @@ export function AvgResolutionKPI() {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow h-full border-orange-200 bg-gradient-to-br from-orange-50/50 to-background">
+    <Card className="hover:shadow-lg transition-all h-full border-orange-200 bg-gradient-to-br from-orange-50/50 to-background">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">Avg Resolution Time</CardTitle>
         <div className="p-2 rounded-lg bg-orange-100">

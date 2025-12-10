@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { AlertCircle, TrendingUp, TrendingDown, Info } from "lucide-react";
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -47,7 +47,7 @@ export function TotalTicketsKPI() {
   const isPositive = trendValue > 0;
 
   return (
-    <Card className="hover:shadow-md transition-shadow h-full border-blue-200 bg-gradient-to-br from-blue-50/50 to-background">
+    <Card className="hover:shadow-lg transition-all h-full border-blue-200 bg-gradient-to-br from-blue-50/50 to-background">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
         <div className="p-2 rounded-lg bg-blue-100">

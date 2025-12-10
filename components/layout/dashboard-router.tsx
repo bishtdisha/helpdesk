@@ -35,10 +35,10 @@ export function DashboardRouter() {
   // Route based on role (Requirement 18.5, 24.1, 24.3)
   switch (userRole) {
     case ROLE_TYPES.USER_EMPLOYEE:
-      // User_Employee sees their personal dashboard
+      // User_Employee sees customizable dashboard with widgets
       return (
         <Suspense fallback={<DashboardSkeleton />}>
-          <UserDashboardWithSuspense />
+          <CustomizableDashboard />
         </Suspense>
       )
     case ROLE_TYPES.ADMIN_MANAGER:
@@ -56,10 +56,10 @@ export function DashboardRouter() {
         </Suspense>
       )
     default:
-      // Fallback to user dashboard
+      // Fallback to customizable dashboard
       return (
         <Suspense fallback={<DashboardSkeleton />}>
-          <UserDashboardWithSuspense />
+          <CustomizableDashboard />
         </Suspense>
       )
   }

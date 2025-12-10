@@ -45,11 +45,15 @@ export function useTickets(options: UseTicketsOptions = {}): UseTicketsReturn {
   // Build cache key from filters
   const cacheKey = filters && Object.keys(filters).length > 0
     ? ['/api/tickets', filters]
-    : '/api/tickets';
+    : ['/api/tickets'];
 
   // Fetcher function
-  const fetcher = async ([endpoint, params]: [string, TicketFilters?]) => {
-    return apiClient.get<GetTicketsResponse>(endpoint, params);
+  const fetcher = async (key: string | [string, TicketFilters?]) => {
+    if (Array.isArray(key)) {
+      const [endpoint, params] = key;
+      return apiClient.get<GetTicketsResponse>(endpoint, params);
+    }
+    return apiClient.get<GetTicketsResponse>(key);
   };
 
   // Use SWR for data fetching with optimized cache configuration

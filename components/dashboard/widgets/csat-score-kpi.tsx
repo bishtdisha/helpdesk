@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, TrendingUp, TrendingDown } from "lucide-react";
+import { Star, TrendingUp, TrendingDown, Info } from "lucide-react";
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -92,7 +92,7 @@ export function CSATScoreKPI() {
   const statusInfo = getStatusInfo();
 
   return (
-    <Card className={`hover:shadow-md transition-shadow h-full ${statusInfo.borderColor} bg-gradient-to-br ${statusInfo.gradientFrom} to-background`}>
+    <Card className={`hover:shadow-lg transition-all h-full ${statusInfo.borderColor} bg-gradient-to-br ${statusInfo.gradientFrom} to-background`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">Customer Satisfaction</CardTitle>
         <div className={`p-2 rounded-lg ${statusInfo.bgColor}`}>

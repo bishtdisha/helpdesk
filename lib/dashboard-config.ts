@@ -10,7 +10,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Total tickets with open/resolved breakdown',
   },
   {
@@ -20,7 +20,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'SLA compliance percentage with status',
   },
   {
@@ -30,7 +30,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Average resolution and response time',
   },
   {
@@ -40,7 +40,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Customer satisfaction score',
   },
 
@@ -52,7 +52,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 12, h: 4 },
     minSize: { w: 6, h: 3 },
     category: 'personal',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Open, High Priority, Urgent, Avg Hours, Failed/Escalated',
   },
 
@@ -64,7 +64,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 12, h: 5 },
     minSize: { w: 6, h: 4 },
     category: 'sla',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Near breach, breached, and priority vs SLA matrix',
   },
 
@@ -76,7 +76,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 4 },
     minSize: { w: 3, h: 3 },
     category: 'performance',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Tickets resolved, avg response, SLA success today',
   },
   {
@@ -86,7 +86,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 4 },
     minSize: { w: 3, h: 3 },
     category: 'performance',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Weekly performance metrics',
   },
   // ⭐ Section 5: Trend Insights
@@ -97,7 +97,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 5 },
     minSize: { w: 3, h: 4 },
     category: 'trends',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Ticket volume trend showing peak days',
   },
   {
@@ -107,7 +107,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 5 },
     minSize: { w: 3, h: 4 },
     category: 'trends',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Resolution time efficiency trend',
   },
   // ⭐ Section 6: Helpful Extras
@@ -118,7 +118,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 5 },
     minSize: { w: 3, h: 4 },
     category: 'extras',
-    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Tickets by status breakdown',
   },
 ];
@@ -244,7 +244,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
     id: 'user-default',
     name: 'User Default',
     description: 'Personal performance dashboard',
-    role: 'User/Employee',
+    role: 'Employee',
     visibleWidgets: [
       'total-tickets-kpi',
       'sla-compliance-kpi',
@@ -297,7 +297,7 @@ export function getDefaultPresetForRole(role: string): DashboardPreset | undefin
   const roleToPresetId: Record<string, string> = {
     'Admin/Manager': 'admin-default',
     'Team Leader': 'team-leader-default',
-    'User/Employee': 'user-default',
+    'Employee': 'user-default',
   };
   
   const presetId = roleToPresetId[role];
