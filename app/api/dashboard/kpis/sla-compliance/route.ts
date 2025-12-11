@@ -75,10 +75,18 @@ export async function GET(request: NextRequest) {
 
     const trend = previousRate > 0 ? currentRate - previousRate : 0;
 
+    // Calculate met and breach counts
+    const metCount = compliantTickets.length;
+    const breachCount = resolvedTickets.length - compliantTickets.length;
+    const totalCount = resolvedTickets.length;
+
     return NextResponse.json({
       percentage,
       status: percentage >= 90 ? 'Excellent' : percentage >= 80 ? 'Good' : 'Needs Attention',
       trend,
+      metCount,
+      breachCount,
+      totalCount,
     });
   } catch (error) {
     console.error('Error fetching SLA compliance KPI:', error);

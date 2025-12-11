@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { Star, TrendingUp, TrendingDown, ThumbsUp, ThumbsDown, Meh } from "lucide-react";
+import { CleanKPICard } from "../clean-kpi-card";
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -43,7 +44,7 @@ export function CSATScoreKPI() {
     );
   }
 
-  const { score, totalResponses, trend } = data;
+  const { score, totalResponses, trend, positiveCount, neutralCount, negativeCount } = data;
   const rating = score || 0;
   const trendValue = trend || 0;
   const isPositive = trendValue > 0;
@@ -91,35 +92,60 @@ export function CSATScoreKPI() {
 
   const statusInfo = getStatusInfo();
 
+  const popoverContent = (
+    <div className="space-y-3">
+      <h4 className="font-semibold text-sm mb-3">Sentiment Breakdown</h4>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 text-center">
+          <ThumbsUp className="h-4 w-4 text-green-600 mx-auto mb-1" />
+          <div className="text-xl font-bold text-green-700">{positiveCount || 0}</div>
+          <span className="text-xs text-green-600">Positive</span>
+        </div>
+        <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 text-center">
+          <Meh className="h-4 w-4 text-yellow-600 mx-auto mb-1" />
+          <div className="text-xl font-bold text-yellow-700">{neutralCount || 0}</div>
+          <span className="text-xs text-yellow-600">Neutral</span>
+        </div>
+        <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-center">
+          <ThumbsDown className="h-4 w-4 text-red-600 mx-auto mb-1" />
+          <div className="text-xl font-bold text-red-700">{negativeCount || 0}</div>
+          <span className="text-xs text-red-600">Negative</span>
+        </div>
+      </div>
+      <div className="p-2 rounded-lg bg-muted/50">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium">Satisfaction Rate</span>
+          <span className="text-xs font-bold">{totalResponses > 0 ? ((positiveCount || 0) / totalResponses * 100).toFixed(1) : 0}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
+            style={{ width: `${totalResponses > 0 ? ((positiveCount || 0) / totalResponses * 100) : 0}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <Card className={`hover:shadow-lg transition-all h-full ${statusInfo.borderColor} bg-gradient-to-br ${statusInfo.gradientFrom} to-background`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">Customer Satisfaction</CardTitle>
-        <div className={`p-2 rounded-lg ${statusInfo.bgColor}`}>
-          <Star className={`h-4 w-4 ${statusInfo.color}`} />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className={`text-3xl font-bold ${statusInfo.color}`}>
-          {rating.toFixed(1)}<span className="text-xl text-muted-foreground">/5</span>
-        </div>
-        <div className="flex items-center gap-2 mt-2">
-          <Badge variant={statusInfo.badgeVariant} className="text-xs">
-            {statusInfo.label}
-          </Badge>
-          {totalResponses > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {totalResponses} {totalResponses === 1 ? 'response' : 'responses'}
-            </span>
-          )}
-        </div>
-        {trendValue !== 0 && (
-          <div className={`flex items-center gap-1 mt-1 text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            <span>{Math.abs(trendValue).toFixed(2)} from last period</span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <CleanKPICard
+      title="Customer Satisfaction"
+      value={`${rating.toFixed(1)}/5`}
+      icon={<Star className={`h-4 w-4 ${statusInfo.color}`} />}
+      iconBgColor={statusInfo.bgColor}
+      valueColor={statusInfo.color}
+      badge={{
+        text: statusInfo.label,
+        variant: statusInfo.badgeVariant
+      }}
+      trend={trendValue !== 0 ? {
+        value: `${Math.abs(trendValue).toFixed(2)} from last period`,
+        isPositive,
+        icon: isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />
+      } : undefined}
+      popoverContent={popoverContent}
+      hoverTrigger={true}
+      className={statusInfo.borderColor}
+    />
   );
 }

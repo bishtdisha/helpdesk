@@ -1,7 +1,9 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { AlertCircle, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { CleanKPICard } from "../clean-kpi-card";
+import { Badge } from "@/components/ui/badge";
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -42,34 +44,68 @@ export function TotalTicketsKPI() {
     );
   }
 
-  const { total, open, resolved, trend } = data;
+  const { total, open, resolved, trend, pending, inProgress, closed } = data;
   const trendValue = trend || 0;
   const isPositive = trendValue > 0;
 
-  return (
-    <Card className="hover:shadow-lg transition-all h-full border-blue-200 bg-gradient-to-br from-blue-50/50 to-background">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
-        <div className="p-2 rounded-lg bg-blue-100">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold text-blue-600">{total || 0}</div>
-        <div className="flex items-center gap-2 mt-2">
-          <p className="text-xs text-muted-foreground">
-            <span className="text-orange-600 font-medium">{open || 0} open</span>
-            {' • '}
-            <span className="text-green-600 font-medium">{resolved || 0} resolved</span>
-          </p>
-        </div>
-        {trendValue !== 0 && (
-          <div className={`flex items-center gap-1 mt-1 text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            <span>{Math.abs(trendValue)}% from last period</span>
+  const popoverContent = (
+    <div className="space-y-3">
+      <h4 className="font-semibold text-sm mb-3">Status Breakdown</h4>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-orange-500" />
+            <span className="text-xs font-medium text-orange-600">Open</span>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div className="text-xl font-bold text-orange-700">{open || 0}</div>
+        </div>
+        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <span className="text-xs font-medium text-blue-600">In Progress</span>
+          </div>
+          <div className="text-xl font-bold text-blue-700">{inProgress || 0}</div>
+        </div>
+        <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-xs font-medium text-green-600">Resolved</span>
+          </div>
+          <div className="text-xl font-bold text-green-700">{resolved || 0}</div>
+        </div>
+        <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-950/20 border border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-gray-500" />
+            <span className="text-xs font-medium text-gray-600">Closed</span>
+          </div>
+          <div className="text-xl font-bold text-gray-700">{closed || 0}</div>
+        </div>
+      </div>
+      <div className="text-xs text-muted-foreground pt-2 border-t">
+        Total tickets evaluated: {total || 0}
+      </div>
+    </div>
+  );
+
+  return (
+    <CleanKPICard
+      title="Total Tickets"
+      value={total || 0}
+      icon={<AlertCircle className="h-4 w-4 text-blue-600" />}
+      iconBgColor="bg-blue-100 dark:bg-blue-900/30"
+      valueColor="text-blue-600"
+      badge={{
+        text: `${open || 0} open`,
+        variant: 'outline'
+      }}
+      trend={trendValue !== 0 ? {
+        value: `${Math.abs(trendValue)}% from last period`,
+        isPositive,
+        icon: isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />
+      } : undefined}
+      popoverContent={popoverContent}
+      hoverTrigger={true}
+      className="border-blue-200 dark:border-blue-800"
+    />
   );
 }

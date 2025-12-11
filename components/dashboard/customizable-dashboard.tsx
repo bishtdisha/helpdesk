@@ -72,24 +72,26 @@ export function CustomizableDashboard() {
         aria-atomic="false"
       >
         {widgetsToShow.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 auto-rows-auto">
+          <div className="space-y-4">
             {/* Section 1: High-Level KPIs - 4 cards in a row */}
-            {['total-tickets-kpi', 'sla-compliance-kpi', 'avg-resolution-kpi', 'csat-kpi'].map(widgetId => 
-              visibleWidgets.includes(widgetId) && (
-                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-3">
-                  <DashboardWidget
-                    id={widgetId}
-                    title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
-                    component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
-                    user={user}
-                  />
-                </div>
-              )
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {['total-tickets-kpi', 'sla-compliance-kpi', 'avg-resolution-kpi', 'csat-kpi'].map(widgetId => 
+                visibleWidgets.includes(widgetId) && (
+                  <div key={widgetId}>
+                    <DashboardWidget
+                      id={widgetId}
+                      title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
+                      component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
+                      user={user}
+                    />
+                  </div>
+                )
+              )}
+            </div>
             
             {/* Section 2: My Tickets Summary - Full Width */}
             {visibleWidgets.includes('my-tickets-summary') && (
-              <div className="col-span-1 md:col-span-2 lg:col-span-12">
+              <div>
                 <DashboardWidget
                   id="my-tickets-summary"
                   title="My Tickets"
@@ -101,7 +103,7 @@ export function CustomizableDashboard() {
             
             {/* Section 3: SLA Breach Alerts - Full Width */}
             {visibleWidgets.includes('sla-breach-alerts') && (
-              <div className="col-span-1 md:col-span-2 lg:col-span-12">
+              <div>
                 <DashboardWidget
                   id="sla-breach-alerts"
                   title="SLA / Priority Breakdown"
@@ -112,52 +114,56 @@ export function CustomizableDashboard() {
             )}
             
             {/* Section 4: Performance - 2 cards */}
-            {['today-performance', 'week-performance'].map(widgetId => 
-              visibleWidgets.includes(widgetId) && (
-                <div key={widgetId} className="col-span-1 md:col-span-1 lg:col-span-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {['today-performance', 'week-performance'].map(widgetId => 
+                visibleWidgets.includes(widgetId) && (
+                  <div key={widgetId}>
+                    <DashboardWidget
+                      id={widgetId}
+                      title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
+                      component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
+                      user={user}
+                    />
+                  </div>
+                )
+              )}
+            </div>
+            
+            {/* Section 5: Trends & Workload - 3 cards in a row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visibleWidgets.includes('ticket-trend') && (
+                <div>
                   <DashboardWidget
-                    id={widgetId}
-                    title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
-                    component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
+                    id="ticket-trend"
+                    title="Ticket Trend (30 Days)"
+                    component="TicketTrendChart"
                     user={user}
                   />
                 </div>
-              )
-            )}
-            
-            {/* Section 5: Trends & Workload - 3 cards in a row */}
-            {visibleWidgets.includes('ticket-trend') && (
-              <div className="col-span-1 md:col-span-1 lg:col-span-4">
-                <DashboardWidget
-                  id="ticket-trend"
-                  title="Ticket Trend (30 Days)"
-                  component="TicketTrendChart"
-                  user={user}
-                />
-              </div>
-            )}
-            
-            {visibleWidgets.includes('workload-by-status') && (
-              <div className="col-span-1 md:col-span-1 lg:col-span-4">
-                <DashboardWidget
-                  id="workload-by-status"
-                  title="Pending Workload"
-                  component="WorkloadByStatus"
-                  user={user}
-                />
-              </div>
-            )}
-            
-            {visibleWidgets.includes('resolution-trend') && (
-              <div className="col-span-1 md:col-span-1 lg:col-span-4">
-                <DashboardWidget
-                  id="resolution-trend"
-                  title="Resolution Time Trend"
-                  component="ResolutionTrendChart"
-                  user={user}
-                />
-              </div>
-            )}
+              )}
+              
+              {visibleWidgets.includes('workload-by-status') && (
+                <div>
+                  <DashboardWidget
+                    id="workload-by-status"
+                    title="Pending Workload"
+                    component="WorkloadByStatus"
+                    user={user}
+                  />
+                </div>
+              )}
+              
+              {visibleWidgets.includes('resolution-trend') && (
+                <div>
+                  <DashboardWidget
+                    id="resolution-trend"
+                    title="Resolution Time Trend"
+                    component="ResolutionTrendChart"
+                    user={user}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           // Show skeleton while layout initializes

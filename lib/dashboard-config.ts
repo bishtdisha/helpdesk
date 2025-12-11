@@ -55,6 +55,16 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     roles: ['Admin/Manager', 'Team Leader', 'Employee'],
     description: 'Open, High Priority, Urgent, Avg Hours, Failed/Escalated',
   },
+  {
+    id: 'following-tickets',
+    title: 'Following',
+    component: 'FollowingTicketsWidget',
+    defaultSize: { w: 12, h: 4 },
+    minSize: { w: 6, h: 3 },
+    category: 'personal',
+    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    description: 'Tickets you are following but not assigned to',
+  },
 
   // ⭐ Section 3: SLA / Priority Breakdown
   {
@@ -170,6 +180,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       'csat-kpi',
       // Section 2: My Tickets
       'my-tickets-summary',
+      'following-tickets',
       // Section 3: SLA Breakdown
       'sla-breach-alerts',
       // Section 4: Performance
@@ -191,19 +202,22 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       // Row 2: My Tickets Summary
       { i: 'my-tickets-summary', x: 0, y: 3, w: 12, h: 4, minW: 6, minH: 3 },
       
-      // Row 3: SLA Breakdown
-      { i: 'sla-breach-alerts', x: 0, y: 7, w: 12, h: 5, minW: 6, minH: 4 },
+      // Row 3: Following Tickets
+      { i: 'following-tickets', x: 0, y: 7, w: 12, h: 4, minW: 6, minH: 3 },
       
-      // Row 4: Performance (2 cards)
-      { i: 'today-performance', x: 0, y: 12, w: 6, h: 4, minW: 4, minH: 3 },
-      { i: 'week-performance', x: 6, y: 12, w: 6, h: 4, minW: 4, minH: 3 },
+      // Row 4: SLA Breakdown
+      { i: 'sla-breach-alerts', x: 0, y: 11, w: 12, h: 5, minW: 6, minH: 4 },
       
-      // Row 5: Trends (2 charts)
-      { i: 'ticket-trend', x: 0, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
-      { i: 'resolution-trend', x: 6, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
+      // Row 5: Performance (2 cards)
+      { i: 'today-performance', x: 0, y: 16, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'week-performance', x: 6, y: 16, w: 6, h: 4, minW: 4, minH: 3 },
       
-      // Row 6: Extras
-      { i: 'workload-by-status', x: 0, y: 21, w: 12, h: 5, minW: 6, minH: 4 },
+      // Row 6: Trends (2 charts)
+      { i: 'ticket-trend', x: 0, y: 20, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'resolution-trend', x: 6, y: 20, w: 6, h: 5, minW: 4, minH: 4 },
+      
+      // Row 7: Extras
+      { i: 'workload-by-status', x: 0, y: 25, w: 12, h: 5, minW: 6, minH: 4 },
     ],
   },
   {
@@ -217,6 +231,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       'avg-resolution-kpi',
       'csat-kpi',
       'my-tickets-summary',
+      'following-tickets',
       'sla-breach-alerts',
       'today-performance',
       'week-performance',
@@ -231,13 +246,14 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       { i: 'avg-resolution-kpi', x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
       { i: 'csat-kpi', x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
       { i: 'my-tickets-summary', x: 0, y: 3, w: 12, h: 4, minW: 6, minH: 3 },
-      { i: 'sla-breach-alerts', x: 0, y: 7, w: 12, h: 5, minW: 6, minH: 4 },
-      { i: 'today-performance', x: 0, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'week-performance', x: 4, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'daily-target', x: 8, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'ticket-trend', x: 0, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
-      { i: 'resolution-trend', x: 6, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
-      { i: 'workload-by-status', x: 0, y: 21, w: 12, h: 5, minW: 6, minH: 4 },
+      { i: 'following-tickets', x: 0, y: 7, w: 12, h: 4, minW: 6, minH: 3 },
+      { i: 'sla-breach-alerts', x: 0, y: 11, w: 12, h: 5, minW: 6, minH: 4 },
+      { i: 'today-performance', x: 0, y: 16, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'week-performance', x: 4, y: 16, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'daily-target', x: 8, y: 16, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'ticket-trend', x: 0, y: 20, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'resolution-trend', x: 6, y: 20, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'workload-by-status', x: 0, y: 25, w: 12, h: 5, minW: 6, minH: 4 },
     ],
   },
   {
@@ -251,6 +267,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       'avg-resolution-kpi',
       'csat-kpi',
       'my-tickets-summary',
+      'following-tickets',
       'sla-breach-alerts',
       'today-performance',
       'week-performance',
@@ -266,13 +283,14 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
       { i: 'avg-resolution-kpi', x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
       { i: 'csat-kpi', x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
       { i: 'my-tickets-summary', x: 0, y: 3, w: 12, h: 4, minW: 6, minH: 3 },
-      { i: 'sla-breach-alerts', x: 0, y: 7, w: 12, h: 5, minW: 6, minH: 4 },
-      { i: 'today-performance', x: 0, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'week-performance', x: 4, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'daily-target', x: 8, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
-      { i: 'ticket-trend', x: 0, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
-      { i: 'resolution-trend', x: 6, y: 16, w: 6, h: 5, minW: 4, minH: 4 },
-      { i: 'workload-by-status', x: 0, y: 21, w: 12, h: 5, minW: 6, minH: 4 },
+      { i: 'following-tickets', x: 0, y: 7, w: 12, h: 4, minW: 6, minH: 3 },
+      { i: 'sla-breach-alerts', x: 0, y: 11, w: 12, h: 5, minW: 6, minH: 4 },
+      { i: 'today-performance', x: 0, y: 16, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'week-performance', x: 4, y: 16, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'daily-target', x: 8, y: 16, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'ticket-trend', x: 0, y: 20, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'resolution-trend', x: 6, y: 20, w: 6, h: 5, minW: 4, minH: 4 },
+      { i: 'workload-by-status', x: 0, y: 25, w: 12, h: 5, minW: 6, minH: 4 },
     ],
   },
 ];

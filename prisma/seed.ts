@@ -232,6 +232,8 @@ async function main() {
       priority: 'LOW',
       customerId: employee1.id,  // Using employee1 as the customer
       createdBy: employee1.id,
+      assignedTo: teamLead1.id,
+      teamId: supportTeam.id,
     },
   });
 
@@ -269,8 +271,8 @@ async function main() {
       name: 'Urgent Priority SLA',
       description: 'SLA for urgent priority tickets',
       priority: 'URGENT',
-      responseTimeHours: 1,
-      resolutionTimeHours: 4,
+      responseTimeHours: 4,
+      resolutionTimeHours: 48, // 2 days
       isActive: true,
     },
   });
@@ -283,8 +285,8 @@ async function main() {
       name: 'High Priority SLA',
       description: 'SLA for high priority tickets',
       priority: 'HIGH',
-      responseTimeHours: 4,
-      resolutionTimeHours: 24,
+      responseTimeHours: 8,
+      resolutionTimeHours: 168, // 7 days
       isActive: true,
     },
   });
@@ -297,8 +299,8 @@ async function main() {
       name: 'Medium Priority SLA',
       description: 'SLA for medium priority tickets',
       priority: 'MEDIUM',
-      responseTimeHours: 8,
-      resolutionTimeHours: 48,
+      responseTimeHours: 24,
+      resolutionTimeHours: 360, // 15 days
       isActive: true,
     },
   });
@@ -311,8 +313,8 @@ async function main() {
       name: 'Low Priority SLA',
       description: 'SLA for low priority tickets',
       priority: 'LOW',
-      responseTimeHours: 24,
-      resolutionTimeHours: 120,
+      responseTimeHours: 48,
+      resolutionTimeHours: 720, // 30 days
       isActive: true,
     },
   });

@@ -99,9 +99,15 @@ export async function GET(request: NextRequest) {
       ? Math.round(((currentAvg - previousAvg) / previousAvg) * 100)
       : 0;
 
+    // Use response time as first response time if available
+    const firstResponseTime = avgResponseTime;
+    const avgHandlingTime = avgResolutionTime;
+
     return NextResponse.json({
       resolutionTime: avgResolutionTime,
       responseTime: avgResponseTime,
+      firstResponseTime,
+      avgHandlingTime,
       trend,
     });
   } catch (error) {

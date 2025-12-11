@@ -298,6 +298,19 @@ export class SLAService {
   }
 
   /**
+   * Get effective SLA due date for a ticket (custom SLA takes priority)
+   */
+  async getEffectiveSLADueDate(ticket: Ticket): Promise<Date | null> {
+    // If custom SLA is set, use it (user override)
+    if (ticket.customSlaDueAt) {
+      return ticket.customSlaDueAt;
+    }
+    
+    // Otherwise use default SLA
+    return ticket.slaDueAt || await this.calculateSLADueDate(ticket);
+  }
+
+  /**
    * Check SLA compliance for a ticket
    */
   async checkSLACompliance(ticket: Ticket): Promise<SLAComplianceStatus> {
@@ -314,8 +327,8 @@ export class SLAService {
       };
     }
 
-    // Calculate or use existing SLA due date
-    const dueAt = ticket.slaDueAt || await this.calculateSLADueDate(ticket);
+    // Get effective SLA due date (custom SLA takes priority over default)
+    const dueAt = await this.getEffectiveSLADueDate(ticket);
     
     if (!dueAt) {
       return {
@@ -409,46 +422,14 @@ export class SLAService {
     }
 
     // Build where clause based on filters
+    // Note: We need to check both slaDueAt and customSlaDueAt
     const where: any = {
       OR: [
         {
-          // Resolution time violations (resolved/closed after SLA due date)
-          AND: [
+          // Tickets with default or custom SLA set
+          OR: [
             { slaDueAt: { not: null } },
-            {
-              OR: [
-                { status: TicketStatus.RESOLVED },
-                { status: TicketStatus.CLOSED },
-              ],
-            },
-            {
-              OR: [
-                {
-                  AND: [
-                    { resolvedAt: { not: null } },
-                    { resolvedAt: { gt: prisma.ticket.fields.slaDueAt } },
-                  ],
-                },
-                {
-                  AND: [
-                    { closedAt: { not: null } },
-                    { closedAt: { gt: prisma.ticket.fields.slaDueAt } },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          // Open tickets past SLA due date
-          AND: [
-            { slaDueAt: { not: null } },
-            { slaDueAt: { lt: new Date() } },
-            {
-              status: {
-                notIn: [TicketStatus.RESOLVED, TicketStatus.CLOSED],
-              },
-            },
+            { customSlaDueAt: { not: null } },
           ],
         },
       ],
@@ -526,6 +507,9 @@ export class SLAService {
 
     for (const ticket of tickets) {
       const policy = await this.getPolicyForPriority(ticket.priority);
+      const effectiveDueDate = await this.getEffectiveSLADueDate(ticket);
+      
+      if (!effectiveDueDate) continue;
       
       // Determine violation type and actual time
       let violationType: 'response' | 'resolution' = 'resolution';
@@ -540,10 +524,13 @@ export class SLAService {
         actualTime = new Date();
       }
 
+      // Check if there's actually a violation
+      if (actualTime.getTime() <= effectiveDueDate.getTime()) {
+        continue; // No violation
+      }
+
       // Calculate delay in hours
-      const delayMs = ticket.slaDueAt 
-        ? actualTime.getTime() - ticket.slaDueAt.getTime()
-        : 0;
+      const delayMs = actualTime.getTime() - effectiveDueDate.getTime();
       const delayHours = Math.max(0, delayMs / (1000 * 60 * 60));
 
       violations.push({
@@ -551,7 +538,7 @@ export class SLAService {
         ticket,
         policy,
         violationType,
-        dueAt: ticket.slaDueAt,
+        dueAt: effectiveDueDate,
         actualTime,
         delayHours,
       });

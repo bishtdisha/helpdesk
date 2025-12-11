@@ -62,12 +62,33 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Get resolved tickets today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const resolved = await prisma.ticket.count({
+      where: {
+        assignedTo: currentUser.id,
+        status: {
+          in: ['RESOLVED', 'CLOSED'],
+        },
+        resolvedAt: {
+          gte: startOfDay,
+        },
+      },
+    });
+
+    // Get in progress count
+    const inProgress = myTickets.filter(t => t.status === 'IN_PROGRESS').length;
+
     return NextResponse.json({
       open,
       highPriority,
       urgent,
       avgOpenHours,
       failedEscalated,
+      resolved,
+      inProgress,
     });
   } catch (error) {
     console.error('Error fetching my tickets summary:', error);

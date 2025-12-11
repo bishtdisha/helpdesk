@@ -196,6 +196,7 @@ model Ticket {
   teamId       String?
   createdBy    String         // Same as customerId or auditor
   slaDueAt     DateTime?
+  customSlaDueAt DateTime?    // User-defined custom SLA override for this ticket only
   resolvedAt   DateTime?
   closedAt     DateTime?
   createdAt    DateTime       @default(now())

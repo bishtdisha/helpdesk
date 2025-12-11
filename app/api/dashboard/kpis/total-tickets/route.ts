@@ -38,6 +38,30 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Get pending tickets count (filtered by role)
+    const pending = await prisma.ticket.count({
+      where: {
+        ...ticketFilter,
+        status: 'WAITING_FOR_CUSTOMER',
+      },
+    });
+
+    // Get in progress tickets count (filtered by role)
+    const inProgress = await prisma.ticket.count({
+      where: {
+        ...ticketFilter,
+        status: 'IN_PROGRESS',
+      },
+    });
+
+    // Get closed tickets count (filtered by role)
+    const closed = await prisma.ticket.count({
+      where: {
+        ...ticketFilter,
+        status: 'CLOSED',
+      },
+    });
+
     // Calculate trend (last 7 days vs previous 7 days) (filtered by role)
     const now = new Date();
     const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -70,6 +94,9 @@ export async function GET(request: NextRequest) {
       total,
       open,
       resolved,
+      pending,
+      inProgress,
+      closed,
       trend,
     });
   } catch (error) {

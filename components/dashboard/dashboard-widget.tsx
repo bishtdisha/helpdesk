@@ -26,6 +26,7 @@ import { SLATrendChart } from './widgets/sla-trend-chart';
 import { WorkloadByStatus } from './widgets/workload-by-status';
 import { AssignedTicketsList } from './widgets/assigned-tickets-list';
 import { TopCategories } from './widgets/top-categories';
+import { FollowingTicketsWidget } from './widgets/following-tickets-widget';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -373,6 +374,9 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
       
       case 'TopCategories':
         return <TopCategories />;
+      
+      case 'FollowingTicketsWidget':
+        return <FollowingTicketsWidget />;
 
       default:
         return (

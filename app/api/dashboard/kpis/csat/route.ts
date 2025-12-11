@@ -55,10 +55,18 @@ export async function GET(request: NextRequest) {
 
     const trend = previousAvg > 0 ? currentAvg - previousAvg : 0;
 
+    // Calculate sentiment breakdown (assuming 1-2 = negative, 3 = neutral, 4-5 = positive)
+    const positiveCount = feedback.filter(f => f.rating >= 4).length;
+    const neutralCount = feedback.filter(f => f.rating === 3).length;
+    const negativeCount = feedback.filter(f => f.rating <= 2).length;
+
     return NextResponse.json({
       score: avgScore,
       totalResponses: feedback.length,
       trend,
+      positiveCount,
+      neutralCount,
+      negativeCount,
     });
   } catch (error) {
     console.error('Error fetching CSAT KPI:', error);
