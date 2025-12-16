@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/hooks/use-auth"
 import { ROLE_TYPES } from "@/lib/rbac/permissions"
-import { 
+import {
   UserDashboardWithSuspense,
   OrganizationDashboardWithSuspense,
   TeamDashboardWithSuspense,

@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (cached) {
         const { user: cachedUser, timestamp } = JSON.parse(cached);
         const age = Date.now() - timestamp;
-        
+
         // Use cache if less than 5 minutes old
         if (age < CACHE_DURATION) {
           setUser(cachedUser);
@@ -111,26 +111,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load cached user immediately, only fetch if needed
   useEffect(() => {
     const initAuth = async () => {
-      // Try to load from cache first (instant)
+      // Try to load from cache first (instant, synchronous)
       const hasCached = loadCachedUser();
-      
+
+      // CRITICAL OPTIMIZATION: Stop loading immediately regardless of cache
+      // This allows the UI to render instantly with cached data (if available)
+      // or show the login redirect immediately (if not authenticated)
+      setIsLoading(false);
+
       if (hasCached) {
-        // Cache hit - stop loading immediately
-        setIsLoading(false);
-        
-        // Validate in background after 30 seconds
+        // Cache hit - validate in background after a short delay
+        // This prevents blocking the UI while still ensuring fresh data
         const validationTimer = setTimeout(() => {
-          fetchUser();
-        }, 30000); // 30 seconds delay
-        
+          fetchUser().catch(console.error);
+        }, 2000); // 2 seconds delay for background validation
+
         return () => clearTimeout(validationTimer);
       } else {
-        // No cache - fetch immediately
-        await fetchUser();
-        setIsLoading(false);
+        // No cache - fetch immediately in background (non-blocking)
+        // The UI is already showing, so this won't delay rendering
+        fetchUser().catch(console.error);
       }
     };
-    
+
     initAuth();
   }, [loadCachedUser, fetchUser]);
 
@@ -142,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sessionStorage.clear();
       setUser(null);
       setIsLoading(true);
-      
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -190,21 +193,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 1. Clear React state immediately
       setUser(null);
       setIsLoading(false);
-      
+
       // 2. Clear all localStorage (including cached user data)
       try {
         localStorage.clear();
       } catch (e) {
         console.error('Error clearing localStorage:', e);
       }
-      
+
       // 3. Clear all sessionStorage
       try {
         sessionStorage.clear();
       } catch (e) {
         console.error('Error clearing sessionStorage:', e);
       }
-      
+
       // 4. Clear all cookies (client-side accessible ones)
       try {
         document.cookie.split(";").forEach((c) => {
@@ -215,7 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error('Error clearing cookies:', e);
       }
-      
+
       // 5. Clear browser cache for this origin (if supported)
       if ('caches' in window) {
         caches.keys().then((names) => {
@@ -224,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         });
       }
-      
+
       // 6. Force hard reload to login page (clears all in-memory state)
       window.location.href = '/login';
     }

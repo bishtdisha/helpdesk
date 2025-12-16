@@ -10,23 +10,35 @@ import useSWR from 'swr';
 const WeeklyActivityChart = lazy(() => import('./charts/weekly-activity-chart').then(mod => ({ default: mod.WeeklyActivityChart })));
 const StatusDistributionChart = lazy(() => import('./charts/status-distribution-chart').then(mod => ({ default: mod.StatusDistributionChart })));
 
-// Import new KPI widgets
-import { TotalTicketsKPI } from './widgets/total-tickets-kpi';
-import { SLAComplianceKPI } from './widgets/sla-compliance-kpi';
-import { AvgResolutionKPI } from './widgets/avg-resolution-kpi';
-import { CSATScoreKPI } from './widgets/csat-score-kpi';
-import { MyTicketsSummary } from './widgets/my-tickets-summary';
-import { SLABreachAlerts } from './widgets/sla-breach-alerts';
-import { TodayPerformance } from './widgets/today-performance';
-import { WeekPerformance } from './widgets/week-performance';
-import { DailyTarget } from './widgets/daily-target';
-import { TicketTrendChart } from './widgets/ticket-trend-chart';
-import { ResolutionTrendChart } from './widgets/resolution-trend-chart';
-import { SLATrendChart } from './widgets/sla-trend-chart';
-import { WorkloadByStatus } from './widgets/workload-by-status';
-import { AssignedTicketsList } from './widgets/assigned-tickets-list';
-import { TopCategories } from './widgets/top-categories';
-import { FollowingTicketsWidget } from './widgets/following-tickets-widget';
+// Lazy load KPI widgets for better performance
+const TotalTicketsKPI = lazy(() => import('./widgets/total-tickets-kpi').then(mod => ({ default: mod.TotalTicketsKPI })));
+const SLAComplianceKPI = lazy(() => import('./widgets/sla-compliance-kpi').then(mod => ({ default: mod.SLAComplianceKPI })));
+const AvgResolutionKPI = lazy(() => import('./widgets/avg-resolution-kpi').then(mod => ({ default: mod.AvgResolutionKPI })));
+const CSATScoreKPI = lazy(() => import('./widgets/csat-score-kpi').then(mod => ({ default: mod.CSATScoreKPI })));
+const MyTicketsSummary = lazy(() => import('./widgets/my-tickets-summary').then(mod => ({ default: mod.MyTicketsSummary })));
+const SLABreachAlerts = lazy(() => import('./widgets/sla-breach-alerts').then(mod => ({ default: mod.SLABreachAlerts })));
+const TodayPerformance = lazy(() => import('./widgets/today-performance').then(mod => ({ default: mod.TodayPerformance })));
+const WeekPerformance = lazy(() => import('./widgets/week-performance').then(mod => ({ default: mod.WeekPerformance })));
+const DailyTarget = lazy(() => import('./widgets/daily-target').then(mod => ({ default: mod.DailyTarget })));
+const TicketTrendChart = lazy(() => import('./widgets/ticket-trend-chart').then(mod => ({ default: mod.TicketTrendChart })));
+const ResolutionTrendChart = lazy(() => import('./widgets/resolution-trend-chart').then(mod => ({ default: mod.ResolutionTrendChart })));
+const SLATrendChart = lazy(() => import('./widgets/sla-trend-chart').then(mod => ({ default: mod.SLATrendChart })));
+const WorkloadByStatus = lazy(() => import('./widgets/workload-by-status').then(mod => ({ default: mod.WorkloadByStatus })));
+const AssignedTicketsList = lazy(() => import('./widgets/assigned-tickets-list').then(mod => ({ default: mod.AssignedTicketsList })));
+const TopCategories = lazy(() => import('./widgets/top-categories').then(mod => ({ default: mod.TopCategories })));
+const FollowingTicketsWidget = lazy(() => import('./widgets/following-tickets-widget').then(mod => ({ default: mod.FollowingTicketsWidget })));
+
+// Widget skeleton component for lazy loading fallback
+const WidgetSkeleton = ({ height = "h-28" }: { height?: string }) => (
+  <Card className="hover:shadow-md transition-shadow h-full">
+    <CardHeader className="pb-3">
+      <div className="flex items-center gap-3">
+        <div className={`w-full ${height} bg-muted animate-pulse rounded`} />
+      </div>
+    </CardHeader>
+  </Card>
+);
+
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -48,7 +60,7 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
   const stats = null;
   const statsLoading = false;
   const statsError = null;
-  
+
   // const { data: stats, isLoading: statsLoading, error: statsError } = useSWR(
   //   component === 'MetricWidget' ? '/api/dashboard/stats' : null,
   //   fetcher,
@@ -161,36 +173,36 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
 
           switch (id) {
             case 'open-tickets':
-              return { 
-                value: safeStats.openTickets?.value ?? 0, 
-                change: `${safeStats.openTickets?.change ?? 0}%`, 
-                changeType: (safeStats.openTickets?.changeType ?? 'neutral') as 'positive' | 'negative' | 'neutral', 
-                icon: AlertCircle, 
-                color: 'text-orange-500' 
+              return {
+                value: safeStats.openTickets?.value ?? 0,
+                change: `${safeStats.openTickets?.change ?? 0}%`,
+                changeType: (safeStats.openTickets?.changeType ?? 'neutral') as 'positive' | 'negative' | 'neutral',
+                icon: AlertCircle,
+                color: 'text-orange-500'
               };
             case 'resolved-today':
-              return { 
-                value: safeStats.resolvedToday?.value ?? 0, 
-                change: `+${safeStats.resolvedToday?.change ?? 0}%`, 
-                changeType: (safeStats.resolvedToday?.changeType ?? 'positive') as 'positive' | 'negative' | 'neutral', 
-                icon: CheckCircle, 
-                color: 'text-green-500' 
+              return {
+                value: safeStats.resolvedToday?.value ?? 0,
+                change: `+${safeStats.resolvedToday?.change ?? 0}%`,
+                changeType: (safeStats.resolvedToday?.changeType ?? 'positive') as 'positive' | 'negative' | 'neutral',
+                icon: CheckCircle,
+                color: 'text-green-500'
               };
             case 'avg-response-time':
-              return { 
-                value: safeStats.avgResponseTime?.value ?? '0h', 
-                change: `${safeStats.avgResponseTime?.change ?? 0}%`, 
-                changeType: (safeStats.avgResponseTime?.changeType ?? 'positive') as 'positive' | 'negative' | 'neutral', 
-                icon: Clock, 
-                color: 'text-blue-500' 
+              return {
+                value: safeStats.avgResponseTime?.value ?? '0h',
+                change: `${safeStats.avgResponseTime?.change ?? 0}%`,
+                changeType: (safeStats.avgResponseTime?.changeType ?? 'positive') as 'positive' | 'negative' | 'neutral',
+                icon: Clock,
+                color: 'text-blue-500'
               };
             case 'active-customers':
-              return { 
-                value: (safeStats.activeCustomers?.value ?? 0).toLocaleString(), 
-                change: `+${safeStats.activeCustomers?.change ?? 0}%`, 
-                changeType: (safeStats.activeCustomers?.changeType ?? 'positive') as 'positive' | 'negative' | 'neutral', 
-                icon: Users, 
-                color: 'text-purple-500' 
+              return {
+                value: (safeStats.activeCustomers?.value ?? 0).toLocaleString(),
+                change: `+${safeStats.activeCustomers?.change ?? 0}%`,
+                changeType: (safeStats.activeCustomers?.changeType ?? 'positive') as 'positive' | 'negative' | 'neutral',
+                icon: Users,
+                color: 'text-purple-500'
               };
             default:
               return { value: 0, change: '0%', changeType: 'neutral' as const, icon: AlertCircle, color: 'text-gray-500' };
@@ -210,10 +222,9 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
               <div className="text-2xl font-bold leading-none">
                 {statsLoading ? <div className="h-8 w-16 bg-muted animate-pulse rounded" /> : metric.value}
               </div>
-              <p className={`text-xs flex items-center gap-1 mt-1 ${
-                metric.changeType === 'positive' ? 'text-green-500' : 
+              <p className={`text-xs flex items-center gap-1 mt-1 ${metric.changeType === 'positive' ? 'text-green-500' :
                 metric.changeType === 'negative' ? 'text-red-500' : 'text-gray-500'
-              }`}>
+                }`}>
                 <span>{metric.change}</span>
               </p>
             </CardContent>
@@ -328,53 +339,53 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
       // New KPI Widgets
       case 'TotalTicketsKPI':
         return <TotalTicketsKPI />;
-      
+
       case 'SLAComplianceKPI':
         return <SLAComplianceKPI />;
-      
+
       case 'AvgResolutionKPI':
         return <AvgResolutionKPI />;
-      
+
       case 'CSATScoreKPI':
         return <CSATScoreKPI />;
 
       // New Summary Widgets
       case 'MyTicketsSummary':
         return <MyTicketsSummary />;
-      
+
       case 'SLABreachAlerts':
         return <SLABreachAlerts />;
 
       // Performance Widgets
       case 'TodayPerformance':
         return <TodayPerformance />;
-      
+
       case 'WeekPerformance':
         return <WeekPerformance />;
-      
+
       case 'DailyTarget':
         return <DailyTarget />;
 
       // Trend Charts
       case 'TicketTrendChart':
         return <TicketTrendChart />;
-      
+
       case 'ResolutionTrendChart':
         return <ResolutionTrendChart />;
-      
+
       case 'SLATrendChart':
         return <SLATrendChart />;
 
       // Extras
       case 'WorkloadByStatus':
         return <WorkloadByStatus />;
-      
+
       case 'AssignedTicketsList':
         return <AssignedTicketsList />;
-      
+
       case 'TopCategories':
         return <TopCategories />;
-      
+
       case 'FollowingTicketsWidget':
         return <FollowingTicketsWidget />;
 

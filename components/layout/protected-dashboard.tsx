@@ -74,7 +74,7 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
       <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <NavigationHeader title={getModuleTitle(activeModule)} />
-        
+
         <main className="flex-1 overflow-auto p-6">
           {/* Show user welcome message and placeholder content when on dashboard */}
           {activeModule === "dashboard" && (
@@ -149,7 +149,7 @@ export function ProtectedDashboard({ user }: ProtectedDashboardProps) {
               </div>
             </div>
           )}
-          
+
           {/* Render other modules */}
           {activeModule !== "dashboard" && renderActiveModule()}
         </main>

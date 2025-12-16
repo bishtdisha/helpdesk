@@ -19,6 +19,7 @@ export interface CreateTicketData {
   phone?: string;
   status?: TicketStatus;
   followerIds?: string[];
+  customSlaDueAt?: string; // Custom SLA override
 }
 
 export interface CreateTicketWithAttachmentsAndCommentsData {
@@ -35,6 +36,7 @@ export interface CreateTicketWithAttachmentsAndCommentsData {
   initialComment?: string;
   isCommentInternal?: boolean;
   followerIds?: string[];
+  customSlaDueAt?: string; // Custom SLA override
 }
 
 export interface UpdateTicketData {
@@ -207,6 +209,9 @@ export class TicketService {
     } as Ticket;
     const slaDueAt = await slaService.calculateSLADueDate(tempTicket);
 
+    // Parse custom SLA if provided
+    const customSlaDueAt = data.customSlaDueAt ? new Date(data.customSlaDueAt) : null;
+
     // Create the ticket
     const ticket = await prisma.ticket.create({
       data: {
@@ -221,6 +226,7 @@ export class TicketService {
         phone: data.phone,
         status: data.status || TicketStatus.OPEN,
         slaDueAt: slaDueAt,
+        customSlaDueAt: customSlaDueAt,
       },
       include: {
         customer: true,
@@ -368,6 +374,9 @@ export class TicketService {
     } as Ticket;
     const slaDueAt = await slaService.calculateSLADueDate(tempTicket);
 
+    // Parse custom SLA if provided
+    const customSlaDueAt = data.customSlaDueAt ? new Date(data.customSlaDueAt) : null;
+
     // Upload files first (outside transaction) to avoid long-running transactions
     const uploadedFiles: Array<{
       fileName: string;
@@ -411,6 +420,7 @@ export class TicketService {
             phone: data.phone,
             status: data.status || TicketStatus.OPEN,
             slaDueAt: slaDueAt,
+            customSlaDueAt: customSlaDueAt,
           },
           include: {
             customer: true,

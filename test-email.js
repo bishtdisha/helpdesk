@@ -6,7 +6,7 @@ require('dotenv').config();
 
 async function testSMTP() {
   console.log('🔍 Testing SMTP Configuration...\n');
-  
+
   console.log('Configuration:');
   console.log('  SMTP_HOST:', process.env.SMTP_HOST);
   console.log('  SMTP_PORT:', process.env.SMTP_PORT);

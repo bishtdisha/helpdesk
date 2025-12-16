@@ -157,9 +157,9 @@ export function AnalyticsPage() {
               </CardContent>
             </Card>
           )}
-          
+
           {selectedTeamId && (
-            <TeamDashboard 
+            <TeamDashboard
               teamId={selectedTeamId}
               dateRange={dateRange}
               onDateRangeChange={handleDateRangeChange}
@@ -169,7 +169,7 @@ export function AnalyticsPage() {
       )}
 
       {/* Export Dialog */}
-      <ReportExportDialog 
+      <ReportExportDialog
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
       />

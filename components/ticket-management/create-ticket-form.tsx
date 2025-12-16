@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert } from "@/components/ui/alert"
 import { TicketPriority } from "@prisma/client"
 import { CreateTicketData } from "@/lib/types/ticket"
-import { Loader2, Upload, X, Lightbulb } from "lucide-react"
+import { Loader2, Upload, X, Lightbulb, Clock, Info } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface Customer {
   id: string
@@ -43,14 +44,19 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
     category: "",
     customerId: "",
     assignedTo: "",
+    teamId: "",
+    phone: "",
     followerIds: [],
   })
+  const [customSlaDueAt, setCustomSlaDueAt] = useState<string>("")
   
   const [customers, setCustomers] = useState<Customer[]>([])
   const [users, setUsers] = useState<User[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
   const [suggestedArticles, setSuggestedArticles] = useState<KBArticle[]>([])
   const [loadingCustomers, setLoadingCustomers] = useState(true)
   const [loadingUsers, setLoadingUsers] = useState(true)
+  const [loadingTeams, setLoadingTeams] = useState(true)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -86,8 +92,23 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
       }
     }
 
+    const fetchTeams = async () => {
+      try {
+        const response = await fetch('/api/teams')
+        if (response.ok) {
+          const data = await response.json()
+          setTeams(data)
+        }
+      } catch (error) {
+        console.error('Error fetching teams:', error)
+      } finally {
+        setLoadingTeams(false)
+      }
+    }
+
     fetchCustomers()
     fetchUsers()
+    fetchTeams()
   }, [])
 
   // Fetch KB article suggestions when title or description changes
@@ -176,7 +197,10 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
           category: formData.category?.trim() || undefined,
           customerId: formData.customerId,
           assignedTo: formData.assignedTo,
+          teamId: formData.teamId || undefined,
+          phone: formData.phone?.trim() || undefined,
           followerIds: formData.followerIds || [],
+          customSlaDueAt: customSlaDueAt || undefined,
         }),
       })
 
@@ -349,8 +373,20 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
                 )}
               </div>
 
-              {/* Priority and Category */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Phone Number, Priority, and Custom SLA in one row */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="e.g., +1 (555) 123-4567"
+                    value={formData.phone || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    maxLength={50}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority *</Label>
                   <Select
@@ -361,10 +397,76 @@ export function CreateTicketForm({ onSuccess, onCancel }: CreateTicketFormProps)
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={TicketPriority.LOW}>Low</SelectItem>
-                      <SelectItem value={TicketPriority.MEDIUM}>Medium</SelectItem>
-                      <SelectItem value={TicketPriority.HIGH}>High</SelectItem>
-                      <SelectItem value={TicketPriority.URGENT}>Urgent</SelectItem>
+                      <SelectItem value={TicketPriority.LOW}>Low (30 days)</SelectItem>
+                      <SelectItem value={TicketPriority.MEDIUM}>Medium (15 days)</SelectItem>
+                      <SelectItem value={TicketPriority.HIGH}>High (7 days)</SelectItem>
+                      <SelectItem value={TicketPriority.URGENT}>Urgent (2 days)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custom-sla" className="flex items-center gap-1">
+                    Custom SLA
+                    <span className="text-xs text-muted-foreground">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="custom-sla"
+                    type="datetime-local"
+                    value={customSlaDueAt}
+                    onChange={(e) => setCustomSlaDueAt(e.target.value)}
+                    placeholder="Override default SLA"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Show SLA info when custom SLA is being set */}
+              {customSlaDueAt && (
+                <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 rounded-lg text-xs">
+                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-blue-700 dark:text-blue-400">
+                    <div className="font-medium mb-1">Custom SLA set - will override default SLA</div>
+                    <div className="text-blue-600 dark:text-blue-500">
+                      Default SLA for {formData.priority}: {
+                        formData.priority === TicketPriority.URGENT ? '2 days (48 hours)' :
+                        formData.priority === TicketPriority.HIGH ? '7 days (168 hours)' :
+                        formData.priority === TicketPriority.MEDIUM ? '15 days (360 hours)' :
+                        '30 days (720 hours)'
+                      }
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Team and Category */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="team">Team</Label>
+                  <Select
+                    value={formData.teamId}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, teamId: value }))}
+                    disabled={loadingTeams}
+                  >
+                    <SelectTrigger id="team">
+                      <SelectValue placeholder={loadingTeams ? "Loading teams..." : "Select a team (optional)"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingTeams ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : teams && teams.length > 0 ? (
+                        teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="text-sm text-muted-foreground text-center py-2">
+                          No teams available
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
