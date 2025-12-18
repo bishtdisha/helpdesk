@@ -167,7 +167,7 @@ export const CacheDashboard: React.FC = () => {
 
             {lastUpdated && (
                 <p className="text-sm text-gray-600 mb-4">
-                    Last updated: {lastUpdated.toLocaleTimeString()}
+                    Last updated: {lastUpdated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                 </p>
             )}
 

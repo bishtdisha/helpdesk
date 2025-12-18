@@ -4,6 +4,16 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Z-Index Contract - Portals must win */
+  --z-base: 0;
+  --z-dropdown: 50;
+  --z-sticky: 40;
+  --z-popover: 50;
+  --z-overlay: 50;
+  --z-modal: 50;
+  --z-toast: 100;
+  --z-tooltip: 50;
+  
   /* Modern, soothing color palette with improved readability */
   --background: oklch(0.99 0 0);
   --foreground: oklch(0.25 0.01 260);
@@ -232,89 +242,18 @@
     @apply outline-2 outline-offset-2 outline-ring;
   }
   
-  /* Universal blue click/active effect for all interactive elements */
-  button,
-  a,
-  [role="button"],
-  [role="link"],
-  [role="tab"],
-  [role="menuitem"],
-  [role="option"],
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"],
-  .clickable {
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-  }
-  
-  /* Blue ripple effect on click */
-  button:active:not(:disabled),
-  a:active,
-  [role="button"]:active,
-  [role="link"]:active,
-  [role="tab"]:active,
-  [role="menuitem"]:active,
-  [role="option"]:active,
-  input[type="button"]:active,
-  input[type="submit"]:active,
-  input[type="reset"]:active,
-  .clickable:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
-  }
-  
-  /* Blue overlay on click */
-  button:active:not(:disabled)::before,
-  a:active::before,
-  [role="button"]:active::before,
-  [role="link"]:active::before,
-  [role="tab"]:active::before,
-  [role="menuitem"]:active::before,
-  [role="option"]:active::before,
-  input[type="button"]:active::before,
-  input[type="submit"]:active::before,
-  input[type="reset"]:active::before,
-  .clickable:active::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: var(--primary);
-    opacity: 0.3;
-    transform: translate(-50%, -50%);
-    animation: ripple 0.6s ease-out;
-  }
-  
-  @keyframes ripple {
-    to {
-      width: 300px;
-      height: 300px;
-      opacity: 0;
-    }
-  }
-  
-  /* Smooth transitions for all interactive elements */
+  /* Smooth transitions for interactive elements */
   button,
   a,
   [role="button"],
   [role="link"],
   [role="tab"] {
-    transition: all 0.2s ease;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   }
   
-  /* Hover effects with blue tint */
-  button:hover:not(:disabled),
-  a:hover,
-  [role="button"]:hover,
-  [role="link"]:hover,
-  [role="tab"]:hover {
-    filter: brightness(0.95);
-  }
+  /* Hover effects - removed filter to prevent stacking context issues with portals */
+  
+  /* Active state - removed filter to prevent stacking context issues with portals */
   
   /* Disabled state */
   button:disabled,
@@ -363,22 +302,13 @@
     @apply text-base bg-input border-border focus:border-primary focus:ring-2 focus:ring-ring;
   }
   
-  /* Interactive element with blue click effect */
-  .btn-interactive {
-    @apply relative overflow-hidden cursor-pointer transition-all duration-200;
-  }
-  
-  .btn-interactive:active {
-    @apply scale-95;
-  }
-  
-  /* Blue ripple animation class */
-  .ripple-effect {
+  /* Opt-in ripple effect - use className="ripple" on buttons that need it */
+  .ripple {
     position: relative;
     overflow: hidden;
   }
   
-  .ripple-effect::after {
+  .ripple::before {
     content: '';
     position: absolute;
     top: 50%;
@@ -390,41 +320,41 @@
     opacity: 0;
     transform: translate(-50%, -50%);
     pointer-events: none;
+    transition: width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
   }
   
-  .ripple-effect:active::after {
-    animation: ripple-expand 0.6s ease-out;
+  .ripple:active::before {
+    width: 200px;
+    height: 200px;
+    opacity: 0.3;
+    transition: 0s;
   }
   
-  @keyframes ripple-expand {
-    0% {
-      width: 0;
-      height: 0;
-      opacity: 0.4;
-    }
-    100% {
-      width: 300px;
-      height: 300px;
-      opacity: 0;
-    }
+  /* Opt-in press effect - use className="btn-press" for scale animation */
+  .btn-press {
+    transition: transform 0.1s ease;
   }
   
-  /* Click feedback for cards */
+  .btn-press:active {
+    transform: scale(0.98);
+  }
+  
+  /* Click feedback for cards - opt-in only */
   .card-clickable {
-    @apply bg-card border border-border rounded-xl shadow-sm cursor-pointer transition-all duration-200;
+    @apply bg-card border border-border rounded-xl shadow-sm cursor-pointer;
+    transition: box-shadow 0.2s ease;
   }
   
   .card-clickable:hover {
     @apply shadow-lg;
-    transform: scale(1.02);
   }
   
   .card-clickable:active {
     @apply shadow-md;
-    transform: scale(0.98);
+    filter: brightness(0.98);
   }
   
-  /* Blue glow effect on click */
+  /* Blue glow effect on click - opt-in */
   .glow-on-click:active {
     box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary);
     transition: box-shadow 0.3s ease;

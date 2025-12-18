@@ -16,7 +16,7 @@ export interface JWTPayload {
 
 export class JWTUtils {
   private static readonly SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-  private static readonly EXPIRY = '24h'; // 24 hours
+  private static readonly EXPIRY = '7d'; // 7 days
 
   /**
    * Generate a JWT token with user data

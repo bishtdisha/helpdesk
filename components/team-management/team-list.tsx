@@ -167,58 +167,66 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-blue-500 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-blue-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Teams</p>
-                <p className="text-2xl font-bold mt-1">{total}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Total Teams</p>
+                <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-300">{total}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">All teams</p>
               </div>
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 bg-blue-500/15 rounded-lg">
+                <Users className="h-4 w-4 text-blue-700 dark:text-blue-300" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-purple-500 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-purple-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Teams</p>
-                <p className="text-2xl font-bold mt-1 text-blue-600">{teams.length}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Total Members</p>
+                <p className="text-2xl font-extrabold text-purple-700 dark:text-purple-300">{teams.reduce((sum, team) => sum + (team.members?.length || 0), 0)}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Across all teams</p>
               </div>
-              <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
-                <UserCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <div className="p-2 bg-purple-500/15 rounded-lg">
+                <Users className="h-4 w-4 text-purple-700 dark:text-purple-300" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-amber-500 bg-gradient-to-br from-amber-50/50 to-white dark:from-amber-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-amber-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Members</p>
-                <p className="text-2xl font-bold mt-1">{teams.reduce((sum, team) => sum + (team.members?.length || 0), 0)}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Team Leaders</p>
+                <p className="text-2xl font-extrabold text-amber-700 dark:text-amber-300">{teams.reduce((sum, team) => sum + (team.teamLeaders?.length || 0), 0)}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Managing teams</p>
               </div>
-              <div className="p-2 bg-cyan-100 dark:bg-cyan-900 rounded-lg">
-                <Users className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+              <div className="p-2 bg-amber-500/15 rounded-lg">
+                <Crown className="h-4 w-4 text-amber-700 dark:text-amber-300" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-green-500 bg-gradient-to-br from-green-50/50 to-white dark:from-green-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-green-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Team Leaders</p>
-                <p className="text-2xl font-bold mt-1">{teams.reduce((sum, team) => sum + (team.teamLeaders?.length || 0), 0)}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Avg Team Size</p>
+                <p className="text-2xl font-extrabold text-green-700 dark:text-green-300">{teams.length > 0 ? Math.round(teams.reduce((sum, team) => sum + (team.members?.length || 0), 0) / teams.length) : 0}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Members per team</p>
               </div>
-              <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
-                <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <div className="p-2 bg-green-500/15 rounded-lg">
+                <UserCheck className="h-4 w-4 text-green-700 dark:text-green-300" />
               </div>
             </div>
           </CardContent>

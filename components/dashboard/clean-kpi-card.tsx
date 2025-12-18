@@ -82,7 +82,7 @@ export function CleanKPICard({
       onClick={() => !hoverTrigger && setIsOpen(!isOpen)}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <CardTitle className="text-sm font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
           {title}
           {popoverContent && (
             <ChevronDown className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -95,7 +95,7 @@ export function CleanKPICard({
         )}
       </CardHeader>
       <CardContent className="space-y-2">
-        <div className={cn('text-3xl font-bold', valueColor)}>
+        <div className={cn('text-3xl font-extrabold', valueColor)}>
           {value}
         </div>
         <div className="flex items-center gap-2 flex-wrap min-h-[20px]">
@@ -114,11 +114,7 @@ export function CleanKPICard({
             </div>
           )}
         </div>
-        {popoverContent && (
-          <p className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity min-h-[16px]">
-            {hoverTrigger ? 'Hover' : 'Click'} to see detailed breakdown
-          </p>
-        )}
+
       </CardContent>
     </Card>
   );

@@ -87,7 +87,7 @@ export function UserManagementPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [editFormData, setEditFormData] = useState({
     roleId: "",
-    teamId: "",
+    teamId: "none",
   })
   const [filters, setFilters] = useState({
     search: "",
@@ -173,8 +173,12 @@ export function UserManagementPage() {
   const fetchRoles = async () => {
     try {
       const response = await fetch("/api/roles")
-      if (!response.ok) throw new Error("Failed to fetch roles")
       const data = await response.json()
+      console.log("Roles API response:", data)
+      if (!response.ok) {
+        console.error("Roles API error:", data)
+        return
+      }
       setRoles(data.roles || [])
     } catch (error) {
       console.error("Error fetching roles:", error)
@@ -264,7 +268,7 @@ export function UserManagementPage() {
   const handleEditClick = (user: User) => {
     setUserToEdit(user)
     setEditFormData({
-      roleId: user.role?.id || "none",
+      roleId: user.role?.id || "",
       teamId: user.team?.id || "none",
     })
     setEditDialogOpen(true)
@@ -281,7 +285,7 @@ export function UserManagementPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          roleId: editFormData.roleId === "none" ? null : editFormData.roleId,
+          roleId: editFormData.roleId || null,
           teamId: editFormData.teamId === "none" ? null : editFormData.teamId,
         }),
       })
@@ -508,58 +512,66 @@ export function UserManagementPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-blue-500 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/30 dark:to-background">
+            <div className="absolute top-0 right-0 w-12 h-12 bg-blue-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold mt-1">{users.length}</p>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Total Users</p>
+                  <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-300">{users.length}</p>
+                  <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">All accounts</p>
                 </div>
-                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 bg-blue-500/15 rounded-lg">
+                  <Users className="h-4 w-4 text-blue-700 dark:text-blue-300" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+          <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-amber-500 bg-gradient-to-br from-amber-50/50 to-white dark:from-amber-950/30 dark:to-background">
+            <div className="absolute top-0 right-0 w-12 h-12 bg-amber-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Users</p>
-                  <p className="text-2xl font-bold mt-1 text-green-600">{users.filter(u => u.isActive).length}</p>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Unassigned</p>
+                  <p className="text-2xl font-extrabold text-amber-700 dark:text-amber-300">{users.filter(u => !u.team).length}</p>
+                  <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Without team</p>
                 </div>
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div className="p-2 bg-amber-500/15 rounded-lg">
+                  <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-300" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+          <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-purple-500 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-950/30 dark:to-background">
+            <div className="absolute top-0 right-0 w-12 h-12 bg-purple-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Roles</p>
-                  <p className="text-2xl font-bold mt-1">{roles.length}</p>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Roles</p>
+                  <p className="text-2xl font-extrabold text-purple-700 dark:text-purple-300">{roles.length}</p>
+                  <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Permission sets</p>
                 </div>
-                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 bg-purple-500/15 rounded-lg">
+                  <Shield className="h-4 w-4 text-purple-700 dark:text-purple-300" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+          <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-orange-500 bg-gradient-to-br from-orange-50/50 to-white dark:from-orange-950/30 dark:to-background">
+            <div className="absolute top-0 right-0 w-12 h-12 bg-orange-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Teams</p>
-                  <p className="text-2xl font-bold mt-1">{teams.length}</p>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Teams</p>
+                  <p className="text-2xl font-extrabold text-orange-700 dark:text-orange-300">{teams.length}</p>
+                  <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Work groups</p>
                 </div>
-                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                <div className="p-2 bg-orange-500/15 rounded-lg">
+                  <Users className="h-4 w-4 text-orange-700 dark:text-orange-300" />
                 </div>
               </div>
             </CardContent>
@@ -833,15 +845,20 @@ export function UserManagementPage() {
                   onValueChange={(value) => setEditFormData({ ...editFormData, roleId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue placeholder="Select role">
+                      {editFormData.roleId && roles.find(r => r.id === editFormData.roleId)?.name}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No Role</SelectItem>
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
+                    {roles.length === 0 ? (
+                      <SelectItem value="loading" disabled>Loading roles...</SelectItem>
+                    ) : (
+                      roles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

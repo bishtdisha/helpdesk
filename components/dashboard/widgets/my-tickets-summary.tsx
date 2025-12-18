@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, AlertTriangle, Clock, XCircle, User, TrendingUp, CheckCircle2 } from "lucide-react";
@@ -9,18 +9,34 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export function MyTicketsSummary() {
   const [hoveredMetric, setHoveredMetric] = useState<number | null>(null);
+  const [openPopover, setOpenPopover] = useState<number | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const handleMouseEnter = (index: number) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setHoveredMetric(index);
+    setOpenPopover(index);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setHoveredMetric(null);
+      setOpenPopover(null);
+    }, 100);
+  };
   
   const { data, isLoading, error } = useSWR('/api/dashboard/my-tickets-summary', fetcher, {
     refreshInterval: 30000,
@@ -217,8 +233,8 @@ export function MyTicketsSummary() {
             <User className="h-4 w-4 text-blue-600" />
           </div>
           <div>
-            <CardTitle className="text-base font-semibold">My Tickets</CardTitle>
-            <CardDescription className="text-sm">Personal Performance Overview</CardDescription>
+            <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100">My Tickets</CardTitle>
+            <CardDescription className="text-sm font-medium text-gray-500 dark:text-gray-400">Personal Performance Overview</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -229,11 +245,11 @@ export function MyTicketsSummary() {
             const isHovered = hoveredMetric === index;
             
             return (
-              <Popover key={index}>
+              <Popover key={index} open={openPopover === index} onOpenChange={(open) => !open && setOpenPopover(null)}>
                 <PopoverTrigger asChild>
                   <div
-                    onMouseEnter={() => setHoveredMetric(index)}
-                    onMouseLeave={() => setHoveredMetric(null)}
+                    onMouseEnter={() => handleMouseEnter(index)}
+                    onMouseLeave={handleMouseLeave}
                     className={`p-4 rounded-lg border ${metric.borderColor} bg-gradient-to-br from-background to-${metric.bgColor}/20 hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer relative overflow-hidden`}
                   >
                     {/* Animated background on hover */}
@@ -248,17 +264,13 @@ export function MyTicketsSummary() {
                           <Badge variant="destructive" className="text-xs animate-pulse">!</Badge>
                         )}
                       </div>
-                      <div className={`text-2xl font-bold ${metric.color} transition-all duration-300 ${isHovered ? 'scale-110' : ''}`}>
+                      <div className={`text-2xl font-extrabold ${metric.color} transition-all duration-300 ${isHovered ? 'scale-110' : ''}`}>
                         {metric.value}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mt-1">
                         {metric.label}
                       </p>
-                      {isHovered && (
-                        <p className="text-[10px] text-muted-foreground mt-1 animate-in fade-in duration-200">
-                          Click for details
-                        </p>
-                      )}
+
                     </div>
                   </div>
                 </PopoverTrigger>
@@ -267,6 +279,8 @@ export function MyTicketsSummary() {
                   side="bottom"
                   align="center"
                   sideOffset={10}
+                  onMouseEnter={() => handleMouseEnter(index)}
+                  onMouseLeave={handleMouseLeave}
                 >
                   {metric.popoverContent}
                 </PopoverContent>
@@ -279,9 +293,9 @@ export function MyTicketsSummary() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-700">Resolved Today</span>
+                <span className="text-sm font-bold text-green-700">Resolved Today</span>
               </div>
-              <span className="text-xl font-bold text-green-600">{resolved || 0}</span>
+              <span className="text-xl font-extrabold text-green-600">{resolved || 0}</span>
             </div>
           </div>
         )}

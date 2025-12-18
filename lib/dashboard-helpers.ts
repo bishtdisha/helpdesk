@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { ROLE_TYPES } from '@/lib/rbac/permissions';
 import type { RoleType } from '@/lib/types/rbac';
+import { cache } from 'react';
 
 /**
  * Dashboard Helper Functions
@@ -18,11 +19,22 @@ export interface DashboardUser {
   }>;
 }
 
+// In-memory cache for dashboard user data (short TTL for request deduplication)
+const userCache = new Map<string, { user: DashboardUser | null; timestamp: number }>();
+const CACHE_TTL = 30000; // 30 seconds
+
 /**
  * Get user with role and team information for dashboard filtering
+ * Uses request-level caching to avoid repeated DB queries
  */
-export async function getDashboardUser(userId: string): Promise<DashboardUser | null> {
-  return await prisma.user.findUnique({
+export const getDashboardUser = cache(async (userId: string): Promise<DashboardUser | null> => {
+  // Check in-memory cache first
+  const cached = userCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.user;
+  }
+
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -39,7 +51,12 @@ export async function getDashboardUser(userId: string): Promise<DashboardUser | 
       },
     },
   });
-}
+
+  // Cache the result
+  userCache.set(userId, { user, timestamp: Date.now() });
+  
+  return user;
+});
 
 /**
  * Get team IDs for a user (including their own team and teams they lead)

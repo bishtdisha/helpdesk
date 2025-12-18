@@ -41,11 +41,25 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '20', 10);
 
-  // Merge external filters with pagination params
+  // Get filter values from URL
+  const search = searchParams.get('search') || undefined;
+  const statusParam = searchParams.get('status');
+  const priorityParam = searchParams.get('priority');
+  const teamId = searchParams.get('teamId') || undefined;
+  const assignedTo = searchParams.get('assignedTo') || undefined;
+  const month = searchParams.get('month') || undefined;
+
+  // Merge external filters with URL params and pagination
   const filters: TicketFilters = {
     ...externalFilters,
     page: currentPage,
     limit,
+    ...(search && { search }),
+    ...(statusParam && statusParam !== 'all' && { status: statusParam }),
+    ...(priorityParam && priorityParam !== 'all' && { priority: priorityParam }),
+    ...(teamId && teamId !== 'all' && { teamId }),
+    ...(assignedTo && assignedTo !== 'all' && { assignedTo }),
+    ...(month && month !== 'all' && { month }),
   };
 
   const { tickets, pagination, isLoading, isError, error, refresh } = useTickets(filters);

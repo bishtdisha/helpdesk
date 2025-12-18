@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ClientProviders } from '@/components/providers/client-providers';
 import { Sidebar } from '@/components/layout/sidebar';
 import { NavigationHeader } from '@/components/layout/navigation-header';
 
@@ -37,17 +38,19 @@ export default function TicketsLayout({
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar
-        activeModule={activeModule}
-        onModuleChange={handleModuleChange}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <NavigationHeader title="Tickets" />
-        <main className="flex-1 overflow-auto">{children}</main>
+    <ClientProviders>
+      <div className="flex h-screen bg-background">
+        <Sidebar
+          activeModule={activeModule}
+          onModuleChange={handleModuleChange}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+        <div className="flex-1 flex flex-col min-h-0">
+          <NavigationHeader title="Tickets" />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
       </div>
-    </div>
+    </ClientProviders>
   );
 }

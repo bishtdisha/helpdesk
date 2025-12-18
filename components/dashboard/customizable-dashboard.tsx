@@ -75,7 +75,7 @@ export function CustomizableDashboard() {
           <div className="space-y-4">
             {/* Section 1: High-Level KPIs - 4 cards in a row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {['total-tickets-kpi', 'sla-compliance-kpi', 'avg-resolution-kpi', 'csat-kpi'].map(widgetId => 
+              {['total-tickets-kpi', 'priority-mix-kpi', 'sla-compliance-kpi', 'avg-resolution-kpi'].map(widgetId => 
                 visibleWidgets.includes(widgetId) && (
                   <div key={widgetId}>
                     <DashboardWidget
@@ -101,31 +101,28 @@ export function CustomizableDashboard() {
               </div>
             )}
             
-            {/* Section 3: SLA Breach Alerts - Full Width */}
-            {visibleWidgets.includes('sla-breach-alerts') && (
-              <div>
-                <DashboardWidget
-                  id="sla-breach-alerts"
-                  title="SLA / Priority Breakdown"
-                  component="SLABreachAlerts"
-                  user={user}
-                />
-              </div>
-            )}
-            
-            {/* Section 4: Performance - 2 cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {['today-performance', 'week-performance'].map(widgetId => 
-                visibleWidgets.includes(widgetId) && (
-                  <div key={widgetId}>
-                    <DashboardWidget
-                      id={widgetId}
-                      title={availableWidgets.find(w => w.id === widgetId)?.title || ''}
-                      component={availableWidgets.find(w => w.id === widgetId)?.component || ''}
-                      user={user}
-                    />
-                  </div>
-                )
+            {/* Section 3: SLA Breach Alerts & Today's Performance - Single Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {visibleWidgets.includes('sla-breach-alerts') && (
+                <div>
+                  <DashboardWidget
+                    id="sla-breach-alerts"
+                    title="SLA / Priority Breakdown"
+                    component="SLABreachAlerts"
+                    user={user}
+                  />
+                </div>
+              )}
+              
+              {visibleWidgets.includes('today-performance') && (
+                <div>
+                  <DashboardWidget
+                    id="today-performance"
+                    title="Today's Performance"
+                    component="TodayPerformance"
+                    user={user}
+                  />
+                </div>
               )}
             </div>
             

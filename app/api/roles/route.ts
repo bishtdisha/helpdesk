@@ -1,27 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { withRBAC } from '@/lib/rbac/middleware';
-import { PERMISSION_ACTIONS, RESOURCE_TYPES } from '@/lib/rbac/permissions';
+import { getCurrentUser } from '@/lib/server-auth';
 
 /**
  * GET /api/roles - List all available roles
  * 
  * This endpoint returns all roles in the system for use in dropdowns and selectors.
- * Access is restricted to authenticated users who can view users.
+ * Access is restricted to authenticated users.
  */
 export async function GET(request: NextRequest) {
   try {
-    // Apply RBAC middleware
-    const rbacResult = await withRBAC(request, {
-      requiredPermission: {
-        action: PERMISSION_ACTIONS.READ,
-        resource: RESOURCE_TYPES.USERS,
-      },
-    });
-
-    // If there's a response (error), return it
-    if (rbacResult.response) {
-      return rbacResult.response;
+    // Check if user is authenticated
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
     }
 
     // Get all roles

@@ -59,7 +59,8 @@ const ticketFormSchema = z.object({
   customerId: z
     .string()
     .uuid('Invalid customer ID')
-    .min(1, 'Customer is required'),
+    .optional()
+    .or(z.literal('')),
 });
 
 type TicketFormValues = z.infer<typeof ticketFormSchema>;
@@ -149,7 +150,7 @@ export function TicketCreateForm({ onSuccess, onCancel }: TicketCreateFormProps)
         description: data.description,
         priority: data.priority,
         category: data.category || undefined,
-        customerId: data.customerId,
+        customerId: data.customerId || undefined,
       });
 
       // Verify API response contains valid ticket ID
@@ -331,7 +332,6 @@ export function TicketCreateForm({ onSuccess, onCancel }: TicketCreateFormProps)
               render={({ field }) => (
                 <FormFieldWithHelp
                   label="Customer"
-                  required
                   helpText={isTeamLeader 
                     ? "Tickets created by Team Leaders are automatically assigned to your account."
                     : "Search and select the customer this ticket is for. Type their name or email to find them."

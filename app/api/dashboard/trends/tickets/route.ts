@@ -15,39 +15,54 @@ export async function GET(request: NextRequest) {
     const ticketFilter = await getTicketFilterForUser(currentUser.id);
 
     const days = 30;
-    const chartData = [];
+    const startDate = subDays(new Date(), days - 1);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
 
+    // Fetch all tickets in the date range in 2 queries instead of 60
+    const [createdTickets, resolvedTickets] = await Promise.all([
+      prisma.ticket.findMany({
+        where: {
+          ...ticketFilter,
+          createdAt: { gte: startDate, lte: endDate },
+        },
+        select: { createdAt: true },
+      }),
+      prisma.ticket.findMany({
+        where: {
+          ...ticketFilter,
+          resolvedAt: { gte: startDate, lte: endDate },
+        },
+        select: { resolvedAt: true },
+      }),
+    ]);
+
+    // Group by date in memory (much faster than 60 DB queries)
+    const createdByDate = new Map<string, number>();
+    const resolvedByDate = new Map<string, number>();
+
+    createdTickets.forEach(t => {
+      const dateKey = format(t.createdAt, 'yyyy-MM-dd');
+      createdByDate.set(dateKey, (createdByDate.get(dateKey) || 0) + 1);
+    });
+
+    resolvedTickets.forEach(t => {
+      if (t.resolvedAt) {
+        const dateKey = format(t.resolvedAt, 'yyyy-MM-dd');
+        resolvedByDate.set(dateKey, (resolvedByDate.get(dateKey) || 0) + 1);
+      }
+    });
+
+    // Build chart data
+    const chartData = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = subDays(new Date(), i);
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const created = await prisma.ticket.count({
-        where: {
-          ...ticketFilter,
-          createdAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
-
-      const resolved = await prisma.ticket.count({
-        where: {
-          ...ticketFilter,
-          resolvedAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
-
+      const dateKey = format(date, 'yyyy-MM-dd');
       chartData.push({
         date: format(date, 'MMM dd'),
-        created,
-        resolved,
+        created: createdByDate.get(dateKey) || 0,
+        resolved: resolvedByDate.get(dateKey) || 0,
       });
     }
 

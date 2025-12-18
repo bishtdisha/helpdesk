@@ -152,7 +152,7 @@ export function VirtualizedTicketList({
       width: '120px',
       render: (ticket: Ticket) => (
         <div className="text-sm text-muted-foreground">
-          {format(new Date(ticket.createdAt), 'MMM dd, HH:mm')}
+          {format(new Date(ticket.createdAt), 'MMM dd, h:mm a')}
         </div>
       ),
     },

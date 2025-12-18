@@ -52,8 +52,20 @@ export function WorkloadByStatus() {
 
   const { statusBreakdown } = data;
 
+  // Map status to display labels
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'OPEN': return 'New';
+      case 'IN_PROGRESS': return 'In Progress';
+      case 'WAITING_FOR_CUSTOMER': return 'On Hold';
+      case 'RESOLVED': return 'Resolved';
+      case 'CLOSED': return 'Cancelled';
+      default: return status.replace(/_/g, ' ');
+    }
+  };
+
   const chartData = statusBreakdown.map((item: any) => ({
-    name: item.status.replace(/_/g, ' '),
+    name: getStatusLabel(item.status),
     value: item.count,
     color: STATUS_COLORS[item.status] || '#6b7280',
   }));

@@ -7,14 +7,14 @@ import { TicketList } from "./ticket-list"
 import { TicketFilters } from "./ticket-filters"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Ticket, Clock, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Plus, Ticket, User, Clock, AlertTriangle } from "lucide-react"
 import { usePermissions } from "@/lib/hooks/use-permissions"
 
 interface TicketStats {
   total: number
-  open: number
-  inProgress: number
-  resolved: number
+  myTickets: number
+  pending: number
+  slaAtRisk: number
 }
 
 export function TicketManagementPage() {
@@ -22,24 +22,23 @@ export function TicketManagementPage() {
   const permissions = usePermissions()
   const [stats, setStats] = useState<TicketStats>({
     total: 0,
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
+    myTickets: 0,
+    pending: 0,
+    slaAtRisk: 0,
   })
 
   // Fetch ticket stats
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/tickets?limit=1000')
+        const response = await fetch('/api/tickets/stats')
         if (response.ok) {
           const data = await response.json()
-          const tickets = data.data || []
           setStats({
-            total: tickets.length,
-            open: tickets.filter((t: any) => t.status === 'OPEN').length,
-            inProgress: tickets.filter((t: any) => t.status === 'IN_PROGRESS').length,
-            resolved: tickets.filter((t: any) => t.status === 'RESOLVED').length,
+            total: data.total || 0,
+            myTickets: data.myTickets || 0,
+            pending: data.pending || 0,
+            slaAtRisk: data.slaAtRisk || 0,
           })
         }
       } catch (error) {
@@ -83,58 +82,66 @@ export function TicketManagementPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-blue-500 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-blue-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Tickets</p>
-                <p className="text-2xl font-bold mt-1">{stats.total}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Total Tickets</p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.total}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">All tickets</p>
               </div>
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Ticket className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 bg-blue-500/15 rounded-lg">
+                <Ticket className="h-4 w-4 text-blue-700 dark:text-blue-300" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-purple-500 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-purple-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Open</p>
-                <p className="text-2xl font-bold mt-1 text-red-600">{stats.open}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">My Tickets</p>
+                <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{stats.myTickets}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Assigned to you</p>
               </div>
-              <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <div className="p-2 bg-purple-500/15 rounded-lg">
+                <User className="h-4 w-4 text-purple-700 dark:text-purple-300" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-orange-500 bg-gradient-to-br from-orange-50/50 to-white dark:from-orange-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-orange-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">In Progress</p>
-                <p className="text-2xl font-bold mt-1 text-orange-600">{stats.inProgress}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Pending</p>
+                <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{stats.pending}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">New + In Progress</p>
               </div>
-              <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 bg-orange-500/15 rounded-lg">
+                <Clock className="h-4 w-4 text-orange-700 dark:text-orange-300" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
+        <Card className="group relative overflow-hidden hover:shadow-md transition-all duration-300 border-l-3 border-l-red-500 bg-gradient-to-br from-red-50/50 to-white dark:from-red-950/30 dark:to-background">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-red-500/10 rounded-full -mr-6 -mt-6 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Resolved</p>
-                <p className="text-2xl font-bold mt-1 text-green-600">{stats.resolved}</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">SLA At Risk</p>
+                <p className="text-2xl font-bold text-red-700 dark:text-red-300">{stats.slaAtRisk}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">Due within 2 hrs</p>
               </div>
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="p-2 bg-red-500/15 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-red-700 dark:text-red-300" />
               </div>
             </div>
           </CardContent>

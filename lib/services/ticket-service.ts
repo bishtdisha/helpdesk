@@ -59,6 +59,7 @@ export interface TicketFilters {
   createdBy?: string;
   customerId?: string;
   search?: string;
+  month?: string; // Format: YYYY-MM
   page?: number;
   limit?: number;
 }
@@ -144,16 +145,18 @@ export class TicketService {
    * @throws Error if any foreign key reference is invalid
    */
   private async validateForeignKeys(data: CreateTicketData): Promise<void> {
-    // Validate customer (user) exists
-    const customer = await prisma.user.findUnique({
-      where: { id: data.customerId },
-    });
-    if (!customer) {
-      throw new Error(`User with ID ${data.customerId} does not exist`);
+    // Validate customer (user) exists if provided (and not empty string)
+    if (data.customerId && data.customerId.trim() !== '') {
+      const customer = await prisma.user.findUnique({
+        where: { id: data.customerId },
+      });
+      if (!customer) {
+        throw new Error(`User with ID ${data.customerId} does not exist`);
+      }
     }
 
-    // Validate team exists if provided
-    if (data.teamId) {
+    // Validate team exists if provided (and not empty string)
+    if (data.teamId && data.teamId.trim() !== '') {
       const team = await prisma.team.findUnique({
         where: { id: data.teamId },
       });
@@ -219,9 +222,9 @@ export class TicketService {
         description: data.description,
         priority: data.priority,
         category: data.category,
-        customerId: data.customerId,
+        customerId: data.customerId || undefined, // Convert empty string to undefined
         createdBy: userId,
-        teamId: data.teamId,
+        teamId: data.teamId || undefined, // Convert empty string to undefined
         assignedTo: data.assignedTo,
         phone: data.phone,
         status: data.status || TicketStatus.OPEN,
@@ -840,6 +843,30 @@ export class TicketService {
       );
     }
 
+    // Send email notification if assignee changed
+    if (data.assignedTo && data.assignedTo !== currentTicket.assignedTo && ticket.assignedUser) {
+      try {
+        await EmailService.sendTicketAssignmentEmail(
+          ticket.assignedUser.email,
+          ticket.assignedUser.name || 'Team Member',
+          {
+            id: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            title: ticket.title,
+            description: ticket.description,
+            priority: ticket.priority,
+            category: ticket.category || undefined,
+            customerName: ticket.customer?.name || undefined,
+            creatorName: ticket.creator?.name || undefined,
+          }
+        );
+        console.log(`📧 Assignee change notification sent to ${ticket.assignedUser.email}`);
+      } catch (emailError) {
+        // Log error but don't fail the update
+        console.error('Failed to send assignee change email:', emailError);
+      }
+    }
+
     return ticket;
   }
 
@@ -1129,6 +1156,30 @@ export class TicketService {
       );
     }
 
+    // Send email notification to new assignee
+    if (ticket.assignedUser && assigneeId !== currentTicket.assignedTo) {
+      try {
+        await EmailService.sendTicketAssignmentEmail(
+          ticket.assignedUser.email,
+          ticket.assignedUser.name || 'Team Member',
+          {
+            id: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            title: ticket.title,
+            description: ticket.description,
+            priority: ticket.priority,
+            category: ticket.category || undefined,
+            customerName: ticket.customer?.name || undefined,
+            creatorName: ticket.creator?.name || undefined,
+          }
+        );
+        console.log(`📧 Assignment notification sent to ${ticket.assignedUser.email}`);
+      } catch (emailError) {
+        // Log error but don't fail the assignment
+        console.error('Failed to send assignment email:', emailError);
+      }
+    }
+
     return ticket;
   }
 
@@ -1189,6 +1240,21 @@ export class TicketService {
           { description: { contains: filters.search, mode: 'insensitive' } },
         ],
       });
+    }
+
+    // Filter by month (format: YYYY-MM)
+    if (filters.month) {
+      const [year, month] = filters.month.split('-').map(Number);
+      if (year && month) {
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0, 23, 59, 59, 999); // Last day of month
+        where.AND!.push({
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        });
+      }
     }
 
     // Get total count

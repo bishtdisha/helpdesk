@@ -14,11 +14,11 @@ const StatusDistributionChart = lazy(() => import('./charts/status-distribution-
 const TotalTicketsKPI = lazy(() => import('./widgets/total-tickets-kpi').then(mod => ({ default: mod.TotalTicketsKPI })));
 const SLAComplianceKPI = lazy(() => import('./widgets/sla-compliance-kpi').then(mod => ({ default: mod.SLAComplianceKPI })));
 const AvgResolutionKPI = lazy(() => import('./widgets/avg-resolution-kpi').then(mod => ({ default: mod.AvgResolutionKPI })));
-const CSATScoreKPI = lazy(() => import('./widgets/csat-score-kpi').then(mod => ({ default: mod.CSATScoreKPI })));
+const PriorityMixKPI = lazy(() => import('./widgets/priority-mix-kpi').then(mod => ({ default: mod.PriorityMixKPI })));
+
 const MyTicketsSummary = lazy(() => import('./widgets/my-tickets-summary').then(mod => ({ default: mod.MyTicketsSummary })));
 const SLABreachAlerts = lazy(() => import('./widgets/sla-breach-alerts').then(mod => ({ default: mod.SLABreachAlerts })));
 const TodayPerformance = lazy(() => import('./widgets/today-performance').then(mod => ({ default: mod.TodayPerformance })));
-const WeekPerformance = lazy(() => import('./widgets/week-performance').then(mod => ({ default: mod.WeekPerformance })));
 const DailyTarget = lazy(() => import('./widgets/daily-target').then(mod => ({ default: mod.DailyTarget })));
 const TicketTrendChart = lazy(() => import('./widgets/ticket-trend-chart').then(mod => ({ default: mod.TicketTrendChart })));
 const ResolutionTrendChart = lazy(() => import('./widgets/resolution-trend-chart').then(mod => ({ default: mod.ResolutionTrendChart })));
@@ -147,7 +147,7 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-lg font-bold leading-tight mb-1">
+                  <CardTitle className="text-lg font-extrabold text-gray-800 dark:text-gray-100 leading-tight mb-1">
                     Welcome back, {user?.name || 'User'}!
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
@@ -346,8 +346,8 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
       case 'AvgResolutionKPI':
         return <AvgResolutionKPI />;
 
-      case 'CSATScoreKPI':
-        return <CSATScoreKPI />;
+      case 'PriorityMixKPI':
+        return <PriorityMixKPI />;
 
       // New Summary Widgets
       case 'MyTicketsSummary':
@@ -359,9 +359,6 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
       // Performance Widgets
       case 'TodayPerformance':
         return <TodayPerformance />;
-
-      case 'WeekPerformance':
-        return <WeekPerformance />;
 
       case 'DailyTarget':
         return <DailyTarget />;

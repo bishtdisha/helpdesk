@@ -61,13 +61,14 @@ export interface PaginatedTickets {
 
 // Ticket filters
 export interface TicketFilters {
-  status?: TicketStatus[];
-  priority?: TicketPriority[];
+  status?: TicketStatus[] | string;
+  priority?: TicketPriority[] | string;
   teamId?: string;
   assignedTo?: string;
   createdBy?: string;
   customerId?: string;
   search?: string;
+  month?: string; // Format: YYYY-MM
   page?: number;
   limit?: number;
 }

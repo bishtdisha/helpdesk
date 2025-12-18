@@ -60,8 +60,28 @@ export function useDashboardLayout() {
     
     const preferences = loadDashboardPreferences(user.id);
     if (preferences) {
+      let savedVisibleWidgets = preferences.visibleWidgets || [];
+      
+      // Auto-migrate: Add priority-mix-kpi if user has old csat-kpi or missing the new widget
+      // This ensures existing users get the new widget without manual reset
+      const kpiWidgets = ['total-tickets-kpi', 'sla-compliance-kpi', 'avg-resolution-kpi'];
+      const hasOtherKpis = kpiWidgets.some(w => savedVisibleWidgets.includes(w));
+      const hasPriorityMix = savedVisibleWidgets.includes('priority-mix-kpi');
+      const hasOldCsat = savedVisibleWidgets.includes('csat-kpi');
+      
+      if (hasOtherKpis && !hasPriorityMix) {
+        // Remove old csat-kpi if present and add priority-mix-kpi
+        savedVisibleWidgets = savedVisibleWidgets.filter(w => w !== 'csat-kpi');
+        savedVisibleWidgets.push('priority-mix-kpi');
+        // Save the migrated preferences
+        saveDashboardPreferences(user.id, {
+          ...preferences,
+          visibleWidgets: savedVisibleWidgets,
+        });
+      }
+      
       setLayout(preferences.layout || []);
-      setVisibleWidgets(preferences.visibleWidgets || []);
+      setVisibleWidgets(savedVisibleWidgets);
       setCurrentPreset(preferences.currentPreset);
     }
   }, [user?.id]);

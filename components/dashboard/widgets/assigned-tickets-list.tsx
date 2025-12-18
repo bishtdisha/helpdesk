@@ -110,7 +110,9 @@ export function AssignedTicketsList() {
                     </div>
                   </div>
                   <div className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(ticket.status)}`}>
-                    {ticket.status.replace(/_/g, ' ')}
+                    {ticket.status === 'WAITING_FOR_CUSTOMER' ? 'On Hold' : 
+                     ticket.status === 'CLOSED' ? 'Cancelled' : 
+                     ticket.status.replace(/_/g, ' ')}
                   </div>
                 </div>
               </Link>

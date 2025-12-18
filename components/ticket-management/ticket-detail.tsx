@@ -148,7 +148,14 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers, re
 
   const formatStatus = (status: TicketStatus) => {
     if (!status) return 'Unknown'
-    return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+    switch (status) {
+      case TicketStatus.OPEN: return 'New'
+      case TicketStatus.IN_PROGRESS: return 'In Progress'
+      case TicketStatus.WAITING_FOR_CUSTOMER: return 'On Hold'
+      case TicketStatus.RESOLVED: return 'Resolved'
+      case TicketStatus.CLOSED: return 'Cancelled'
+      default: return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+    }
   }
 
   const formatPriority = (priority: TicketPriority) => {
@@ -504,7 +511,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers, re
                               <span className="font-medium">{entry.user.name}</span>
                               <span className="text-sm text-muted-foreground">{entry.action}</span>
                               <span className="text-xs text-muted-foreground">
-                                {format(new Date(entry.createdAt), 'MMM d, yyyy HH:mm')}
+                                {format(new Date(entry.createdAt), 'MMM d, yyyy h:mm a')}
                               </span>
                             </div>
                             {entry.fieldName && (
@@ -545,7 +552,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers, re
                 <div className="flex-1">
                   <div className="text-xs text-muted-foreground">Created</div>
                   <div className="font-medium">
-                    {ticket.createdAt ? format(new Date(ticket.createdAt), 'MMM d, yyyy HH:mm') : 'Unknown'}
+                    {ticket.createdAt ? format(new Date(ticket.createdAt), 'MMM d, yyyy h:mm a') : 'Unknown'}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">by {ticket.creator?.name || 'Unknown'}</div>
                 </div>
@@ -558,7 +565,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers, re
                 <div className="flex-1">
                   <div className="text-xs text-muted-foreground">Last Updated</div>
                   <div className="font-medium">
-                    {ticket.updatedAt ? format(new Date(ticket.updatedAt), 'MMM d, yyyy HH:mm') : 'Unknown'}
+                    {ticket.updatedAt ? format(new Date(ticket.updatedAt), 'MMM d, yyyy h:mm a') : 'Unknown'}
                   </div>
                 </div>
               </div>
@@ -571,7 +578,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers, re
                   <div className="flex-1">
                     <div className="text-xs text-muted-foreground">Resolved</div>
                     <div className="font-medium">
-                      {format(new Date(ticket.resolvedAt), 'MMM d, yyyy HH:mm')}
+                      {format(new Date(ticket.resolvedAt), 'MMM d, yyyy h:mm a')}
                     </div>
                   </div>
                 </div>
@@ -585,7 +592,7 @@ export function TicketDetail({ ticketId, onBack, onAssign, onManageFollowers, re
                   <div className="flex-1">
                     <div className="text-xs text-muted-foreground">Closed</div>
                     <div className="font-medium">
-                      {format(new Date(ticket.closedAt), 'MMM d, yyyy HH:mm')}
+                      {format(new Date(ticket.closedAt), 'MMM d, yyyy h:mm a')}
                     </div>
                   </div>
                 </div>

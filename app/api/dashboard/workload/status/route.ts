@@ -14,26 +14,23 @@ export async function GET(request: NextRequest) {
     // Get role-based filter
     const ticketFilter = await getTicketFilterForUser(currentUser.id);
 
-    // Get count of tickets by status (filtered by role)
-    const statuses: TicketStatus[] = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'RESOLVED', 'CLOSED'];
-    
-    const statusBreakdown = await Promise.all(
-      statuses.map(async (status) => {
-        const count = await prisma.ticket.count({
-          where: { 
-            ...ticketFilter,
-            status 
-          },
-        });
-        return { status, count };
-      })
-    );
+    // Get all tickets and group by status in memory (1 query instead of 5)
+    const tickets = await prisma.ticket.groupBy({
+      by: ['status'],
+      where: ticketFilter,
+      _count: { status: true },
+    });
 
-    // Filter out statuses with 0 count
-    const filteredBreakdown = statusBreakdown.filter(item => item.count > 0);
+    // Map to expected format
+    const statusBreakdown = tickets
+      .map(item => ({
+        status: item.status,
+        count: item._count.status,
+      }))
+      .filter(item => item.count > 0);
 
     return NextResponse.json({
-      statusBreakdown: filteredBreakdown,
+      statusBreakdown,
     });
   } catch (error) {
     console.error('Error fetching workload by status:', error);

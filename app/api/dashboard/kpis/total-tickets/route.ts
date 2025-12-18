@@ -13,90 +13,70 @@ export async function GET(request: NextRequest) {
     // Get role-based filter
     const ticketFilter = await getTicketFilterForUser(currentUser.id);
 
-    // Get total tickets count (filtered by role)
-    const total = await prisma.ticket.count({
-      where: ticketFilter,
-    });
-
-    // Get open tickets count (filtered by role)
-    const open = await prisma.ticket.count({
-      where: {
-        ...ticketFilter,
-        status: {
-          in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'],
-        },
-      },
-    });
-
-    // Get resolved tickets count (filtered by role)
-    const resolved = await prisma.ticket.count({
-      where: {
-        ...ticketFilter,
-        status: {
-          in: ['RESOLVED', 'CLOSED'],
-        },
-      },
-    });
-
-    // Get pending tickets count (filtered by role)
-    const pending = await prisma.ticket.count({
-      where: {
-        ...ticketFilter,
-        status: 'WAITING_FOR_CUSTOMER',
-      },
-    });
-
-    // Get in progress tickets count (filtered by role)
-    const inProgress = await prisma.ticket.count({
-      where: {
-        ...ticketFilter,
-        status: 'IN_PROGRESS',
-      },
-    });
-
-    // Get closed tickets count (filtered by role)
-    const closed = await prisma.ticket.count({
-      where: {
-        ...ticketFilter,
-        status: 'CLOSED',
-      },
-    });
-
-    // Calculate trend (last 7 days vs previous 7 days) (filtered by role)
+    // Calculate dates for trend
     const now = new Date();
     const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const previous7Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    const currentPeriod = await prisma.ticket.count({
-      where: {
-        ...ticketFilter,
-        createdAt: {
-          gte: last7Days,
-        },
-      },
-    });
-
-    const previousPeriod = await prisma.ticket.count({
-      where: {
-        ...ticketFilter,
-        createdAt: {
-          gte: previous7Days,
-          lt: last7Days,
-        },
-      },
-    });
+    // Run all queries in parallel for better performance
+    const [
+      total,
+      newTickets,
+      inProgress,
+      onHold,
+      resolved,
+      closed,
+      currentPeriod,
+      previousPeriod,
+    ] = await Promise.all([
+      // Total tickets
+      prisma.ticket.count({ where: ticketFilter }),
+      // New tickets (OPEN status only)
+      prisma.ticket.count({
+        where: { ...ticketFilter, status: 'OPEN' },
+      }),
+      // In progress tickets
+      prisma.ticket.count({
+        where: { ...ticketFilter, status: 'IN_PROGRESS' },
+      }),
+      // On Hold tickets (WAITING_FOR_CUSTOMER)
+      prisma.ticket.count({
+        where: { ...ticketFilter, status: 'WAITING_FOR_CUSTOMER' },
+      }),
+      // Resolved tickets
+      prisma.ticket.count({
+        where: { ...ticketFilter, status: 'RESOLVED' },
+      }),
+      // Cancelled tickets (CLOSED)
+      prisma.ticket.count({
+        where: { ...ticketFilter, status: 'CLOSED' },
+      }),
+      // Current period (last 7 days)
+      prisma.ticket.count({
+        where: { ...ticketFilter, createdAt: { gte: last7Days } },
+      }),
+      // Previous period
+      prisma.ticket.count({
+        where: { ...ticketFilter, createdAt: { gte: previous7Days, lt: last7Days } },
+      }),
+    ]);
 
     const trend = previousPeriod > 0
       ? Math.round(((currentPeriod - previousPeriod) / previousPeriod) * 100)
       : 0;
 
+    // Calculate open (all non-closed/resolved) for backward compatibility
+    const open = newTickets + inProgress + onHold;
+
     return NextResponse.json({
       total,
+      newTickets,
       open,
-      resolved,
-      pending,
       inProgress,
+      onHold,
+      resolved,
       closed,
+      pending: onHold, // backward compatibility
       trend,
     });
   } catch (error) {

@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
     const createdBy = searchParams.get('createdBy') || undefined;
     const customerId = searchParams.get('customerId') || undefined;
     const search = searchParams.get('search') || undefined;
+    const month = searchParams.get('month') || undefined;
 
     // Build filters
     const filters: TicketFilters = {
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
       createdBy,
       customerId,
       search,
+      month,
       page,
       limit,
     };

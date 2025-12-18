@@ -113,9 +113,9 @@ export function SLAViolationList() {
           v.status,
           v.team?.name || 'Unassigned',
           v.assignedUser?.name || 'Unassigned',
-          format(new Date(v.slaDueAt), 'yyyy-MM-dd HH:mm'),
+          format(new Date(v.slaDueAt), 'yyyy-MM-dd h:mm a'),
           `${overdueHours}h ${overdueMinutes}m`,
-          format(new Date(v.createdAt), 'yyyy-MM-dd HH:mm'),
+          format(new Date(v.createdAt), 'yyyy-MM-dd h:mm a'),
         ];
       });
 
@@ -302,7 +302,7 @@ export function SLAViolationList() {
                           {format(new Date(violation.slaDueAt), 'MMM d, yyyy')}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(violation.slaDueAt), 'HH:mm')}
+                          {format(new Date(violation.slaDueAt), 'h:mm a')}
                         </div>
                       </div>
                     </TableCell>

@@ -352,7 +352,9 @@ export function AdvancedSearchDialog({
                       className="cursor-pointer"
                       onClick={() => updateArrayFilter('status', status, !filters.status?.includes(status))}
                     >
-                      {status.replace('_', ' ')}
+                      {status === 'WAITING_FOR_CUSTOMER' ? 'On Hold' : 
+                       status === 'CLOSED' ? 'Cancelled' : 
+                       status.replace('_', ' ')}
                       {filters.status?.includes(status) && (
                         <X className="h-3 w-3 ml-1" />
                       )}

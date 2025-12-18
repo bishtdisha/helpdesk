@@ -27,7 +27,7 @@ export class PasswordUtils {
 // Session token utilities
 export class SessionUtils {
   private static readonly TOKEN_LENGTH = 32; // 32 bytes = 256 bits
-  private static readonly DEFAULT_EXPIRY_HOURS = 24;
+  private static readonly DEFAULT_EXPIRY_HOURS = 168; // 7 days (7 * 24 = 168 hours)
 
   /**
    * Generate a secure random session token

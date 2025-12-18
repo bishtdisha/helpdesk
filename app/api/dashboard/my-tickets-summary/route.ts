@@ -9,77 +9,51 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get tickets assigned to current user
-    const myTickets = await prisma.ticket.findMany({
-      where: {
-        assignedTo: currentUser.id,
-      },
-      select: {
-        id: true,
-        status: true,
-        priority: true,
-        createdAt: true,
-      },
-    });
+    const now = new Date();
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
-    // Calculate metrics
-    const open = myTickets.filter(t =>
-      ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(t.status)
-    ).length;
+    // Run all queries in parallel for better performance
+    const [myTickets, failedEscalated, resolved] = await Promise.all([
+      // Get tickets assigned to current user
+      prisma.ticket.findMany({
+        where: { assignedTo: currentUser.id },
+        select: { id: true, status: true, priority: true, createdAt: true },
+      }),
+      // Failed/Escalated (overdue tickets)
+      prisma.ticket.count({
+        where: {
+          assignedTo: currentUser.id,
+          status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'] },
+          slaDueAt: { lt: now },
+        },
+      }),
+      // Resolved tickets today
+      prisma.ticket.count({
+        where: {
+          assignedTo: currentUser.id,
+          status: { in: ['RESOLVED', 'CLOSED'] },
+          resolvedAt: { gte: startOfDay },
+        },
+      }),
+    ]);
 
-    const highPriority = myTickets.filter(t =>
-      t.priority === 'HIGH' && ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(t.status)
-    ).length;
-
-    const urgent = myTickets.filter(t =>
-      t.priority === 'URGENT' && ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(t.status)
-    ).length;
+    // Calculate metrics from fetched tickets (in-memory, fast)
+    const openStatuses = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'];
+    const openTickets = myTickets.filter(t => openStatuses.includes(t.status));
+    
+    const open = openTickets.length;
+    const highPriority = openTickets.filter(t => t.priority === 'HIGH').length;
+    const urgent = openTickets.filter(t => t.priority === 'URGENT').length;
+    const inProgress = myTickets.filter(t => t.status === 'IN_PROGRESS').length;
 
     // Calculate average open hours
-    const openTickets = myTickets.filter(t =>
-      ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(t.status)
-    );
-
     const avgOpenHours = openTickets.length > 0
       ? openTickets.reduce((sum, t) => {
           const hours = (Date.now() - t.createdAt.getTime()) / (1000 * 60 * 60);
           return sum + hours;
         }, 0) / openTickets.length
       : 0;
-
-    // Failed/Escalated (tickets that have been reassigned or escalated)
-    // For now, we'll count tickets that are overdue
-    const now = new Date();
-    const failedEscalated = await prisma.ticket.count({
-      where: {
-        assignedTo: currentUser.id,
-        status: {
-          in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'],
-        },
-        slaDueAt: {
-          lt: now,
-        },
-      },
-    });
-
-    // Get resolved tickets today
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const resolved = await prisma.ticket.count({
-      where: {
-        assignedTo: currentUser.id,
-        status: {
-          in: ['RESOLVED', 'CLOSED'],
-        },
-        resolvedAt: {
-          gte: startOfDay,
-        },
-      },
-    });
-
-    // Get in progress count
-    const inProgress = myTickets.filter(t => t.status === 'IN_PROGRESS').length;
 
     return NextResponse.json({
       open,

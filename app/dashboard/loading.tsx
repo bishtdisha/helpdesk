@@ -12,7 +12,7 @@ export default function DashboardLoading() {
       </div>
       
       {/* Main content skeleton */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Header skeleton */}
         <div className="border-b p-4">
           <div className="h-8 w-48 bg-muted animate-pulse rounded" />

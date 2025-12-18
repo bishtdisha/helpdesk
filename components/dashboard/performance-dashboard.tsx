@@ -219,7 +219,9 @@ export function PerformanceDashboard() {
                     <div className="flex items-center gap-2 mt-2">
                       <div className={`h-2 w-2 rounded-full ${getStatusColor(status)}`} />
                       <span className="text-xs text-muted-foreground capitalize">
-                        {status.replace('-', ' ')}
+                        {status === 'WAITING_FOR_CUSTOMER' || status === 'waiting-for-customer' ? 'On Hold' : 
+                         status === 'CLOSED' || status === 'closed' ? 'Cancelled' : 
+                         status.replace(/-|_/g, ' ')}
                       </span>
                     </div>
                   </CardContent>

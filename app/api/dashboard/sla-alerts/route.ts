@@ -63,58 +63,46 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get priority matrix (filtered by role)
+    // Get priority matrix - fetch all open tickets once and calculate in memory
+    const allOpenTickets = await prisma.ticket.findMany({
+      where: {
+        ...ticketFilter,
+        status: {
+          in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'],
+        },
+      },
+      select: {
+        id: true,
+        priority: true,
+        slaDueAt: true,
+      },
+    });
+
     const priorities: TicketPriority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW'];
-    const priorityMatrix = await Promise.all(
-      priorities.map(async (priority) => {
-        const openTickets = await prisma.ticket.findMany({
-          where: {
-            ...ticketFilter,
-            priority,
-            status: {
-              in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'],
-            },
-          },
-          select: {
-            id: true,
-            slaDueAt: true,
-          },
-        });
+    const priorityMatrix = priorities.map((priority) => {
+      const openTickets = allOpenTickets.filter(t => t.priority === priority);
+      const open = openTickets.length;
 
-        const open = openTickets.length;
+      // Calculate average SLA time left
+      const ticketsWithSLA = openTickets.filter(t => t.slaDueAt);
+      const avgSlaLeftMinutes = ticketsWithSLA.length > 0
+        ? ticketsWithSLA.reduce((sum, t) => {
+            if (!t.slaDueAt) return sum;
+            const minutesLeft = Math.floor((t.slaDueAt.getTime() - now.getTime()) / (1000 * 60));
+            return sum + Math.max(0, minutesLeft);
+          }, 0) / ticketsWithSLA.length
+        : 0;
 
-        // Calculate average SLA time left
-        const ticketsWithSLA = openTickets.filter(t => t.slaDueAt);
-        const avgSlaLeftMinutes = ticketsWithSLA.length > 0
-          ? ticketsWithSLA.reduce((sum, t) => {
-              if (!t.slaDueAt) return sum;
-              const minutesLeft = Math.floor((t.slaDueAt.getTime() - now.getTime()) / (1000 * 60));
-              return sum + Math.max(0, minutesLeft);
-            }, 0) / ticketsWithSLA.length
-          : 0;
+      // Count breached tickets for this priority
+      const breachedCount = openTickets.filter(t => t.slaDueAt && t.slaDueAt < now).length;
 
-        // Count breached tickets for this priority (filtered by role)
-        const breachedCount = await prisma.ticket.count({
-          where: {
-            ...ticketFilter,
-            priority,
-            status: {
-              in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'],
-            },
-            slaDueAt: {
-              lt: now,
-            },
-          },
-        });
-
-        return {
-          priority,
-          open,
-          avgSlaLeftMinutes: Math.round(avgSlaLeftMinutes),
-          breached: breachedCount,
-        };
-      })
-    );
+      return {
+        priority,
+        open,
+        avgSlaLeftMinutes: Math.round(avgSlaLeftMinutes),
+        breached: breachedCount,
+      };
+    });
 
     return NextResponse.json({
       nearBreach,

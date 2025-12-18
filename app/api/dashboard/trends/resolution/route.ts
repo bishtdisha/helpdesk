@@ -15,36 +15,45 @@ export async function GET(request: NextRequest) {
     const ticketFilter = await getTicketFilterForUser(currentUser.id);
 
     const days = 30;
-    const chartData = [];
+    const startDate = subDays(new Date(), days - 1);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
 
+    // Fetch all resolved tickets in date range in 1 query instead of 30
+    const resolvedTickets = await prisma.ticket.findMany({
+      where: {
+        ...ticketFilter,
+        resolvedAt: { gte: startDate, lte: endDate },
+      },
+      select: {
+        createdAt: true,
+        resolvedAt: true,
+      },
+    });
+
+    // Group by date and calculate averages in memory
+    const resolutionByDate = new Map<string, number[]>();
+
+    resolvedTickets.forEach(t => {
+      if (!t.resolvedAt) return;
+      const dateKey = format(t.resolvedAt, 'yyyy-MM-dd');
+      const resolutionHours = (t.resolvedAt.getTime() - t.createdAt.getTime()) / (1000 * 60 * 60);
+      
+      if (!resolutionByDate.has(dateKey)) {
+        resolutionByDate.set(dateKey, []);
+      }
+      resolutionByDate.get(dateKey)!.push(resolutionHours);
+    });
+
+    // Build chart data
+    const chartData = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = subDays(new Date(), i);
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const resolvedTickets = await prisma.ticket.findMany({
-        where: {
-          ...ticketFilter,
-          resolvedAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-        select: {
-          createdAt: true,
-          resolvedAt: true,
-        },
-      });
-
-      const resolutionTimes = resolvedTickets.map(t => {
-        if (!t.resolvedAt) return 0;
-        return (t.resolvedAt.getTime() - t.createdAt.getTime()) / (1000 * 60 * 60);
-      });
-
-      const avgResolutionTime = resolutionTimes.length > 0
-        ? resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length
+      const dateKey = format(date, 'yyyy-MM-dd');
+      const times = resolutionByDate.get(dateKey) || [];
+      const avgResolutionTime = times.length > 0
+        ? times.reduce((a, b) => a + b, 0) / times.length
         : 0;
 
       chartData.push({

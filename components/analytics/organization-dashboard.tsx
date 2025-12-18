@@ -77,8 +77,19 @@ export function OrganizationDashboard({ className }: OrganizationDashboardProps)
   const chartData = useMemo(() => {
     if (!metrics) return null;
 
+    const getStatusLabel = (status: string) => {
+      switch (status) {
+        case 'OPEN': return 'New';
+        case 'IN_PROGRESS': return 'In Progress';
+        case 'WAITING_FOR_CUSTOMER': return 'On Hold';
+        case 'RESOLVED': return 'Resolved';
+        case 'CLOSED': return 'Cancelled';
+        default: return status.replace(/_/g, ' ');
+      }
+    };
+
     const statusData = Object.entries(metrics.ticketsByStatus || {}).map(([status, count]) => ({
-      name: status.replace('_', ' '),
+      name: getStatusLabel(status),
       value: count,
       color: STATUS_COLORS[status as TicketStatus] || '#6b7280',
     }));
@@ -199,8 +210,19 @@ export function OrganizationDashboard({ className }: OrganizationDashboardProps)
     color: PRIORITY_COLORS[priority as TicketPriority],
   }));
 
+  const getStatusDisplayLabel = (status: string) => {
+    switch (status) {
+      case 'OPEN': return 'New';
+      case 'IN_PROGRESS': return 'In Progress';
+      case 'WAITING_FOR_CUSTOMER': return 'On Hold';
+      case 'RESOLVED': return 'Resolved';
+      case 'CLOSED': return 'Cancelled';
+      default: return status.replace(/_/g, ' ');
+    }
+  };
+
   const statusData = Object.entries(metrics.ticketsByStatus).map(([status, count]) => ({
-    name: status.replace(/_/g, ' '),
+    name: getStatusDisplayLabel(status),
     value: count,
     color: STATUS_COLORS[status as TicketStatus],
   }));

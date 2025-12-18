@@ -70,7 +70,7 @@ export function VirtualizedCommentList({
             )}
             
             <span className="text-xs text-muted-foreground">
-              {format(new Date(comment.createdAt), 'MMM dd, yyyy HH:mm')}
+              {format(new Date(comment.createdAt), 'MMM dd, yyyy h:mm a')}
             </span>
             
             {comment.updatedAt !== comment.createdAt && (

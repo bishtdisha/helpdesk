@@ -48,16 +48,20 @@ export function TotalTicketsKPI() {
   const trendValue = trend || 0;
   const isPositive = trendValue > 0;
 
+  // Calculate "new" tickets (OPEN status only, not including in progress or on hold)
+  const newTickets = data.newTickets ?? open ?? 0;
+  const onHold = data.onHold ?? pending ?? 0;
+
   const popoverContent = (
     <div className="space-y-3">
       <h4 className="font-semibold text-sm mb-3">Status Breakdown</h4>
       <div className="grid grid-cols-2 gap-2">
-        <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+        <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
           <div className="flex items-center gap-1 mb-1">
-            <div className="w-2 h-2 rounded-full bg-orange-500" />
-            <span className="text-xs font-medium text-orange-600">Open</span>
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-xs font-medium text-red-600">New</span>
           </div>
-          <div className="text-xl font-bold text-orange-700">{open || 0}</div>
+          <div className="text-xl font-bold text-red-700">{newTickets}</div>
         </div>
         <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-1 mb-1">
@@ -66,6 +70,13 @@ export function TotalTicketsKPI() {
           </div>
           <div className="text-xl font-bold text-blue-700">{inProgress || 0}</div>
         </div>
+        <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="w-2 h-2 rounded-full bg-orange-500" />
+            <span className="text-xs font-medium text-orange-600">On Hold</span>
+          </div>
+          <div className="text-xl font-bold text-orange-700">{onHold}</div>
+        </div>
         <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
           <div className="flex items-center gap-1 mb-1">
             <div className="w-2 h-2 rounded-full bg-green-500" />
@@ -73,10 +84,10 @@ export function TotalTicketsKPI() {
           </div>
           <div className="text-xl font-bold text-green-700">{resolved || 0}</div>
         </div>
-        <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-950/20 border border-gray-200 dark:border-gray-800">
+        <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-950/20 border border-gray-200 dark:border-gray-800 col-span-2">
           <div className="flex items-center gap-1 mb-1">
             <div className="w-2 h-2 rounded-full bg-gray-500" />
-            <span className="text-xs font-medium text-gray-600">Closed</span>
+            <span className="text-xs font-medium text-gray-600">Cancelled</span>
           </div>
           <div className="text-xl font-bold text-gray-700">{closed || 0}</div>
         </div>
@@ -95,7 +106,7 @@ export function TotalTicketsKPI() {
       iconBgColor="bg-blue-100 dark:bg-blue-900/30"
       valueColor="text-blue-600"
       badge={{
-        text: `${open || 0} open`,
+        text: `${newTickets} new`,
         variant: 'outline'
       }}
       trend={trendValue !== 0 ? {
