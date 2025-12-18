@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { EnhancedTicketCreateForm } from "@/components/ticket-management/enhanced-ticket-create-form"
-import { Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Loader2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 export default function TeamTicketEditPage() {
@@ -36,13 +37,15 @@ export default function TeamTicketEditPage() {
     fetchTicket()
   }, [ticketId, teamId, router])
 
-  const handleSuccess = (ticketId: string) => {
+  const handleSuccess = (updatedTicketId: string) => {
     toast.success('Ticket updated successfully')
-    router.push(`/helpdesk/teams/${teamId}`)
+    // Navigate back to the view page after successful update
+    router.push(`/helpdesk/teams/${teamId}/tickets/${ticketId}/view`)
   }
 
   const handleCancel = () => {
-    router.push(`/helpdesk/teams/${teamId}`)
+    // Navigate back to the view page when cancelled
+    router.push(`/helpdesk/teams/${teamId}/tickets/${ticketId}/view`)
   }
 
   if (loading) {
@@ -70,6 +73,9 @@ export default function TeamTicketEditPage() {
       {/* Page header with gradient background */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg p-6 mb-6 border border-blue-100 dark:border-blue-900">
         <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={handleCancel}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

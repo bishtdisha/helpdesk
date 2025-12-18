@@ -33,6 +33,7 @@ import {
   UserCheck,
   Crown,
   Loader2,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -237,11 +238,27 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
       <Card className="shadow-sm">
         <CardContent className="p-5">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded">
-                <Search className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded">
+                  <Search className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                </div>
+                <span className="text-base font-semibold">Search Teams</span>
               </div>
-              <span className="text-base font-semibold">Search Teams</span>
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setPage(1);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear Filter
+                </Button>
+              )}
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -249,8 +266,19 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                 placeholder="Search teams by name..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10 h-10"
+                className="pl-10 pr-10 h-10"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setPage(1);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
         </CardContent>

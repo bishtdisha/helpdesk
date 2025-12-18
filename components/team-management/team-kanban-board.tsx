@@ -258,12 +258,8 @@ export function TeamKanbanBoard({ team, onBack }: TeamKanbanBoardProps) {
                     className="group cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-l-4 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-950/50"
                     style={{ borderLeftColor: getPriorityBorderColor(ticket.priority) }}
                     onClick={() => {
-                      // Admin and Team Leaders go to edit page within team context
-                      if (isAdminOrLeader) {
-                        router.push(`/helpdesk/teams/${team.id}/tickets/${ticket.id}`);
-                      } else {
-                        router.push(`/helpdesk/tickets/${ticket.id}`);
-                      }
+                      // Navigate to View page first within team context
+                      router.push(`/helpdesk/teams/${team.id}/tickets/${ticket.id}/view`);
                     }}
                   >
                     <CardContent className="p-3 space-y-2">
