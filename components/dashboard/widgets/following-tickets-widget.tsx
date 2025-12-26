@@ -62,7 +62,7 @@ export function FollowingTicketsWidget() {
             <div>
               <CardTitle className="text-base">Following</CardTitle>
               <CardDescription className="text-xs">
-                Tickets you're following
+                Tickets you&apos;re following
               </CardDescription>
             </div>
           </div>
@@ -96,7 +96,7 @@ export function FollowingTicketsWidget() {
           ) : followingTickets.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Eye className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">You're not following any tickets</p>
+              <p className="text-sm">You&apos;re not following any tickets</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">

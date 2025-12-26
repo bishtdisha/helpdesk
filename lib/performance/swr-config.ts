@@ -5,27 +5,24 @@ import useSWRInfinite from 'swr/infinite';
 import { apiClient } from '@/lib/api-client';
 import { CACHE_CONFIG, CachePerformance } from './caching';
 
-// Global SWR configuration
+// Global SWR configuration - optimized for performance
 export const swrConfig: SWRConfiguration = {
   // Default fetcher using our API client
   fetcher: (url: string) => apiClient.get(url),
   
   // Error retry configuration
-  errorRetryCount: 3,
-  errorRetryInterval: 1000,
+  errorRetryCount: 2,
+  errorRetryInterval: 2000,
   
-  // Focus revalidation
-  revalidateOnFocus: true,
+  // Disable focus revalidation for better performance
+  revalidateOnFocus: false,
   revalidateOnReconnect: true,
   
-  // Deduping
-  dedupingInterval: 5000,
+  // Increased deduping interval
+  dedupingInterval: 10000,
   
   // Loading timeout
-  loadingTimeout: 10000,
-  
-  // Error timeout
-  errorRetryInterval: 1000,
+  loadingTimeout: 15000,
   
   // Keep previous data while revalidating
   keepPreviousData: true,
@@ -33,27 +30,15 @@ export const swrConfig: SWRConfiguration = {
   // Fallback data
   fallbackData: undefined,
   
-  // Success callback
-  onSuccess: (data, key) => {
-    if (process.env.NODE_ENV === 'development') {
-      CachePerformance.recordCacheHit(key);
-    }
-  },
+  // Success callback - disabled in production for performance
+  onSuccess: process.env.NODE_ENV === 'development' 
+    ? (data, key) => CachePerformance.recordCacheHit(key)
+    : undefined,
   
-  // Error callback
-  onError: (error, key) => {
-    if (process.env.NODE_ENV === 'development') {
-      CachePerformance.recordCacheMiss(key);
-      console.error(`SWR Error for ${key}:`, error);
-    }
-  },
-  
-  // Loading callback
-  onLoadingSlow: (key) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(`SWR slow loading for ${key}`);
-    }
-  },
+  // Error callback - minimal logging
+  onError: process.env.NODE_ENV === 'development'
+    ? (error, key) => CachePerformance.recordCacheMiss(key)
+    : undefined,
 };
 
 // Get cache configuration for specific data type
@@ -191,21 +176,6 @@ export function useOptimisticMutation<T>(
   };
 }
 
-// Batch SWR requests for better performance
-export function useBatchSWR<T>(keys: string[], options?: SWRConfiguration) {
-  const results = keys.map(key => 
-    useSWR<T>(key, {
-      ...swrConfig,
-      ...options,
-    })
-  );
-  
-  return {
-    data: results.map(r => r.data),
-    error: results.find(r => r.error)?.error,
-    isLoading: results.some(r => r.isLoading),
-    isValidating: results.some(r => r.isValidating),
-    mutate: () => Promise.all(results.map(r => r.mutate())),
-  };
-}
+// Note: Batch SWR requests removed - use individual useSWR calls instead
+// React hooks cannot be called inside callbacks/loops
 

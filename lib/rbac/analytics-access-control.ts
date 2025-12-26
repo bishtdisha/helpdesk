@@ -236,7 +236,7 @@ export class AnalyticsAccessControl {
    * Get team filter for analytics queries
    * Returns Prisma where clause for filtering by team
    */
-  async getTeamFilter(userId: string): Promise<{ teamId?: { in: string[] } } | {}> {
+  async getTeamFilter(userId: string): Promise<{ teamId?: { in: string[] } } | Record<string, never>> {
     const scope = await this.getAnalyticsScope(userId);
 
     if (scope.level === 'organization') {

@@ -398,7 +398,7 @@ export function UserProfile({
                     Change Password
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Leave password fields empty if you don't want to change your password.
+                    Leave password fields empty if you don&apos;t want to change your password.
                   </p>
                   
                   <div className="space-y-4">

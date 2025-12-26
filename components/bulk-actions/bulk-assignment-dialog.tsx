@@ -194,7 +194,7 @@ export function BulkAssignmentDialog({
                 <div className="text-center py-8">
                   <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
                   <p className="text-sm text-muted-foreground">
-                    No users found matching "{searchQuery}"
+                    No users found matching &quot;{searchQuery}&quot;
                   </p>
                 </div>
               )}

@@ -53,12 +53,12 @@ const helpCategories: HelpCategory[] = [
           <div className="space-y-4">
             <p>Creating a ticket is simple:</p>
             <ol className="list-decimal list-inside space-y-2">
-              <li>Click the "New Ticket" button or press <kbd className="px-2 py-1 bg-muted rounded text-xs">N</kbd></li>
+              <li>Click the &quot;New Ticket&quot; button or press <kbd className="px-2 py-1 bg-muted rounded text-xs">N</kbd></li>
               <li>Fill in the title with a brief description</li>
               <li>Provide detailed information in the description</li>
               <li>Select the appropriate priority level</li>
               <li>Choose the customer from the dropdown</li>
-              <li>Click "Create Ticket"</li>
+              <li>Click &quot;Create Ticket&quot;</li>
             </ol>
             <p><strong>Tip:</strong> Use templates to speed up ticket creation for common issues.</p>
           </div>
@@ -439,7 +439,7 @@ export function HelpSidebar({ children }: HelpSidebarProps) {
               {/* No results */}
               {searchQuery && filteredCategories.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No help topics found for "{searchQuery}"</p>
+                  <p>No help topics found for &quot;{searchQuery}&quot;</p>
                   <Button
                     variant="link"
                     className="mt-2"

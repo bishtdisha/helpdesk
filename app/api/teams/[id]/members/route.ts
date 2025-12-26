@@ -81,7 +81,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const isActive = isActiveParam ? isActiveParam === 'true' : undefined;
 
     // Build where clause for team members
-    let whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       teamId: teamId,
     };
 

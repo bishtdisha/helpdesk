@@ -200,7 +200,7 @@ export function CustomerSearchInput({
                     <div className="p-4 text-center">
                       <User className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">
-                        No customers found matching "{searchQuery}"
+                        No customers found matching &quot;{searchQuery}&quot;
                       </p>
                     </div>
                   </CommandEmpty>

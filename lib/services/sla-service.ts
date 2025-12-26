@@ -512,7 +512,7 @@ export class SLAService {
       if (!effectiveDueDate) continue;
       
       // Determine violation type and actual time
-      let violationType: 'response' | 'resolution' = 'resolution';
+      const violationType: 'response' | 'resolution' = 'resolution';
       let actualTime: Date | null = null;
       
       if (ticket.resolvedAt) {

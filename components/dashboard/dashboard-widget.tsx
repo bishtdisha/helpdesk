@@ -151,7 +151,7 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
                     Welcome back, {user?.name || 'User'}!
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
-                    Ready to tackle today's challenges? Here's your dashboard overview.
+                    Ready to tackle today&apos;s challenges? Here&apos;s your dashboard overview.
                   </CardDescription>
                 </div>
               </div>

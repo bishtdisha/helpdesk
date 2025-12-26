@@ -4,7 +4,7 @@
  * Custom hook for fetching and managing ticket list data with:
  * - SWR for caching and revalidation
  * - Support for filters (status, priority, team, assignee, search)
- * - 30-second polling for real-time updates
+ * - Optimized polling (60 seconds instead of 30)
  * - Pagination support
  */
 
@@ -18,7 +18,7 @@ import { CacheManager } from '../performance/caching';
 interface UseTicketsOptions extends TicketFilters {
   // Enable/disable polling
   enablePolling?: boolean;
-  // Custom refresh interval (default: 30000ms)
+  // Custom refresh interval (default: 60000ms)
   refreshInterval?: number;
 }
 
@@ -37,8 +37,8 @@ interface UseTicketsReturn {
  */
 export function useTickets(options: UseTicketsOptions = {}): UseTicketsReturn {
   const {
-    enablePolling = true,
-    refreshInterval = 30000, // 30 seconds
+    enablePolling = false, // Disabled by default for better performance
+    refreshInterval = 60000, // 60 seconds when enabled
     ...filters
   } = options;
 
@@ -63,27 +63,17 @@ export function useTickets(options: UseTicketsOptions = {}): UseTicketsReturn {
     fetcher,
     {
       ...cacheConfig,
-      refreshInterval: enablePolling ? (refreshInterval || cacheConfig.refreshInterval) : 0,
-      // Override with custom options if provided
-      ...(options.refreshInterval && { refreshInterval: options.refreshInterval }),
+      refreshInterval: enablePolling ? refreshInterval : 0,
+      revalidateOnFocus: false, // Disable focus revalidation for better performance
+      dedupingInterval: 10000, // 10 seconds deduping
     }
   );
 
   // Refresh function with cache invalidation
   const refresh = async () => {
-    // Invalidate related caches
     CacheManager.invalidateTicketCaches();
     await mutate();
   };
-
-  // Debug logging
-  console.log('🔍 useTickets hook:', {
-    cacheKey,
-    data,
-    ticketsCount: data?.data?.length || 0,
-    isLoading,
-    error
-  });
 
   return {
     tickets: data?.data || [],

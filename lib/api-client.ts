@@ -153,12 +153,9 @@ export class APIClient {
    */
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     const url = this.buildURL(endpoint, params);
-    console.log('🔍 API Client GET:', { endpoint, params, url });
-    const result = await this.request<T>(url, {
+    return this.request<T>(url, {
       method: 'GET',
     });
-    console.log('🔍 API Client Response:', { endpoint, result });
-    return result;
   }
 
   /**

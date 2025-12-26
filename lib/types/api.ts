@@ -39,7 +39,7 @@ export interface APIError {
 }
 
 // Ticket API Responses
-export interface GetTicketsResponse extends PaginatedResponse<TicketWithRelations> {}
+export type GetTicketsResponse = PaginatedResponse<TicketWithRelations>;
 
 export interface GetTicketResponse {
   ticket: TicketWithRelations;
@@ -121,7 +121,7 @@ export interface Notification {
   createdAt: Date;
 }
 
-export interface GetNotificationsResponse extends PaginatedResponse<Notification> {}
+export type GetNotificationsResponse = PaginatedResponse<Notification>;
 
 export interface UnreadCountResponse {
   count: number;
@@ -193,7 +193,7 @@ export interface KBArticle {
   updatedAt: Date;
 }
 
-export interface GetKBArticlesResponse extends PaginatedResponse<KBArticle> {}
+export type GetKBArticlesResponse = PaginatedResponse<KBArticle>;
 
 export interface KBArticleSuggestion {
   article: KBArticle;
@@ -232,7 +232,7 @@ export interface GetSLAPoliciesResponse {
   policies: SLAPolicy[];
 }
 
-export interface GetSLAViolationsResponse extends PaginatedResponse<SLAViolation> {}
+export type GetSLAViolationsResponse = PaginatedResponse<SLAViolation>;
 
 // Escalation API Responses
 export interface EscalationRule {

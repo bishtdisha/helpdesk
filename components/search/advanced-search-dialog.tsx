@@ -21,7 +21,8 @@ import { TicketFilters, TicketStatus, TicketPriority } from '@/lib/types/ticket'
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { useRecentSearches } from '@/lib/hooks/use-recent-searches';
 import { CustomerSearchInput } from '@/components/user-management/customer-search-input';
-import { Search, Calendar as CalendarIcon, X, Filter, ExternalLink, Clock, Trash2 } from 'lucide-react';
+import { DynamicDropdownSelect } from '@/components/search/dynamic-dropdown-select';
+import { Search, Calendar as CalendarIcon, X, Filter, ExternalLink, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
@@ -148,9 +149,8 @@ export function AdvancedSearchDialog({
             }
           );
         }
-      } catch (error) {
+      } catch {
         // Ticket not found or no access, continue with search
-        console.log('Ticket not found for direct navigation:', error);
       } finally {
         setIsCheckingTicketId(false);
       }
@@ -185,7 +185,7 @@ export function AdvancedSearchDialog({
   };
 
   // Apply a recent search
-  const applyRecentSearch = (recentSearch: any) => {
+  const applyRecentSearch = (recentSearch: { name: string; filters: AdvancedSearchFilters }) => {
     // Transform the saved filters back to component state
     const transformedFilters: AdvancedSearchFilters = { ...recentSearch.filters };
     
@@ -396,12 +396,12 @@ export function AdvancedSearchDialog({
                     <Label htmlFor="teamId">Team</Label>
                     <DynamicDropdownSelect
                       value={filters.teamId || ''}
-                      onValueChange={(value) => updateFilter('teamId', value || undefined)}
+                      onValueChange={(value: string) => updateFilter('teamId', value || undefined)}
                       placeholder="Select team..."
                       apiEndpoint="/api/teams"
                       responseKey="teams"
-                      formatLabel={(team: any) => team.name}
-                      formatValue={(team: any) => team.id}
+                      formatLabel={(team: { name: string }) => team.name}
+                      formatValue={(team: { id: string }) => team.id}
                       allowClear
                       clearLabel="All Teams"
                     />

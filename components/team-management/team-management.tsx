@@ -211,7 +211,7 @@ export function TeamManagement() {
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
               <p className="text-yellow-800 text-sm">
                 <strong>Important:</strong> This team has {dialogs.deleteConfirm.team.members.length} member(s). 
-                They will be automatically unassigned from this team when it's deleted.
+                They will be automatically unassigned from this team when it&apos;s deleted.
               </p>
             </div>
           )}

@@ -59,20 +59,6 @@ export function OrganizationDashboard({ className }: OrganizationDashboardProps)
     refreshInterval: 300000, // Refresh every 5 minutes (less aggressive)
   });
 
-  // Permission check
-  if (!canViewOrganizationAnalytics()) {
-    return (
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-red-600">
-            <AlertCircle className="h-5 w-5" />
-            <p>Access denied. Only Admin/Manager can view organization analytics.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   // Memoized chart data to prevent unnecessary recalculations
   const chartData = useMemo(() => {
     if (!metrics) return null;
@@ -167,7 +153,19 @@ export function OrganizationDashboard({ className }: OrganizationDashboardProps)
     }
   }, [sortField, sortDirection]);
 
-
+  // Permission check - moved after all hooks
+  if (!canViewOrganizationAnalytics()) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-5 w-5" />
+            <p>Access denied. Only Admin/Manager can view organization analytics.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (

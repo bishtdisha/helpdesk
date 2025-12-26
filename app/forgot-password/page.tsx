@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
             </div>
             <CardTitle>Check Your Email</CardTitle>
             <CardDescription>
-              If an account exists with that email, you'll receive a password reset link shortly.
+              If an account exists with that email, you&apos;ll receive a password reset link shortly.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
               <p className="font-medium text-blue-900 mb-2">Important:</p>
               <ul className="list-disc list-inside space-y-1 text-blue-800">
                 <li>The reset link will expire in <strong>15 minutes</strong></li>
-                <li>Check your spam folder if you don't see the email</li>
+                <li>Check your spam folder if you don&apos;t see the email</li>
                 <li>The link can only be used once</li>
               </ul>
             </div>
@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
                 variant="outline"
                 className="w-full"
               >
-                Didn't receive it? Try again
+                Didn&apos;t receive it? Try again
               </Button>
               <Link href="/login">
                 <Button variant="ghost" className="w-full">
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
         <CardHeader className="text-center">
           <CardTitle>Reset Your Password</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we&apos;ll send you a link to reset your password
           </CardDescription>
         </CardHeader>
         <CardContent>

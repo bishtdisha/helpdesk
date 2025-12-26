@@ -311,37 +311,52 @@ export function TicketFilters() {
   // Check permissions once
   const canViewTeamFilters = permissions.canViewAllTickets() || permissions.canViewTeamTickets();
 
-  // Fetch teams and users on mount
-  useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const response = await fetch('/api/teams?simple=true');
-        if (response.ok) {
-          const data = await response.json();
-          setTeams(data.teams || []);
-        }
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      }
-    };
+  // Lazy load teams and users - only fetch when needed
+  const [teamsLoaded, setTeamsLoaded] = useState(false);
+  const [usersLoaded, setUsersLoaded] = useState(false);
 
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('/api/users?simple=true');
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data.users || []);
-        }
-      } catch (error) {
-        console.error('Error fetching users:', error);
+  // Fetch teams lazily
+  const loadTeams = useCallback(async () => {
+    if (teamsLoaded || !canViewTeamFilters) return;
+    try {
+      const response = await fetch('/api/teams?simple=true');
+      if (response.ok) {
+        const data = await response.json();
+        setTeams(data.teams || []);
       }
-    };
-
-    if (canViewTeamFilters) {
-      fetchTeams();
-      fetchUsers();
+    } catch {
+      // Silently fail
+    } finally {
+      setTeamsLoaded(true);
     }
-  }, [canViewTeamFilters]);
+  }, [teamsLoaded, canViewTeamFilters]);
+
+  // Fetch users lazily
+  const loadUsers = useCallback(async () => {
+    if (usersLoaded || !canViewTeamFilters) return;
+    try {
+      const response = await fetch('/api/users?simple=true');
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setUsersLoaded(true);
+    }
+  }, [usersLoaded, canViewTeamFilters]);
+
+  // Load data after initial render with a small delay
+  useEffect(() => {
+    if (canViewTeamFilters) {
+      const timer = setTimeout(() => {
+        loadTeams();
+        loadUsers();
+      }, 100); // Small delay to not block initial render
+      return () => clearTimeout(timer);
+    }
+  }, [canViewTeamFilters, loadTeams, loadUsers]);
 
   // Debounce search term
   const debouncedSearch = useDebounce(searchTerm, 300);

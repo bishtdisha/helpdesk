@@ -109,7 +109,7 @@ export function TemplateManagement() {
         <CardContent className="p-6">
           <div className="text-center text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>You don't have permission to manage templates.</p>
+            <p>You don&apos;t have permission to manage templates.</p>
             <p className="text-sm">Only Admin_Manager users can access this feature.</p>
           </div>
         </CardContent>
@@ -275,7 +275,7 @@ export function TemplateManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Template</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the template "{templateToDelete?.name}"?
+              Are you sure you want to delete the template &quot;{templateToDelete?.name}&quot;?
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

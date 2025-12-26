@@ -231,21 +231,8 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   }, [callback, delay]) as T;
 }
 
-// Memoized event handlers
-export function useMemoizedHandlers<T>(
-  handlers: Record<string, (...args: any[]) => any>,
-  dependencies: T[]
-) {
-  return useMemo(() => {
-    const memoizedHandlers: Record<string, any> = {};
-    
-    Object.entries(handlers).forEach(([key, handler]) => {
-      memoizedHandlers[key] = useCallback(handler, dependencies);
-    });
-    
-    return memoizedHandlers;
-  }, [handlers, ...dependencies]);
-}
+// Note: useMemoizedHandlers removed - React hooks cannot be called inside callbacks
+// Use individual useCallback calls instead for each handler
 
 // Stable reference hook - prevents unnecessary re-renders
 export function useStableCallback<T extends (...args: any[]) => any>(callback: T): T {
@@ -257,7 +244,5 @@ export function useStableCallback<T extends (...args: any[]) => any>(callback: T
   }, []) as T;
 }
 
-// Memoized component props to prevent child re-renders
-export function useMemoizedProps<T extends Record<string, any>>(props: T): T {
-  return useMemo(() => props, Object.values(props));
-}
+// Note: useMemoizedProps removed - React hooks cannot be called with dynamic dependencies
+// Use useMemo directly with explicit dependencies instead

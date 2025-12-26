@@ -158,9 +158,9 @@ export class SLAMonitorJob {
    */
   private async sendBreachRiskNotifications(
     ticket: any,
-    complianceStatus: any
+    _complianceStatus: any
   ): Promise<number> {
-    let notificationsSent = 0;
+    const notificationsSent = 0;
     const recipientIds = new Set<string>();
 
     try {

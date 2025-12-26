@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const accessScope = userPermissions.accessScope;
 
     // Build where clause based on user's permissions
-    let whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       isActive: true, // Only show active users
       OR: [
         { name: { contains: query, mode: 'insensitive' } },

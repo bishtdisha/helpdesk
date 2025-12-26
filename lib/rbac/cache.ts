@@ -1,14 +1,24 @@
 // Conditional Redis import to avoid server-side issues during build
-let createClient: any = null;
+let createClient: ((options: { url: string; socket: { reconnectStrategy: (retries: number) => number } }) => {
+  on: (event: string, callback: (...args: unknown[]) => void) => void;
+  connect: () => Promise<void>;
+  setEx: (key: string, ttl: number, value: string) => Promise<void>;
+  get: (key: string) => Promise<string | null>;
+  del: (key: string | string[]) => Promise<void>;
+  keys: (pattern: string) => Promise<string[]>;
+  disconnect: () => Promise<void>;
+}) | null = null;
 
 // Only try to import Redis if we're in a runtime environment (not build time)
 const isRuntimeEnvironment = typeof process !== 'undefined' && process.env.NODE_ENV;
 
 if (isRuntimeEnvironment && typeof window === 'undefined') {
   try {
-    const redis = require('redis');
+    // Dynamic import for Redis - using eval to avoid static analysis
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const redis = eval('require')('redis');
     createClient = redis.createClient;
-  } catch (error) {
+  } catch {
     // Redis not available, caching will be disabled
     console.warn('Redis not available, RBAC caching will be disabled');
   }

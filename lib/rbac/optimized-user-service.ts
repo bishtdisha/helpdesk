@@ -68,7 +68,7 @@ export class OptimizedUserService {
     }
 
     // Build where clause based on filters and access scope
-    let where = buildUserFilterWhere(filters);
+    const where = buildUserFilterWhere(filters);
 
     // Apply role-based filtering
     if (!accessScope.organizationWide) {
@@ -146,7 +146,7 @@ export class OptimizedUserService {
     }
 
     // Build where clause
-    let where = buildTeamFilterWhere(filters);
+    const where = buildTeamFilterWhere(filters);
 
     // Apply role-based filtering
     if (!accessScope.organizationWide && accessScope.teamIds.length > 0) {

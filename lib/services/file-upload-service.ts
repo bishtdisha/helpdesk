@@ -134,45 +134,25 @@ export class FileUploadService {
     subDirectory: string = 'general',
     options?: FileValidationOptions
   ): Promise<UploadedFileInfo> {
-    console.log('📁 uploadFile called:', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      subDirectory,
-      uploadDir: this.uploadDir
-    });
-
     // Validate the file
-    console.log('✓ Validating file...');
     this.validateFile(file, options);
-    console.log('✓ File validation passed');
 
     // Generate unique filename
     const uniqueFileName = this.generateUniqueFileName(file.name);
-    console.log('✓ Generated unique filename:', uniqueFileName);
 
     // Create upload directory if it doesn't exist
     const targetDir = path.join(this.uploadDir, subDirectory);
-    console.log('✓ Target directory:', targetDir);
     await this.ensureDirectoryExists(targetDir);
-    console.log('✓ Directory ensured');
 
     // Get file path
     const filePath = path.join(targetDir, uniqueFileName);
     const relativePath = path.join(subDirectory, uniqueFileName);
-    console.log('✓ File paths:', { filePath, relativePath });
 
     try {
-      // Convert File to Buffer
-      console.log('✓ Converting file to buffer...');
+      // Convert File to Buffer and write to disk
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      console.log('✓ Buffer created, size:', buffer.length);
-
-      // Write file to disk
-      console.log('✓ Writing file to disk...');
       await writeFile(filePath, buffer);
-      console.log('✅ File written successfully');
 
       return {
         fileName: uniqueFileName,

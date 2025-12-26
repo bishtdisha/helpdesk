@@ -51,7 +51,7 @@ export function ResetConfirmationDialog({
                 <li>Clear your current widget layout and positions</li>
                 <li>Reset widget visibility settings</li>
                 {currentPreset && (
-                  <li>Remove the current preset: "{currentPreset}"</li>
+                  <li>Remove the current preset: &quot;{currentPreset}&quot;</li>
                 )}
                 <li>Restore the default layout for your role</li>
               </ul>

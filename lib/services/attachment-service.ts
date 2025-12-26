@@ -57,17 +57,8 @@ export class AttachmentService {
     file: File,
     userId: string
   ): Promise<AttachmentWithUploader> {
-    console.log('📎 uploadAttachment called:', {
-      ticketId,
-      userId,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
-    });
-
     // Check if user can access this ticket
     const canAccess = await ticketAccessControl.canAccessTicket(userId, ticketId);
-    console.log('🔐 Access check:', { canAccess });
 
     if (!canAccess) {
       throw new AttachmentPermissionDeniedError(
@@ -80,19 +71,15 @@ export class AttachmentService {
     const ticket = await prisma.ticket.findUnique({
       where: { id: ticketId },
     });
-    console.log('🎫 Ticket check:', { exists: !!ticket });
 
     if (!ticket) {
       throw new Error(`Ticket not found: ${ticketId}`);
     }
 
     try {
-      console.log('📤 Starting file upload...');
       // Upload the file
       const uploadedFile = await fileUploadService.uploadTicketAttachment(file, ticketId);
-      console.log('✅ File uploaded:', uploadedFile);
 
-      console.log('💾 Creating attachment record...');
       // Create the attachment record
       const attachment = await prisma.ticketAttachment.create({
         data: {
@@ -104,10 +91,8 @@ export class AttachmentService {
           mimeType: uploadedFile.mimeType,
         },
       });
-      console.log('✅ Attachment record created:', attachment.id);
       
       // Fetch the uploader details separately to avoid relation issues
-      console.log('👤 Fetching uploader details...');
       const uploader = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -116,7 +101,6 @@ export class AttachmentService {
           email: true,
         },
       });
-      console.log('✅ Uploader details fetched');
       
       // Combine the data
       const attachmentWithUploader = {

@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useState, useEffect, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import {
@@ -14,7 +13,6 @@ import {
   UserPlus,
   Home,
   UserCog,
-  Shield,
   Clock,
   Menu,
   Plus,
@@ -29,7 +27,7 @@ import type { RoleType } from "@/lib/types/rbac"
 
 interface RoleBasedNavigationProps {
   activeModule: string
-  onModuleChange: (module: string) => void
+  onModuleChange?: (module: string) => void
   isOpen?: boolean
   onToggle?: () => void
 }
@@ -145,18 +143,31 @@ function shouldShowMenuItem(item: MenuItem, userRole: RoleType | null): boolean 
 /**
  * Get user role from auth context
  */
-function getUserRole(user: any): RoleType | null {
+function getUserRole(user: { role?: { name?: string } } | null): RoleType | null {
   if (!user?.role?.name) return null
   return user.role.name as RoleType
 }
 
-export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = true, onToggle }: RoleBasedNavigationProps) {
-  const router = useRouter()
+export function RoleBasedNavigation({ activeModule, isOpen = true, onToggle }: RoleBasedNavigationProps) {
   const { user, isAuthenticated, isLoading } = useAuth()
   const permissions = usePermissions()
 
   // Track pending navigation for optimistic UI updates
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
+
+  // Get user role for filtering - must be before any conditional returns
+  const userRole = isAuthenticated ? getUserRole(user) : null
+
+  // Choose menu items based on authentication state
+  const itemsToRender = isAuthenticated ? menuItems : publicMenuItems
+
+  // Filter items based on user role (Requirements: 18.1, 18.2, 18.3)
+  const visibleItems = useMemo(() =>
+    itemsToRender.filter(item =>
+      !isAuthenticated || shouldShowMenuItem(item, userRole)
+    ),
+    [isAuthenticated, userRole, itemsToRender]
+  )
 
   // Clear pending navigation when activeModule changes (navigation completed)
   useEffect(() => {
@@ -204,21 +215,6 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
       </div>
     )
   }
-
-  // Get user role for filtering
-  const userRole = isAuthenticated ? getUserRole(user) : null
-
-  // Choose menu items based on authentication state
-  const itemsToRender = isAuthenticated ? menuItems : publicMenuItems
-
-  // Filter items based on user role (Requirements: 18.1, 18.2, 18.3)
-  // Memoized to prevent unnecessary recalculations
-  const visibleItems = useMemo(() =>
-    itemsToRender.filter(item =>
-      !isAuthenticated || shouldShowMenuItem(item, userRole)
-    ),
-    [isAuthenticated, userRole, itemsToRender]
-  )
 
   return (
     <>
@@ -333,7 +329,7 @@ export function RoleBasedNavigation({ activeModule, onModuleChange, isOpen = tru
                       <Crown className="h-3 w-3" />
                       <span>MY TEAM{user.teamLeaderships.length > 1 ? 'S' : ''}</span>
                     </div>
-                    {user.teamLeaderships.map((leadership: any) => (
+                    {user.teamLeaderships.map((leadership: { team: { id: string; name: string } }) => (
                       <Link
                         key={leadership.team.id}
                         href="/helpdesk/teams"

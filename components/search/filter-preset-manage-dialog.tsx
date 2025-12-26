@@ -112,7 +112,7 @@ export function FilterPresetManageDialog({
               <div className="text-center py-8 text-muted-foreground">
                 <p>No saved presets yet.</p>
                 <p className="text-sm mt-2">
-                  Apply filters and click "Save Filter" to create a preset.
+                  Apply filters and click &quot;Save Filter&quot; to create a preset.
                 </p>
               </div>
             ) : (

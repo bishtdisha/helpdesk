@@ -110,31 +110,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load cached user immediately, only fetch if needed
   useEffect(() => {
-    const initAuth = async () => {
-      // Try to load from cache first (instant, synchronous)
-      const hasCached = loadCachedUser();
+    // Try to load from cache first (instant, synchronous)
+    const hasCached = loadCachedUser();
 
-      // CRITICAL OPTIMIZATION: Stop loading immediately regardless of cache
-      // This allows the UI to render instantly with cached data (if available)
-      // or show the login redirect immediately (if not authenticated)
-      setIsLoading(false);
+    // Stop loading immediately - UI renders instantly
+    setIsLoading(false);
 
-      if (hasCached) {
-        // Cache hit - validate in background after a short delay
-        // This prevents blocking the UI while still ensuring fresh data
-        const validationTimer = setTimeout(() => {
-          fetchUser().catch(console.error);
-        }, 2000); // 2 seconds delay for background validation
+    if (hasCached) {
+      // Cache hit - validate in background after delay
+      const validationTimer = setTimeout(() => {
+        fetchUser().catch(() => {});
+      }, 3000); // 3 seconds delay for background validation
 
-        return () => clearTimeout(validationTimer);
-      } else {
-        // No cache - fetch immediately in background (non-blocking)
-        // The UI is already showing, so this won't delay rendering
-        fetchUser().catch(console.error);
-      }
-    };
-
-    initAuth();
+      return () => clearTimeout(validationTimer);
+    } else {
+      // No cache - fetch in background (non-blocking)
+      fetchUser().catch(() => {});
+    }
   }, [loadCachedUser, fetchUser]);
 
   // Login function

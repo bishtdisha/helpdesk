@@ -46,6 +46,14 @@ export function CommentList({
 }: CommentListProps) {
   const { user } = useAuth();
 
+  // Check if user can edit/delete a comment - defined before any conditional returns
+  const canModifyComment = (comment: Comment) => {
+    return user?.id === comment.authorId;
+  };
+
+  // Check if we should use virtual scrolling - must be called unconditionally
+  const shouldUseVirtualScrolling = useVirtualScrolling(comments?.length || 0, 20);
+
   // Loading state
   if (isLoading) {
     return (
@@ -92,14 +100,6 @@ export function CommentList({
       </Card>
     );
   }
-
-  // Check if user can edit/delete a comment
-  const canModifyComment = (comment: Comment) => {
-    return user?.id === comment.authorId;
-  };
-
-  // Check if we should use virtual scrolling
-  const shouldUseVirtualScrolling = useVirtualScrolling(comments.length, 20);
 
   // Use virtual scrolling for large comment lists
   if (shouldUseVirtualScrolling) {

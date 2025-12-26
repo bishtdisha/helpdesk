@@ -100,7 +100,7 @@ export function UserDashboard() {
                 Welcome back, {user.name || 'User'}!
               </h2>
               <p className="text-sm text-gray-600 mt-0.5">
-                Here's an overview of your tickets and activity.
+                Here&apos;s an overview of your tickets and activity.
               </p>
             </div>
           </div>
@@ -117,7 +117,7 @@ export function UserDashboard() {
           <CardContent>
             <div className="text-3xl font-bold text-gray-900">{stats.totalCreated}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total tickets you've created
+              Total tickets you&apos;ve created
             </p>
           </CardContent>
         </Card>
@@ -143,7 +143,7 @@ export function UserDashboard() {
           <CardContent>
             <div className="text-3xl font-bold text-gray-900">{stats.followingCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Tickets you're following
+              Tickets you&apos;re following
             </p>
           </CardContent>
         </Card>
@@ -235,7 +235,7 @@ export function UserDashboard() {
         <TabsContent value="following" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tickets I'm Following</CardTitle>
+              <CardTitle>Tickets I&apos;m Following</CardTitle>
               <CardDescription>Tickets you are following for updates</CardDescription>
             </CardHeader>
             <CardContent>
@@ -246,7 +246,7 @@ export function UserDashboard() {
               ) : followedTickets.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Eye className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>You're not following any tickets</p>
+                  <p>You&apos;re not following any tickets</p>
                 </div>
               ) : (
                 <div className="space-y-3">

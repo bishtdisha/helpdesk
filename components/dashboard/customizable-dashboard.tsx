@@ -56,7 +56,7 @@ export function CustomizableDashboard() {
                 Welcome back, {user.name || 'User'}!
               </h2>
               <p className="text-sm text-gray-600 mt-0.5">
-                Here's an overview of your tickets and activity.
+                Here&apos;s an overview of your tickets and activity.
               </p>
             </div>
           </div>

@@ -17,7 +17,7 @@ export function TicketListOnboarding({ autoStart = true }: TicketListOnboardingP
       title: "Welcome to Ticket Management!",
       content: (
         <div className="space-y-2">
-          <p>Let's take a quick tour of the ticket management system.</p>
+          <p>Let&apos;s take a quick tour of the ticket management system.</p>
           <p>This tour will show you the key features and how to use them effectively.</p>
         </div>
       ),
@@ -31,7 +31,7 @@ export function TicketListOnboarding({ autoStart = true }: TicketListOnboardingP
       content: (
         <div className="space-y-2">
           <p>Use the search bar to find tickets by title, customer name, or ticket ID.</p>
-          <p><strong>Pro tip:</strong> Press "/" to quickly focus the search input!</p>
+          <p><strong>Pro tip:</strong> Press &quot;/&quot; to quickly focus the search input!</p>
         </div>
       ),
       target: "[data-tour='search-input']",
@@ -140,10 +140,10 @@ export function TicketListOnboarding({ autoStart = true }: TicketListOnboardingP
   // Final step
   steps.push({
     id: "complete",
-    title: "You're All Set!",
+    title: "You&apos;re All Set!",
     content: (
       <div className="space-y-2">
-        <p>You've completed the ticket management tour!</p>
+        <p>You&apos;ve completed the ticket management tour!</p>
         <p>Remember, you can always access help by clicking the Help button in the header.</p>
         <p>Happy ticket managing! 🎉</p>
       </div>

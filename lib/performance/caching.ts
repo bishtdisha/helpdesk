@@ -2,36 +2,35 @@
 
 import { mutate } from 'swr';
 
-// Cache configuration for different data types
+// Cache configuration for different data types - optimized for performance
 export const CACHE_CONFIG = {
-  // Frequently changing data - short cache times
+  // Tickets - reduced polling frequency for better performance
   tickets: {
-    refreshInterval: 30000, // 30 seconds
-    revalidateOnFocus: true,
+    refreshInterval: 0, // Disabled auto-refresh, use manual refresh
+    revalidateOnFocus: false, // Disabled to prevent unnecessary fetches
     revalidateOnReconnect: true,
-    dedupingInterval: 5000, // 5 seconds
+    dedupingInterval: 10000, // 10 seconds deduping
   },
-  
 
-  // Slowly changing data
+  // Analytics - moderately changing data
   analytics: {
-    refreshInterval: 300000, // 5 minutes
+    refreshInterval: 0, // Disabled auto-refresh
     revalidateOnFocus: false,
     revalidateOnReconnect: true,
-    dedupingInterval: 60000, // 1 minute
+    dedupingInterval: 120000, // 2 minutes deduping
   },
   
-  // Rarely changing data
+  // Knowledge base - rarely changing
   knowledgeBase: {
-    refreshInterval: 600000, // 10 minutes
+    refreshInterval: 0, // Disabled auto-refresh
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
-    dedupingInterval: 300000, // 5 minutes
+    dedupingInterval: 300000, // 5 minutes deduping
   },
   
-  // Static-like data
+  // Users - static-like data
   users: {
-    refreshInterval: 0, // No automatic refresh
+    refreshInterval: 0,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     dedupingInterval: 600000, // 10 minutes
@@ -39,10 +38,10 @@ export const CACHE_CONFIG = {
   
   // User preferences and settings
   preferences: {
-    refreshInterval: 0, // No automatic refresh
+    refreshInterval: 0,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
-    dedupingInterval: 0, // No deduping
+    dedupingInterval: 0,
   },
 };
 

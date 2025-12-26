@@ -21,11 +21,22 @@ export interface TicketQueryFilter {
  * Handles role-based access control for ticket operations
  */
 export class TicketAccessControl {
+  // Cache for user data to avoid repeated DB queries within the same request
+  private userCache: Map<string, { data: UserWithRole | null; timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 5000; // 5 seconds cache
+
   /**
-   * Get user with role information
+   * Get user with role information (with in-memory caching)
    */
   private async getUserWithRole(userId: string): Promise<UserWithRole | null> {
-    return await prisma.user.findUnique({
+    const cached = this.userCache.get(userId);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < this.CACHE_TTL) {
+      return cached.data;
+    }
+
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
         role: true,
@@ -37,6 +48,19 @@ export class TicketAccessControl {
         },
       },
     });
+
+    this.userCache.set(userId, { data: user, timestamp: now });
+    
+    // Clean old cache entries periodically
+    if (this.userCache.size > 100) {
+      for (const [key, value] of this.userCache.entries()) {
+        if (now - value.timestamp > this.CACHE_TTL) {
+          this.userCache.delete(key);
+        }
+      }
+    }
+
+    return user;
   }
 
   /**
@@ -164,27 +188,13 @@ export class TicketAccessControl {
 
       case ROLE_TYPES.USER_EMPLOYEE:
         // Only tickets they created, are assigned to, or are following
-        const followedTicketIds = await this.getFollowedTicketIds(userId);
-        
-        // Build OR conditions - only include followed tickets if there are any
-        const orConditions: any[] = [
-          { createdBy: userId },
-          { assignedTo: userId },
-        ];
-        
-        // Only add the follower condition if there are followed tickets
-        if (followedTicketIds.length > 0) {
-          orConditions.push({ id: { in: followedTicketIds } });
-        }
-        
-        console.log('🔍 Employee Ticket Filters:', {
-          userId,
-          followedTicketIds,
-          orConditions
-        });
-        
+        // Use a subquery approach to avoid fetching all followed ticket IDs
         return {
-          OR: orConditions,
+          OR: [
+            { createdBy: userId },
+            { assignedTo: userId },
+            { followers: { some: { userId } } },
+          ],
         };
 
       default:

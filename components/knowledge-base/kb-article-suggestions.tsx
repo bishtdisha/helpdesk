@@ -167,7 +167,7 @@ export function KBArticleSuggestions({
             <DialogHeader>
               <DialogTitle>Article Preview</DialogTitle>
               <DialogDescription>
-                Click "View Full Article" to see the complete content
+                Click &quot;View Full Article&quot; to see the complete content
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">

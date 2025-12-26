@@ -144,7 +144,7 @@ export function TeamDashboard({ teamId, dateRange, onDateRangeChange }: TeamDash
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 text-red-600">
             <AlertCircle className="h-5 w-5" />
-            <p>Access denied. You do not have permission to view this team's analytics.</p>
+            <p>Access denied. You do not have permission to view this team&apos;s analytics.</p>
           </div>
         </CardContent>
       </Card>

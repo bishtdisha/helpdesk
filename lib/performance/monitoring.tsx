@@ -324,20 +324,22 @@ export function useApiPerformanceMonitoring() {
 
 // Performance debugging component (development only)
 export function PerformanceDebugger() {
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
   const [isOpen, setIsOpen] = React.useState(false);
   const [metrics, setMetrics] = React.useState(performanceMonitor.getPerformanceSummary());
 
   React.useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    
     const interval = setInterval(() => {
       setMetrics(performanceMonitor.getPerformanceSummary());
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
+
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
 
   if (!isOpen) {
     return (

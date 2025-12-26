@@ -215,7 +215,7 @@ export function RoleSelector({ user, isOpen, onClose, onSuccess }: RoleSelectorP
           {selectedRoleId && selectedRoleId !== user.roleId && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
               <p className="text-yellow-800 text-sm">
-                <strong>Warning:</strong> Changing the user's role will immediately affect their 
+                <strong>Warning:</strong> Changing the user&apos;s role will immediately affect their 
                 permissions and access to system features. The user may need to log in again 
                 for changes to take full effect.
               </p>

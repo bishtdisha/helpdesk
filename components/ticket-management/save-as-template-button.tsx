@@ -232,7 +232,7 @@ export function SaveAsTemplateButton({ formData, disabled = false }: SaveAsTempl
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="text-sm">
-                          Title: "{formData.title.substring(0, 50)}{formData.title.length > 50 ? '...' : ''}"
+                          Title: &quot;{formData.title.substring(0, 50)}{formData.title.length > 50 ? '...' : ''}&quot;
                         </FormLabel>
                       </div>
                     </FormItem>

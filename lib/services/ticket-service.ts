@@ -180,13 +180,6 @@ export class TicketService {
    * Create a new ticket
    */
   async createTicket(data: CreateTicketData, userId: string): Promise<Ticket> {
-    console.log('🎫 ========================================');
-    console.log('🎫 CREATING NEW TICKET');
-    console.log('🎫 ========================================');
-    console.log('   Title:', data.title);
-    console.log('   Assigned To:', data.assignedTo);
-    console.log('   Followers:', data.followerIds);
-    console.log('🎫 ========================================');
     
     // Validate required fields
     if (!data.title || data.title.trim().length === 0) {
@@ -273,47 +266,34 @@ export class TicketService {
     // Create history entry
     await this.createHistoryEntry(ticket.id, userId, 'created', null, null, null);
 
-    console.log('='.repeat(60));
-    console.log('🎫 TICKET CREATED - NOW SENDING EMAIL NOTIFICATION');
-    console.log('='.repeat(60));
+    // Send email notification to assigned user with followers in CC (async, non-blocking)
+    this.sendTicketCreationEmail(ticket, data).catch(() => {});
 
-    // Send email notification to assigned user with followers in CC
+    return ticket;
+  }
+
+  /**
+   * Send ticket creation email notification (non-blocking)
+   */
+  private async sendTicketCreationEmail(ticket: any, data: CreateTicketData): Promise<void> {
     try {
-      console.log('📧 Attempting to send ticket assignment email...');
-      console.log('   Ticket ID:', ticket.id);
-      console.log('   Ticket Number:', ticket.ticketNumber);
-      console.log('   Assigned To ID:', data.assignedTo);
-      
-      // Get assignee details
       const assignee = await prisma.user.findUnique({
         where: { id: data.assignedTo },
         select: { email: true, name: true },
       });
-      
-      console.log('   Assignee found:', assignee ? `${assignee.name} <${assignee.email}>` : 'NOT FOUND');
 
-      if (assignee && assignee.email) {
-        console.log('   Assignee has email, proceeding with email notification...');
-        
-        // Get follower emails for CC
+      if (assignee?.email) {
         let ccEmails: string[] = [];
         if (data.followerIds && data.followerIds.length > 0) {
-          console.log('   Fetching follower emails for CC...');
           const followers = await prisma.user.findMany({
-            where: { 
-              id: { in: data.followerIds },
-            },
+            where: { id: { in: data.followerIds } },
             select: { email: true },
           });
-          // Filter out null emails
           ccEmails = followers
             .map(f => f.email)
             .filter((email): email is string => email !== null && email !== undefined);
-          console.log('   Followers for CC:', ccEmails.length > 0 ? ccEmails.join(', ') : 'None');
         }
 
-        // Send the email
-        console.log('   Calling EmailService.sendTicketAssignmentEmail...');
         await EmailService.sendTicketAssignmentEmail(
           assignee.email,
           assignee.name || 'User',
@@ -329,20 +309,10 @@ export class TicketService {
           },
           ccEmails.length > 0 ? ccEmails : undefined
         );
-
-        console.log('✅ Ticket assignment email sent to:', assignee.email);
-        if (ccEmails.length > 0) {
-          console.log('   CC:', ccEmails.join(', '));
-        }
-      } else {
-        console.log('⚠️  Assignee not found or has no email address');
       }
-    } catch (emailError) {
-      // Log email error but don't fail ticket creation
-      console.error('⚠️  Failed to send ticket assignment email:', emailError);
+    } catch {
+      // Silently fail - email is not critical
     }
-
-    return ticket;
   }
 
   /**
@@ -860,7 +830,7 @@ export class TicketService {
             creatorName: ticket.creator?.name || undefined,
           }
         );
-        console.log(`📧 Assignee change notification sent to ${ticket.assignedUser.email}`);
+        // Email sent successfully
       } catch (emailError) {
         // Log error but don't fail the update
         console.error('Failed to send assignee change email:', emailError);
@@ -1173,7 +1143,7 @@ export class TicketService {
             creatorName: ticket.creator?.name || undefined,
           }
         );
-        console.log(`📧 Assignment notification sent to ${ticket.assignedUser.email}`);
+        // Email sent successfully
       } catch (emailError) {
         // Log error but don't fail the assignment
         console.error('Failed to send assignment email:', emailError);
@@ -1194,11 +1164,7 @@ export class TicketService {
     // Get role-based filters
     const roleFilters = await ticketAccessControl.getTicketFilters(userId);
 
-    console.log('🔍 listTickets called:', {
-      userId,
-      roleFilters: JSON.stringify(roleFilters, null, 2),
-      filters
-    });
+    // Role-based filtering applied
 
     // Build where clause
     const where: Prisma.TicketWhereInput = {
@@ -1257,62 +1223,54 @@ export class TicketService {
       }
     }
 
-    // Get total count
-    const total = await prisma.ticket.count({ where });
-
-    console.log('🔍 Ticket count:', total);
-
-    // Get tickets
-    const tickets = await prisma.ticket.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    // Get total count and tickets in parallel for better performance
+    const [total, tickets] = await Promise.all([
+      prisma.ticket.count({ where }),
+      prisma.ticket.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          assignedUser: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          team: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+              attachments: true,
+              followers: true,
+            },
           },
         },
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        assignedUser: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        team: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        _count: {
-          select: {
-            comments: true,
-            attachments: true,
-            followers: true,
-          },
-        },
-      },
-    });
-
-    console.log('🔍 Tickets found:', {
-      count: tickets.length,
-      ticketIds: tickets.map(t => t.id),
-      ticketTitles: tickets.map(t => t.title)
-    });
+      }),
+    ]);
 
     const totalPages = Math.ceil(total / limit);
 
@@ -1396,7 +1354,7 @@ export class TicketService {
     }
 
     // Build base query with RBAC filtering
-    let whereClause: Prisma.TicketWhereInput = {
+    const whereClause: Prisma.TicketWhereInput = {
       status: { in: ['RESOLVED', 'CLOSED'] }, // Only resolved/closed tickets
     };
 

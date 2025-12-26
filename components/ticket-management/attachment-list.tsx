@@ -110,7 +110,7 @@ export function AttachmentList({
       const errorMessage = error instanceof Error ? error.message : 'Failed to download file';
       // Use a more user-friendly notification instead of alert
       if (typeof window !== 'undefined' && 'toast' in window) {
-        // @ts-ignore
+        // @ts-expect-error - toast may be added by external library
         window.toast?.error?.(errorMessage);
       } else {
         alert(errorMessage);
