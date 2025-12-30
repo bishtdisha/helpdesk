@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, Check, ChevronDown, X, Calendar, RotateCcw } from 'lucide-react';
+import { Search, Filter, Check, ChevronDown, X, Calendar, RotateCcw, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { TicketStatus, TicketPriority } from '@prisma/client';
 import { cn } from '@/lib/utils';
 
@@ -286,6 +286,7 @@ export function TicketFilters() {
   const [team, setTeam] = useState(searchParams.get('teamId') || 'all');
   const [assignee, setAssignee] = useState(searchParams.get('assignedTo') || 'all');
   const [month, setMonth] = useState(searchParams.get('month') || 'all');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Generate month options for the last 12 months + current month
   const getMonthOptions = () => {
@@ -433,6 +434,41 @@ export function TicketFilters() {
     router.push(pathname);
   };
 
+  // Export filtered tickets to Excel
+  const handleExportReport = async () => {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (status !== 'all') params.set('status', status);
+      if (priority !== 'all') params.set('priority', priority);
+      if (team !== 'all') params.set('teamId', team);
+      if (assignee !== 'all') params.set('assignedTo', assignee);
+      if (month !== 'all') params.set('month', month);
+      if (searchTerm) params.set('search', searchTerm);
+
+      const response = await fetch(`/api/tickets/export?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tickets-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export report. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Card className="shadow-sm">
       <CardContent className="p-5">
@@ -445,17 +481,33 @@ export function TicketFilters() {
               </div>
               <span className="text-base font-semibold">Filters & Search</span>
             </div>
-            {hasActiveFilters && (
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="h-8 text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Clear Filters
+                </Button>
+              )}
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={handleClearFilters}
-                className="h-8 text-muted-foreground hover:text-foreground"
+                onClick={handleExportReport}
+                disabled={isExporting}
+                className="h-8 bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900"
               >
-                <RotateCcw className="h-4 w-4 mr-1" />
-                Clear Filters
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="h-4 w-4 mr-1" />
+                )}
+                {isExporting ? 'Exporting...' : 'Report'}
               </Button>
-            )}
+            </div>
           </div>
           
           {/* Search and Filters in Single Row */}
