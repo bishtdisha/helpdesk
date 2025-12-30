@@ -84,6 +84,7 @@
     "react-dom": "^18",
     "react-grid-layout": "^1.5.2",
     "react-hook-form": "^7.60.0",
+    "react-is": "^19.2.3",
     "react-resizable-panels": "^2.1.7",
     "recharts": "latest",
     "redis": "^5.9.0",
