@@ -102,10 +102,10 @@ export async function GET(request: NextRequest) {
         'Status': formatStatus(ticket.status),
         'Assigned Date': formatDate(ticket.createdAt),
         'Assigned Person': ticket.assignedUser?.name || 'Unassigned',
+        'Team': ticket.team?.name || '',
         'Customer': ticket.customer?.name || '-',
         'Title/Short Description': ticket.title,
         'Last Comment Date': lastCommentDate,
-        'Project Code': ticket.team?.name || '-',
         'Close Date': ticket.closedAt ? formatDate(ticket.closedAt) : '',
         'Followers': followers || '-',
         'Resolution Time': resolutionTime,
@@ -122,10 +122,10 @@ export async function GET(request: NextRequest) {
       { wch: 18 },  // Status
       { wch: 18 },  // Assigned Date
       { wch: 20 },  // Assigned Person
+      { wch: 20 },  // Team
       { wch: 25 },  // Customer
       { wch: 50 },  // Title
       { wch: 18 },  // Last Comment Date
-      { wch: 15 },  // Project Code
       { wch: 18 },  // Close Date
       { wch: 30 },  // Followers
       { wch: 15 },  // Resolution Time
