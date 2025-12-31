@@ -16,7 +16,8 @@ import {
   Clock,
   Menu,
   Plus,
-  Crown
+  Crown,
+  FileBarChart
 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { usePermissions } from "@/lib/hooks/use-permissions"
@@ -79,7 +80,17 @@ const menuItems: MenuItem[] = [
     id: "analytics",
     label: "Analytics",
     icon: BarChart3,
-    requireRole: ROLE_TYPES.ADMIN_MANAGER
+    public: true,
+    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE, ROLE_TYPES.TEAM_LEADER]
+  },
+
+  // Reports - Admin/Manager and Team Leader
+  {
+    id: "reports",
+    label: "Reports",
+    icon: FileBarChart,
+    public: true,
+    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
   },
 
   // User Management - Admin/Manager ONLY (Team Leader access removed)
@@ -89,7 +100,7 @@ const menuItems: MenuItem[] = [
     icon: UserCog,
     action: PERMISSION_ACTIONS.READ,
     resource: RESOURCE_TYPES.USERS,
-    requireRole: ROLE_TYPES.ADMIN_MANAGER
+    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE, ROLE_TYPES.TEAM_LEADER]
   },
 
   // Team Management - Admin/Manager and Team Leader (Requirement 18.3)
@@ -100,14 +111,6 @@ const menuItems: MenuItem[] = [
     action: PERMISSION_ACTIONS.READ,
     resource: RESOURCE_TYPES.TEAMS,
     excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
-  },
-
-  // SLA Management - Admin/Manager ONLY
-  {
-    id: "sla",
-    label: "SLA Management",
-    icon: Clock,
-    requireRole: ROLE_TYPES.ADMIN_MANAGER
   },
 ]
 
@@ -121,16 +124,16 @@ const publicMenuItems = [
  * Requirements: 18.1, 18.2, 18.3
  */
 function shouldShowMenuItem(item: MenuItem, userRole: RoleType | null): boolean {
-  // Public items are always shown
+  // Check if role is explicitly excluded (applies to all items)
+  if (item.excludeRoles && userRole && item.excludeRoles.includes(userRole)) {
+    return false
+  }
+
+  // Public items are shown (after exclusion check)
   if (item.public) return true
 
   // If no user role, don't show protected items
   if (!userRole) return false
-
-  // Check if role is explicitly excluded
-  if (item.excludeRoles && item.excludeRoles.includes(userRole)) {
-    return false
-  }
 
   // Check if specific role is required
   if (item.requireRole && userRole !== item.requireRole) {
