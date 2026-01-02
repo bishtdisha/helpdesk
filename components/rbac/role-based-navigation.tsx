@@ -16,7 +16,8 @@ import {
   Clock,
   Menu,
   Plus,
-  Crown
+  Crown,
+  FileText
 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { usePermissions } from "@/lib/hooks/use-permissions"
@@ -80,6 +81,14 @@ const menuItems: MenuItem[] = [
     label: "Analytics",
     icon: BarChart3,
     requireRole: ROLE_TYPES.ADMIN_MANAGER
+  },
+
+  // Reports - Admin/Manager and Team Leader
+  {
+    id: "reports",
+    label: "Reports",
+    icon: FileText,
+    excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
   },
 
   // User Management - Admin/Manager ONLY (Team Leader access removed)
