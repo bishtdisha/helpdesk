@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
@@ -60,7 +61,6 @@
     "@types/redis": "^4.0.10",
     "@vercel/analytics": "latest",
     "autoprefixer": "^10.4.20",
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
