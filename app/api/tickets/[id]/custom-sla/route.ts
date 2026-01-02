@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/lib/server-auth';
+import { prisma } from '@/lib/db';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -60,9 +59,9 @@ export async function PATCH(
     await prisma.ticketHistory.create({
       data: {
         ticketId: params.id,
-        userId: session.user.id,
-        action: 'UPDATED',
-        field: 'customSlaDueAt',
+        userId: currentUser.id,
+        action: 'custom_sla_updated',
+        fieldName: 'customSlaDueAt',
         oldValue: ticket.customSlaDueAt?.toISOString() || null,
         newValue: customSlaDueAt || null,
       },
