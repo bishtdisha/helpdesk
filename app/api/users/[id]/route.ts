@@ -17,7 +17,7 @@ import {
   UserNotFoundError,
   ValidationError,
 } from '@/lib/rbac/errors';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 interface RouteParams {
   params: {

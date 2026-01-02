@@ -9,7 +9,7 @@ import {
 import {
   ValidationError,
 } from '@/lib/rbac/errors';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 /**
  * GET /api/users/me - Get current user profile

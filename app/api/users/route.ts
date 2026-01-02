@@ -20,7 +20,7 @@ import {
   UserNotFoundError,
   ValidationError,
 } from '@/lib/rbac/errors';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 /**
  * GET /api/users - List users with role-based filtering and pagination
