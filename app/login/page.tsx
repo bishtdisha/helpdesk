@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ interface FormErrors {
   general?: string
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState<FormData>({
@@ -124,115 +124,139 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Sign In to Odoo Helpdesk</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your dashboard
-          </CardDescription>
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Demo Admin Account:</strong><br />
-              Email: disha.bisht@cimconautomation.com<br />
-              Password: cimcon@123
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errors.general && (
-              <div className="bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-md text-sm">
-                {errors.general}
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold">Sign In to Odoo Helpdesk</CardTitle>
+        <CardDescription>
+          Enter your credentials to access your dashboard
+        </CardDescription>
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            <strong>Demo Admin Account:</strong><br />
+            Email: disha.bisht@cimconautomation.com<br />
+            Password: cimcon@123
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {errors.general && (
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-md text-sm">
+              {errors.general}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Enter your email"
+              aria-invalid={!!errors.email}
+              required
+            />
+            {errors.email && (
+              <div className="text-destructive text-sm">
+                {errors.email.map((error, index) => (
+                  <div key={index}>{error}</div>
+                ))}
               </div>
             )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
               <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
                 onChange={handleInputChange}
-                placeholder="Enter your email"
-                aria-invalid={!!errors.email}
+                placeholder="Enter your password"
+                aria-invalid={!!errors.password}
+                className="pr-10"
                 required
               />
-              {errors.email && (
-                <div className="text-destructive text-sm">
-                  {errors.email.map((error, index) => (
-                    <div key={index}>{error}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter your password"
-                  aria-invalid={!!errors.password}
-                  className="pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <div className="text-destructive text-sm">
-                  {errors.password.map((error, index) => (
-                    <div key={index}>{error}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-primary hover:underline"
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                Forgot password?
-              </Link>
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
+            {errors.password && (
+              <div className="text-destructive text-sm">
+                {errors.password.map((error, index) => (
+                  <div key={index}>{error}</div>
+                ))}
+              </div>
+            )}
+          </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing In..." : "Sign In"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don&apos;t have an account? </span>
+          <div className="flex items-center justify-end">
             <Link
-              href="/register"
-              className="text-primary hover:underline font-medium"
+              href="/forgot-password"
+              className="text-sm text-primary hover:underline"
             >
-              Create account
+              Forgot password?
             </Link>
           </div>
-        </CardContent>
-      </Card>
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing In..." : "Sign In"}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center text-sm">
+          <span className="text-muted-foreground">Don&apos;t have an account? </span>
+          <Link
+            href="/register"
+            className="text-primary hover:underline font-medium"
+          >
+            Create account
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function LoginFormSkeleton() {
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <div className="h-8 bg-muted animate-pulse rounded w-3/4 mx-auto" />
+        <div className="h-4 bg-muted animate-pulse rounded w-1/2 mx-auto mt-2" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="h-10 bg-muted animate-pulse rounded" />
+        <div className="h-10 bg-muted animate-pulse rounded" />
+        <div className="h-10 bg-muted animate-pulse rounded" />
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Suspense fallback={<LoginFormSkeleton />}>
+        <LoginForm />
+      </Suspense>
     </div>
   )
 }

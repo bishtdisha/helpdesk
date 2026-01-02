@@ -1,5 +1,5 @@
-import { SLAManagement } from '@/components/sla/sla-management';
+import { redirect } from 'next/navigation';
 
 export default function SLAPage() {
-  return <SLAManagement />;
+  redirect('/helpdesk/dashboard');
 }

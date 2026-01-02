@@ -1,9 +1,5 @@
-import { AuditLogs } from '@/components/audit/audit-logs';
+import { redirect } from 'next/navigation';
 
 export default function AuditLogsPage() {
-  return (
-    <div className="container mx-auto py-6">
-      <AuditLogs />
-    </div>
-  );
+  redirect('/helpdesk/dashboard');
 }

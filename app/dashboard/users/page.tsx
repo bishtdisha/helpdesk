@@ -1,9 +1,5 @@
-import { UserManagement } from '@/components/user-management/user-management';
+import { redirect } from 'next/navigation';
 
 export default function UsersPage() {
-  return (
-    <div className="container mx-auto py-6">
-      <UserManagement />
-    </div>
-  );
+  redirect('/helpdesk/users');
 }
