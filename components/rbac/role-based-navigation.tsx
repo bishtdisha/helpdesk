@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button"
 import { PermissionGate } from "./permission-gate"
 import { PERMISSION_ACTIONS, RESOURCE_TYPES, ROLE_TYPES } from "@/lib/rbac/permissions"
 import type { RoleType } from "@/lib/types/rbac"
+import { prefetchRoute } from "@/lib/utils/prefetch"
 
 interface RoleBasedNavigationProps {
   activeModule: string
@@ -155,6 +156,9 @@ export function RoleBasedNavigation({ activeModule, isOpen = true, onToggle }: R
 
   // Track pending navigation for optimistic UI updates
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
+  
+  // Track which routes have been prefetched to avoid duplicate prefetches
+  const [prefetchedRoutes, setPrefetchedRoutes] = useState<Set<string>>(new Set())
 
   // Get user role for filtering - must be before any conditional returns
   const userRole = isAuthenticated ? getUserRole(user) : null
@@ -176,6 +180,17 @@ export function RoleBasedNavigation({ activeModule, isOpen = true, onToggle }: R
       setPendingNavigation(null)
     }
   }, [activeModule, pendingNavigation])
+  
+  // Prefetch handler for hover - prefetches data before navigation
+  const handlePrefetch = useCallback((routeId: string) => {
+    if (!prefetchedRoutes.has(routeId)) {
+      setPrefetchedRoutes(prev => new Set(prev).add(routeId))
+      // Small delay to avoid prefetching on accidental hovers
+      setTimeout(() => {
+        prefetchRoute(routeId)
+      }, 150)
+    }
+  }, [prefetchedRoutes])
 
   // Show loading state
   if (isLoading) {
@@ -268,6 +283,7 @@ export function RoleBasedNavigation({ activeModule, isOpen = true, onToggle }: R
                     <Link
                       href={href}
                       onClick={() => setPendingNavigation(item.id)}
+                      onMouseEnter={() => handlePrefetch(item.id)}
                       className={cn(
                         "w-full flex items-center gap-3 rounded-lg text-left transition-colors",
                         isOpen ? "px-4 py-3" : "px-2 py-3 justify-center",
@@ -300,6 +316,7 @@ export function RoleBasedNavigation({ activeModule, isOpen = true, onToggle }: R
                     <Link
                       href={href}
                       onClick={() => setPendingNavigation(item.id)}
+                      onMouseEnter={() => handlePrefetch(item.id)}
                       className={cn(
                         "w-full flex items-center gap-3 rounded-lg text-left transition-colors",
                         isOpen ? "px-4 py-3" : "px-2 py-3 justify-center",

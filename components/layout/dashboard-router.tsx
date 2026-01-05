@@ -2,20 +2,15 @@
 
 import { useAuth } from "@/lib/hooks/use-auth"
 import { ROLE_TYPES } from "@/lib/rbac/permissions"
-import {
-  UserDashboardWithSuspense,
-  OrganizationDashboardWithSuspense,
-  TeamDashboardWithSuspense,
-  DashboardSkeleton
-} from "@/lib/performance/lazy-components"
-import { CustomizableDashboard } from "@/components/dashboard/customizable-dashboard"
-import { Card, CardContent } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
-import { Suspense } from "react"
+import { DashboardSkeleton } from "@/lib/performance/lazy-components"
+import { OptimizedDashboard } from "@/components/dashboard/optimized-dashboard"
 
 /**
  * DashboardRouter component that routes users to role-specific dashboards
  * Requirements: 18.5, 24.1, 24.3
+ * 
+ * Performance optimized: Uses OptimizedDashboard which fetches all data
+ * in a single batch API call instead of multiple individual requests.
  * 
  * - Admin/Manager: Organization Dashboard (Analytics)
  * - Team Leader: Team Dashboard (Analytics)
@@ -29,40 +24,10 @@ export function DashboardRouter() {
     return <DashboardSkeleton />
   }
 
-  // Get user role
-  const userRole = user.role?.name
-
-  // Route based on role (Requirement 18.5, 24.1, 24.3)
-  switch (userRole) {
-    case ROLE_TYPES.USER_EMPLOYEE:
-      // User_Employee sees customizable dashboard with widgets
-      return (
-        <Suspense fallback={<DashboardSkeleton />}>
-          <CustomizableDashboard />
-        </Suspense>
-      )
-    case ROLE_TYPES.ADMIN_MANAGER:
-      // Admin_Manager sees customizable dashboard with widgets
-      return (
-        <Suspense fallback={<DashboardSkeleton />}>
-          <CustomizableDashboard />
-        </Suspense>
-      )
-    case ROLE_TYPES.TEAM_LEADER:
-      // Team_Leader sees customizable dashboard (same as admin for now)
-      return (
-        <Suspense fallback={<DashboardSkeleton />}>
-          <CustomizableDashboard />
-        </Suspense>
-      )
-    default:
-      // Fallback to customizable dashboard
-      return (
-        <Suspense fallback={<DashboardSkeleton />}>
-          <CustomizableDashboard />
-        </Suspense>
-      )
-  }
+  // All roles now use the optimized dashboard for better performance
+  // The OptimizedDashboard component handles role-based data filtering
+  // via the /api/dashboard/all endpoint
+  return <OptimizedDashboard />
 }
 
 /**
