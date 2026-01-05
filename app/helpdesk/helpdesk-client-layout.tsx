@@ -57,6 +57,7 @@ export function HelpdeskClientLayout({
   const activeModule = useMemo(() => {
     if (pathname === "/helpdesk" || pathname === "/helpdesk/dashboard") return "dashboard"
     if (pathname?.startsWith("/helpdesk/tickets")) return "tickets"
+    if (pathname?.startsWith("/helpdesk/reports")) return "reports"
     if (pathname?.startsWith("/helpdesk/analytics")) return "analytics"
     if (pathname?.startsWith("/helpdesk/knowledge-base")) return "knowledge-base"
     if (pathname?.startsWith("/helpdesk/users")) return "users"
@@ -69,6 +70,7 @@ export function HelpdeskClientLayout({
     switch (activeModule) {
       case "dashboard": return "Dashboard"
       case "tickets": return "Tickets"
+      case "reports": return "Reports"
       case "teams": return "Team Management"
       case "users": return "User Management"
       case "analytics": return "Analytics"

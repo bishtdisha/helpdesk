@@ -75,7 +75,7 @@ const menuItems: MenuItem[] = [
     resource: RESOURCE_TYPES.KNOWLEDGE_BASE
   },
 
-  // Analytics - Admin/Manager ONLY (Team Leader access removed)
+  // Analytics - Admin/Manager ONLY
   {
     id: "analytics",
     label: "Analytics",
@@ -91,7 +91,7 @@ const menuItems: MenuItem[] = [
     excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
   },
 
-  // User Management - Admin/Manager ONLY (Team Leader access removed)
+  // User Management - Admin/Manager ONLY
   {
     id: "users",
     label: "User Management",
@@ -110,14 +110,6 @@ const menuItems: MenuItem[] = [
     resource: RESOURCE_TYPES.TEAMS,
     excludeRoles: [ROLE_TYPES.USER_EMPLOYEE]
   },
-
-  // SLA Management - Admin/Manager ONLY
-  {
-    id: "sla",
-    label: "SLA Management",
-    icon: Clock,
-    requireRole: ROLE_TYPES.ADMIN_MANAGER
-  },
 ]
 
 const publicMenuItems = [
@@ -130,16 +122,16 @@ const publicMenuItems = [
  * Requirements: 18.1, 18.2, 18.3
  */
 function shouldShowMenuItem(item: MenuItem, userRole: RoleType | null): boolean {
-  // Public items are always shown
+  // Check if role is explicitly excluded (applies to all items)
+  if (item.excludeRoles && userRole && item.excludeRoles.includes(userRole)) {
+    return false
+  }
+
+  // Public items are shown (after exclusion check)
   if (item.public) return true
 
   // If no user role, don't show protected items
   if (!userRole) return false
-
-  // Check if role is explicitly excluded
-  if (item.excludeRoles && item.excludeRoles.includes(userRole)) {
-    return false
-  }
 
   // Check if specific role is required
   if (item.requireRole && userRole !== item.requireRole) {
@@ -299,9 +291,10 @@ export function RoleBasedNavigation({ activeModule, isOpen = true, onToggle }: R
               return (
                 <PermissionGate
                   key={item.id}
-                  action={item.action || 'read'}
-                  resource={item.resource || 'default'}
+                  action={item.action}
+                  resource={item.resource}
                   requireRole={item.requireRole}
+                  excludeRoles={item.excludeRoles}
                 >
                   <li>
                     <Link
