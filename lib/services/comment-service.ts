@@ -2,6 +2,7 @@ import { prisma } from '../db';
 import { Comment } from '@prisma/client';
 import { ticketAccessControl } from '../rbac/ticket-access-control';
 import { PermissionError } from '../rbac/errors';
+import { EmailService } from './email-service';
 
 
 // Custom errors
@@ -68,6 +69,11 @@ export class CommentService {
     // Verify the ticket exists
     const ticket = await prisma.ticket.findUnique({
       where: { id: ticketId },
+      select: {
+        id: true,
+        ticketNumber: true,
+        title: true,
+      },
     });
 
     if (!ticket) {
@@ -96,7 +102,77 @@ export class CommentService {
     // Create history entry
     await this.createCommentHistoryEntry(ticketId, userId, 'comment_added', comment.id);
 
+    // Parse @mentions and send email notifications (non-blocking)
+    this.processMentions(data.content, ticket, comment.author.name || 'Someone', userId).catch(() => {});
+
     return comment;
+  }
+
+  /**
+   * Parse @mentions from comment content and send email notifications
+   */
+  private async processMentions(
+    content: string,
+    ticket: { id: string; ticketNumber: number; title: string },
+    mentionedByName: string,
+    authorId: string
+  ): Promise<void> {
+    try {
+      // Parse @mentions - matches @username or @"Full Name" patterns
+      const mentionPattern = /@(\w+)|@"([^"]+)"/g;
+      const mentions: string[] = [];
+      let match;
+
+      while ((match = mentionPattern.exec(content)) !== null) {
+        const mention = match[1] || match[2];
+        if (mention && !mentions.includes(mention.toLowerCase())) {
+          mentions.push(mention.toLowerCase());
+        }
+      }
+
+      if (mentions.length === 0) {
+        return;
+      }
+
+      // Find users matching the mentions
+      const users = await prisma.user.findMany({
+        where: {
+          OR: [
+            { name: { in: mentions, mode: 'insensitive' } },
+            // Also try to match by first name or partial name
+            ...mentions.map(m => ({
+              name: { contains: m, mode: 'insensitive' as const },
+            })),
+          ],
+          id: { not: authorId }, // Don't notify the author
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      });
+
+      // Send email to each mentioned user
+      for (const user of users) {
+        if (user.email) {
+          await EmailService.sendMentionEmail(
+            user.email,
+            user.name || 'User',
+            {
+              id: ticket.id,
+              ticketNumber: ticket.ticketNumber,
+              title: ticket.title,
+              commentContent: content,
+              mentionedByName,
+            }
+          );
+        }
+      }
+    } catch {
+      // Silently fail - email is not critical
+    }
   }
 
   /**

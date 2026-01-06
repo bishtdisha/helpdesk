@@ -4,44 +4,89 @@ import nodemailer from 'nodemailer';
 const SMTP_CONFIG = {
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false, // true for 465, false for other ports
+  secure: false,
   auth: {
-    user: process.env.SMTP_USER || 'cssupport@cimconautomation.com',
-    pass: process.env.SMTP_PASSWORD || '', // Set this in .env
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASSWORD || '',
   },
 };
 
-const FROM_EMAIL = 'cssupport@cimconautomation.com';
+const FROM_EMAIL = process.env.SMTP_FROM || 'cssupport@cimconautomation.com';
 const FROM_NAME = 'CS Support - Cimcon Automation';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-// Create reusable transporter
+// Email signature
+const EMAIL_SIGNATURE = {
+  name: 'Bhavyata Jethwa',
+  title: 'Customer Success Executive',
+};
+
 const transporter = nodemailer.createTransport(SMTP_CONFIG);
+
+/**
+ * Generate HTML email footer with signature
+ */
+function getEmailFooterHtml(): string {
+  return `
+          <!-- Signature -->
+          <tr>
+            <td style="padding:20px 40px 10px 40px;">
+              <p style="margin:0 0 5px 0; font-size:14px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                Best Regards,
+              </p>
+              <p style="margin:0 0 3px 0; font-size:14px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                ${EMAIL_SIGNATURE.name}
+              </p>
+              <p style="margin:0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">
+                ${EMAIL_SIGNATURE.title}
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td bgcolor="#f9fafb" style="padding:20px 40px; border-top:1px solid #e5e7eb;">
+              <p style="margin:0 0 5px 0; font-size:13px; color:#6b7280; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                This is an automated message from the Helpdesk System
+              </p>
+              <p style="margin:0; font-size:12px; color:#9ca3af; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                &copy; ${new Date().getFullYear()} Cimcon Automation. All rights reserved.
+              </p>
+            </td>
+          </tr>`;
+}
+
+/**
+ * Generate plain text email signature
+ */
+function getEmailSignatureText(): string {
+  return `
+Best Regards,
+${EMAIL_SIGNATURE.name}
+${EMAIL_SIGNATURE.title}
+
+---
+CS Support Team - Cimcon Automation
+`;
+}
 
 export interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  cc?: string[];
 }
 
 export class EmailService {
-  /**
-   * Check if email is configured
-   */
   static isConfigured(): boolean {
     return !!(process.env.SMTP_USER && process.env.SMTP_PASSWORD);
   }
 
-  /**
-   * Send an email
-   */
   static async sendEmail(options: SendEmailOptions): Promise<boolean> {
     try {
-      // Check if SMTP is configured
       if (!this.isConfigured()) {
         console.warn('⚠️  SMTP not configured. Email would be sent to:', options.to);
-        console.warn('⚠️  Please configure SMTP_USER and SMTP_PASSWORD in .env file');
-        // In development, we'll pretend it succeeded
         if (process.env.NODE_ENV === 'development') {
           console.log('📧 [DEV MODE] Email simulated successfully');
           return true;
@@ -49,270 +94,28 @@ export class EmailService {
         return false;
       }
 
-      const info = await transporter.sendMail({
+      const mailOptions: any = {
         from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
         to: options.to,
         subject: options.subject,
-        text: options.text,
         html: options.html,
-      });
+        text: options.text,
+      };
 
+      if (options.cc && options.cc.length > 0) {
+        mailOptions.cc = options.cc.join(', ');
+      }
+
+      const info = await transporter.sendMail(mailOptions);
       console.log('✅ Email sent:', info.messageId);
       return true;
     } catch (error) {
       console.error('❌ Error sending email:', error);
-      // In development, log the error but don't fail
       if (process.env.NODE_ENV === 'development') {
-        console.log('📧 [DEV MODE] Email sending failed but continuing...');
         return true;
       }
       return false;
     }
-  }
-
-  /**
-   * Send password reset email
-   */
-  static async sendPasswordResetEmail(
-    email: string,
-    resetToken: string,
-    userName?: string
-  ): Promise<boolean> {
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-          }
-          .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-          }
-          .header {
-            background-color: #3b82f6;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-          }
-          .content {
-            background-color: #f9fafb;
-            padding: 30px;
-            border: 1px solid #e5e7eb;
-          }
-          .button {
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #3b82f6;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-          }
-          .footer {
-            text-align: center;
-            padding: 20px;
-            color: #6b7280;
-            font-size: 12px;
-          }
-          .warning {
-            background-color: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            margin: 20px 0;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Password Reset Request</h1>
-          </div>
-          <div class="content">
-            <p>Hello${userName ? ' ' + userName : ''},</p>
-            
-            <p>We received a request to reset your password for your Cimcon Automation Helpdesk account.</p>
-            
-            <p>Click the button below to reset your password:</p>
-            
-            <center>
-              <a href="${resetUrl}" class="button">Reset Password</a>
-            </center>
-            
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #3b82f6;">${resetUrl}</p>
-            
-            <div class="warning">
-              <strong>⚠️ Important:</strong>
-              <ul>
-                <li>This link will expire in <strong>15 minutes</strong></li>
-                <li>This link can only be used once</li>
-                <li>If you didn't request this reset, please ignore this email</li>
-              </ul>
-            </div>
-            
-            <p>For security reasons, we recommend:</p>
-            <ul>
-              <li>Using a strong, unique password</li>
-              <li>Not sharing your password with anyone</li>
-              <li>Changing your password regularly</li>
-            </ul>
-            
-            <p>If you have any questions or concerns, please contact our support team.</p>
-            
-            <p>Best regards,<br>
-            <strong>CS Support Team</strong><br>
-            Cimcon Automation</p>
-          </div>
-          <div class="footer">
-            <p>This is an automated email. Please do not reply to this message.</p>
-            <p>&copy; ${new Date().getFullYear()} Cimcon Automation. All rights reserved.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const text = `
-Password Reset Request
-
-Hello${userName ? ' ' + userName : ''},
-
-We received a request to reset your password for your Cimcon Automation Helpdesk account.
-
-Click the link below to reset your password:
-${resetUrl}
-
-⚠️ Important:
-- This link will expire in 15 minutes
-- This link can only be used once
-- If you didn't request this reset, please ignore this email
-
-Best regards,
-CS Support Team
-Cimcon Automation
-    `;
-
-    return this.sendEmail({
-      to: email,
-      subject: 'Password Reset Request - Cimcon Automation Helpdesk',
-      html,
-      text,
-    });
-  }
-
-  /**
-   * Send password reset confirmation email
-   */
-  static async sendPasswordResetConfirmation(
-    email: string,
-    userName?: string
-  ): Promise<boolean> {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-          }
-          .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-          }
-          .header {
-            background-color: #10b981;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-          }
-          .content {
-            background-color: #f9fafb;
-            padding: 30px;
-            border: 1px solid #e5e7eb;
-          }
-          .footer {
-            text-align: center;
-            padding: 20px;
-            color: #6b7280;
-            font-size: 12px;
-          }
-          .success {
-            background-color: #d1fae5;
-            border-left: 4px solid #10b981;
-            padding: 15px;
-            margin: 20px 0;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>✓ Password Reset Successful</h1>
-          </div>
-          <div class="content">
-            <p>Hello${userName ? ' ' + userName : ''},</p>
-            
-            <div class="success">
-              <strong>Your password has been successfully reset.</strong>
-            </div>
-            
-            <p>You can now log in to your Cimcon Automation Helpdesk account using your new password.</p>
-            
-            <p><strong>If you did not make this change:</strong></p>
-            <ul>
-              <li>Please contact our support team immediately</li>
-              <li>Your account security may be compromised</li>
-            </ul>
-            
-            <p>For security tips, please visit our help center or contact support.</p>
-            
-            <p>Best regards,<br>
-            <strong>CS Support Team</strong><br>
-            Cimcon Automation</p>
-          </div>
-          <div class="footer">
-            <p>This is an automated email. Please do not reply to this message.</p>
-            <p>&copy; ${new Date().getFullYear()} Cimcon Automation. All rights reserved.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const text = `
-Password Reset Successful
-
-Hello${userName ? ' ' + userName : ''},
-
-Your password has been successfully reset.
-
-You can now log in to your Cimcon Automation Helpdesk account using your new password.
-
-If you did not make this change, please contact our support team immediately.
-
-Best regards,
-CS Support Team
-Cimcon Automation
-    `;
-
-    return this.sendEmail({
-      to: email,
-      subject: 'Password Reset Successful - Cimcon Automation Helpdesk',
-      html,
-      text,
-    });
   }
 
   /**
@@ -333,179 +136,172 @@ Cimcon Automation
     },
     ccEmails?: string[]
   ): Promise<boolean> {
-    const ticketUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/helpdesk/tickets/${ticketData.id}`;
+    const ticketUrl = `${APP_URL}/helpdesk/tickets/${ticketData.id}`;
     
-    const priorityColors: Record<string, string> = {
-      LOW: '#10b981',
-      MEDIUM: '#f59e0b',
-      HIGH: '#ef4444',
-      URGENT: '#dc2626',
+    const priorityStyles: Record<string, { bg: string; color: string }> = {
+      LOW: { bg: '#dcfce7', color: '#166534' },
+      MEDIUM: { bg: '#fef3c7', color: '#92400e' },
+      HIGH: { bg: '#fed7aa', color: '#c2410c' },
+      URGENT: { bg: '#fecaca', color: '#dc2626' },
     };
-
-    const priorityColor = priorityColors[ticketData.priority] || '#6b7280';
+    const priority = priorityStyles[ticketData.priority] || { bg: '#e5e7eb', color: '#374151' };
 
     const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-          }
-          .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-          }
-          .header {
-            background-color: #3b82f6;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-          }
-          .content {
-            background-color: #f9fafb;
-            padding: 30px;
-            border: 1px solid #e5e7eb;
-          }
-          .ticket-info {
-            background-color: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 5px;
-            padding: 20px;
-            margin: 20px 0;
-          }
-          .info-row {
-            display: flex;
-            padding: 8px 0;
-            border-bottom: 1px solid #f3f4f6;
-          }
-          .info-row:last-child {
-            border-bottom: none;
-          }
-          .info-label {
-            font-weight: bold;
-            width: 120px;
-            color: #6b7280;
-          }
-          .info-value {
-            flex: 1;
-            color: #111827;
-          }
-          .priority-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-          }
-          .button {
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #3b82f6;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-          }
-          .footer {
-            text-align: center;
-            padding: 20px;
-            color: #6b7280;
-            font-size: 12px;
-          }
-          .description-box {
-            background-color: #f9fafb;
-            border-left: 4px solid #3b82f6;
-            padding: 15px;
-            margin: 15px 0;
-            font-style: italic;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🎫 New Ticket Assigned to You</h1>
-          </div>
-          <div class="content">
-            <p>Hello ${assigneeName},</p>
-            
-            <p>A new ticket has been assigned to you. Please review the details below:</p>
-            
-            <div class="ticket-info">
-              <div class="info-row">
-                <div class="info-label">Ticket #:</div>
-                <div class="info-value"><strong>${ticketData.ticketNumber}</strong></div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Title:</div>
-                <div class="info-value"><strong>${ticketData.title}</strong></div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Priority:</div>
-                <div class="info-value">
-                  <span class="priority-badge" style="background-color: ${priorityColor};">
-                    ${ticketData.priority}
-                  </span>
-                </div>
-              </div>
-              ${ticketData.category ? `
-              <div class="info-row">
-                <div class="info-label">Category:</div>
-                <div class="info-value">${ticketData.category}</div>
-              </div>
-              ` : ''}
-              ${ticketData.customerName ? `
-              <div class="info-row">
-                <div class="info-label">Customer:</div>
-                <div class="info-value">${ticketData.customerName}</div>
-              </div>
-              ` : ''}
-              ${ticketData.creatorName ? `
-              <div class="info-row">
-                <div class="info-label">Created By:</div>
-                <div class="info-value">${ticketData.creatorName}</div>
-              </div>
-              ` : ''}
-            </div>
-            
-            <div class="description-box">
-              <strong>Description:</strong><br>
-              ${ticketData.description.replace(/\n/g, '<br>')}
-            </div>
-            
-            <center>
-              <a href="${ticketUrl}" class="button">View Ticket</a>
-            </center>
-            
-            <p>Please address this ticket according to its priority level and SLA requirements.</p>
-            
-            <p>Best regards,<br>
-            <strong>CS Support Team</strong><br>
-            Cimcon Automation</p>
-          </div>
-          <div class="footer">
-            <p>This is an automated email from the Helpdesk System.</p>
-            <p>&copy; ${new Date().getFullYear()} Cimcon Automation. All rights reserved.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]>
+  <style type="text/css">
+    table { border-collapse: collapse; }
+    .button-link { padding: 14px 30px !important; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #e5e7eb;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="#2563eb" style="padding:30px 40px;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                New Ticket Assigned to You
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                Hello <strong>${assigneeName}</strong>,
+              </p>
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:24px; font-family:Arial, Helvetica, sans-serif;">
+                A new ticket has been assigned to you. Please review the details below:
+              </p>
+              
+              <!-- Ticket Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f9fafb; border:1px solid #e5e7eb; margin-bottom:25px;">
+                <!-- Ticket Number & Priority Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="50%" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#dbeafe" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#1e40af; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">Ticket #${ticketData.ticketNumber}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="50%" align="right" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="${priority.bg}" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:${priority.color}; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${ticketData.priority}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Title Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #e5e7eb;">
+                    <p style="margin:0 0 5px 0; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">TITLE</p>
+                    <p style="margin:0; font-size:16px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${ticketData.title}</p>
+                  </td>
+                </tr>
+                
+                <!-- Details Row -->
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      ${ticketData.category ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Category:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.category}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.customerName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Customer:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.customerName}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.creatorName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Created By:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.creatorName}</td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Description Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:25px;">
+                <tr>
+                  <td width="4" bgcolor="#2563eb"></td>
+                  <td bgcolor="#eff6ff" style="padding:15px 20px;">
+                    <p style="margin:0 0 8px 0; font-size:11px; color:#1e40af; text-transform:uppercase; letter-spacing:1px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">DESCRIPTION</p>
+                    <p style="margin:0; font-size:14px; color:#374151; line-height:22px; font-family:Arial, Helvetica, sans-serif;">${ticketData.description.replace(/\n/g, '<br>')}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center" style="padding:10px 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ticketUrl}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="10%" strokecolor="#2563eb" fillcolor="#2563eb">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">View Ticket Details</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${ticketUrl}" style="display:inline-block; background-color:#2563eb; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold; font-family:Arial, Helvetica, sans-serif; border:1px solid #2563eb;">
+                      View Ticket Details
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0; font-size:13px; color:#6b7280; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                Please address this ticket according to its priority level.
+              </p>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
     const text = `
 New Ticket Assigned to You
 
 Hello ${assigneeName},
 
-A new ticket has been assigned to you. Please review the details below:
+A new ticket has been assigned to you:
 
-Ticket #: ${ticketData.ticketNumber}
+Ticket #${ticketData.ticketNumber}
 Title: ${ticketData.title}
 Priority: ${ticketData.priority}
 ${ticketData.category ? `Category: ${ticketData.category}` : ''}
@@ -515,60 +311,952 @@ ${ticketData.creatorName ? `Created By: ${ticketData.creatorName}` : ''}
 Description:
 ${ticketData.description}
 
-Please address this ticket according to its priority level and SLA requirements.
+View ticket: ${ticketUrl}
+${getEmailSignatureText()}`;
+
+    return this.sendEmail({
+      to: assigneeEmail,
+      subject: `[Ticket #${ticketData.ticketNumber}] New Ticket Assigned: ${ticketData.title}`,
+      html,
+      text,
+      cc: ccEmails,
+    });
+  }
+
+  /**
+   * Send ticket resolved/closed notification email
+   */
+  static async sendTicketClosedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    ticketData: {
+      id: string;
+      ticketNumber: number;
+      title: string;
+      priority: string;
+      status?: string;
+      category?: string;
+      customerName?: string;
+      closedByName?: string;
+      resolution?: string;
+    },
+    ccEmails?: string[]
+  ): Promise<boolean> {
+    const ticketUrl = `${APP_URL}/helpdesk/tickets/${ticketData.id}`;
+    const isResolved = ticketData.status === 'RESOLVED';
+    const statusText = isResolved ? 'Resolved' : 'Closed';
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]>
+  <style type="text/css">
+    table { border-collapse: collapse; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #e5e7eb;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="#16a34a" style="padding:30px 40px;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                Ticket ${statusText}
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                Hello <strong>${recipientName}</strong>,
+              </p>
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:24px; font-family:Arial, Helvetica, sans-serif;">
+                The following ticket has been ${statusText.toLowerCase()}. Thank you for your patience.
+              </p>
+              
+              <!-- Ticket Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0fdf4; border:1px solid #bbf7d0; margin-bottom:25px;">
+                <!-- Ticket Number & Status Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #bbf7d0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="50%" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#dbeafe" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#1e40af; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">Ticket #${ticketData.ticketNumber}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="50%" align="right" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#dcfce7" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#166534; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">✓ ${statusText.toUpperCase()}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Title Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #bbf7d0;">
+                    <p style="margin:0 0 5px 0; font-size:11px; color:#166534; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">TITLE</p>
+                    <p style="margin:0; font-size:16px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${ticketData.title}</p>
+                  </td>
+                </tr>
+                
+                <!-- Details Row -->
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      ${ticketData.category ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Category:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.category}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.customerName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Customer:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.customerName}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.closedByName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">${statusText} By:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.closedByName}</td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              ${ticketData.resolution ? `
+              <!-- Resolution Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:25px;">
+                <tr>
+                  <td width="4" bgcolor="#16a34a"></td>
+                  <td bgcolor="#f0fdf4" style="padding:15px 20px;">
+                    <p style="margin:0 0 8px 0; font-size:11px; color:#166534; text-transform:uppercase; letter-spacing:1px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">RESOLUTION</p>
+                    <p style="margin:0; font-size:14px; color:#374151; line-height:22px; font-family:Arial, Helvetica, sans-serif;">${ticketData.resolution.replace(/\n/g, '<br>')}</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center" style="padding:10px 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ticketUrl}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="10%" strokecolor="#16a34a" fillcolor="#16a34a">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">View Ticket Details</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${ticketUrl}" style="display:inline-block; background-color:#16a34a; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold; font-family:Arial, Helvetica, sans-serif; border:1px solid #16a34a;">
+                      View Ticket Details
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0; font-size:13px; color:#6b7280; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                If you have any questions, please contact our support team.
+              </p>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `
+Ticket ${statusText}
+
+Hello ${recipientName},
+
+The following ticket has been ${statusText.toLowerCase()}:
+
+Ticket #${ticketData.ticketNumber}
+Title: ${ticketData.title}
+Status: ${ticketData.status || 'CLOSED'}
+${ticketData.category ? `Category: ${ticketData.category}` : ''}
+${ticketData.customerName ? `Customer: ${ticketData.customerName}` : ''}
+${ticketData.closedByName ? `${statusText} By: ${ticketData.closedByName}` : ''}
+${ticketData.resolution ? `\nResolution:\n${ticketData.resolution}` : ''}
 
 View ticket: ${ticketUrl}
+${getEmailSignatureText()}`;
 
-Best regards,
-CS Support Team
-Cimcon Automation
-    `;
+    return this.sendEmail({
+      to: recipientEmail,
+      subject: `[Ticket #${ticketData.ticketNumber}] Ticket ${statusText}: ${ticketData.title}`,
+      html,
+      text,
+      cc: ccEmails,
+    });
+  }
 
-    try {
-      // Check if SMTP is configured
-      if (!this.isConfigured()) {
-        console.warn('⚠️  SMTP not configured. Email would be sent to:', assigneeEmail);
-        if (ccEmails && ccEmails.length > 0) {
-          console.warn('⚠️  CC:', ccEmails.join(', '));
-        }
-        console.warn('⚠️  Please configure SMTP_USER and SMTP_PASSWORD in .env file');
-        // In development, we'll pretend it succeeded
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📧 [DEV MODE] Ticket assignment email simulated successfully');
-          return true;
-        }
-        return false;
-      }
+  /**
+   * Send password reset email
+   */
+  static async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+    userName?: string
+  ): Promise<boolean> {
+    const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
 
-      const mailOptions: any = {
-        from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
-        to: assigneeEmail,
-        subject: `[Ticket #${ticketData.ticketNumber}] New Ticket Assigned: ${ticketData.title}`,
-        text,
-        html,
-      };
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#f59e0b; padding:30px 40px; text-align:center;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold;">
+                🔐 Password Reset Request
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151;">
+                Hello${userName ? ` <strong>${userName}</strong>` : ''},
+              </p>
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:1.5;">
+                We received a request to reset your password for your Cimcon Automation Helpdesk account.
+              </p>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding:10px 0 25px 0;">
+                    <a href="${resetUrl}" style="display:inline-block; background-color:#f59e0b; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold;">
+                      Reset Password →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Warning Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
+                <tr>
+                  <td style="background-color:#fef3c7; border-left:4px solid #f59e0b; padding:15px 20px; border-radius:0 8px 8px 0;">
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#92400e; font-weight:bold;">⚠️ Important</p>
+                    <p style="margin:0; font-size:13px; color:#92400e; line-height:1.5;">
+                      • This link will expire in <strong>15 minutes</strong><br>
+                      • This link can only be used once<br>
+                      • If you didn't request this, please ignore this email
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0; font-size:13px; color:#6b7280; text-align:center;">
+                If the button doesn't work, copy this link:<br>
+                <a href="${resetUrl}" style="color:#2563eb; word-break:break-all;">${resetUrl}</a>
+              </p>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
-      // Add CC if provided
-      if (ccEmails && ccEmails.length > 0) {
-        mailOptions.cc = ccEmails.join(', ');
-      }
+    const text = `
+Password Reset Request
 
-      const info = await transporter.sendMail(mailOptions);
+Hello${userName ? ` ${userName}` : ''},
 
-      console.log('✅ Ticket assignment email sent:', info.messageId);
-      console.log('   To:', assigneeEmail);
-      if (ccEmails && ccEmails.length > 0) {
-        console.log('   CC:', ccEmails.join(', '));
-      }
-      return true;
-    } catch (error) {
-      console.error('❌ Error sending ticket assignment email:', error);
-      // In development, log the error but don't fail
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📧 [DEV MODE] Email sending failed but continuing...');
-        return true;
-      }
-      return false;
+We received a request to reset your password.
+
+Click here to reset: ${resetUrl}
+
+Important:
+- This link expires in 15 minutes
+- This link can only be used once
+- If you didn't request this, ignore this email
+${getEmailSignatureText()}`;
+
+    return this.sendEmail({
+      to: email,
+      subject: 'Password Reset Request - Cimcon Automation Helpdesk',
+      html,
+      text,
+    });
+  }
+
+  /**
+   * Send ticket reopened notification email
+   */
+  static async sendTicketReopenedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    ticketData: {
+      id: string;
+      ticketNumber: number;
+      title: string;
+      priority: string;
+      category?: string;
+      customerName?: string;
+      reopenedByName?: string;
+    },
+    ccEmails?: string[]
+  ): Promise<boolean> {
+    const ticketUrl = `${APP_URL}/helpdesk/tickets/${ticketData.id}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]>
+  <style type="text/css">
+    table { border-collapse: collapse; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #e5e7eb;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="#f59e0b" style="padding:30px 40px;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                Ticket Reopened
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                Hello <strong>${recipientName}</strong>,
+              </p>
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:24px; font-family:Arial, Helvetica, sans-serif;">
+                A ticket has been reopened and requires your attention.
+              </p>
+              
+              <!-- Ticket Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fffbeb; border:1px solid #fcd34d; margin-bottom:25px;">
+                <!-- Ticket Number & Status Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #fcd34d;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="50%" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#dbeafe" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#1e40af; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">Ticket #${ticketData.ticketNumber}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="50%" align="right" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#fef3c7" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#92400e; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">&#8635; REOPENED</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Title Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #fcd34d;">
+                    <p style="margin:0 0 5px 0; font-size:11px; color:#92400e; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">TITLE</p>
+                    <p style="margin:0; font-size:16px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${ticketData.title}</p>
+                  </td>
+                </tr>
+                
+                <!-- Details Row -->
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Priority:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.priority}</td>
+                      </tr>
+                      ${ticketData.category ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Category:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.category}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.customerName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Customer:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.customerName}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.reopenedByName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Reopened By:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.reopenedByName}</td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center" style="padding:10px 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ticketUrl}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="10%" strokecolor="#f59e0b" fillcolor="#f59e0b">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">View Ticket Details</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${ticketUrl}" style="display:inline-block; background-color:#f59e0b; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold; font-family:Arial, Helvetica, sans-serif; border:1px solid #f59e0b;">
+                      View Ticket Details
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0; font-size:13px; color:#6b7280; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                Please review and address this ticket as soon as possible.
+              </p>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `
+Ticket Reopened
+
+Hello ${recipientName},
+
+A ticket has been reopened and requires your attention:
+
+Ticket #${ticketData.ticketNumber}
+Title: ${ticketData.title}
+Priority: ${ticketData.priority}
+${ticketData.category ? `Category: ${ticketData.category}` : ''}
+${ticketData.customerName ? `Customer: ${ticketData.customerName}` : ''}
+${ticketData.reopenedByName ? `Reopened By: ${ticketData.reopenedByName}` : ''}
+
+View ticket: ${ticketUrl}
+${getEmailSignatureText()}`;
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject: `[Ticket #${ticketData.ticketNumber}] Ticket Reopened: ${ticketData.title}`,
+      html,
+      text,
+      cc: ccEmails,
+    });
+  }
+
+  /**
+   * Send ticket on hold notification email
+   */
+  static async sendTicketOnHoldEmail(
+    recipientEmail: string,
+    recipientName: string,
+    ticketData: {
+      id: string;
+      ticketNumber: number;
+      title: string;
+      priority: string;
+      category?: string;
+      customerName?: string;
+      changedByName?: string;
+    },
+    ccEmails?: string[]
+  ): Promise<boolean> {
+    const ticketUrl = `${APP_URL}/helpdesk/tickets/${ticketData.id}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]>
+  <style type="text/css">
+    table { border-collapse: collapse; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #e5e7eb;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="#6366f1" style="padding:30px 40px;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                Ticket On Hold
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                Hello <strong>${recipientName}</strong>,
+              </p>
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:24px; font-family:Arial, Helvetica, sans-serif;">
+                A ticket has been placed on hold. This may require additional information or action from your side.
+              </p>
+              
+              <!-- Ticket Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eef2ff; border:1px solid #c7d2fe; margin-bottom:25px;">
+                <!-- Ticket Number & Status Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #c7d2fe;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="50%" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#dbeafe" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#1e40af; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">Ticket #${ticketData.ticketNumber}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="50%" align="right" valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#e0e7ff" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#4338ca; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">&#9208; ON HOLD</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Title Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #c7d2fe;">
+                    <p style="margin:0 0 5px 0; font-size:11px; color:#4338ca; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">TITLE</p>
+                    <p style="margin:0; font-size:16px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${ticketData.title}</p>
+                  </td>
+                </tr>
+                
+                <!-- Details Row -->
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Priority:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.priority}</td>
+                      </tr>
+                      ${ticketData.category ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Category:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.category}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.customerName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Customer:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.customerName}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.changedByName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Changed By:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.changedByName}</td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center" style="padding:10px 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ticketUrl}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="10%" strokecolor="#6366f1" fillcolor="#6366f1">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">View Ticket Details</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${ticketUrl}" style="display:inline-block; background-color:#6366f1; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold; font-family:Arial, Helvetica, sans-serif; border:1px solid #6366f1;">
+                      View Ticket Details
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0; font-size:13px; color:#6b7280; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                Please provide any required information to help resolve this ticket.
+              </p>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `
+Ticket On Hold
+
+Hello ${recipientName},
+
+A ticket has been placed on hold:
+
+Ticket #${ticketData.ticketNumber}
+Title: ${ticketData.title}
+Priority: ${ticketData.priority}
+${ticketData.category ? `Category: ${ticketData.category}` : ''}
+${ticketData.customerName ? `Customer: ${ticketData.customerName}` : ''}
+${ticketData.changedByName ? `Changed By: ${ticketData.changedByName}` : ''}
+
+This may require additional information or action from your side.
+
+View ticket: ${ticketUrl}
+${getEmailSignatureText()}`;
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject: `[Ticket #${ticketData.ticketNumber}] Ticket On Hold: ${ticketData.title}`,
+      html,
+      text,
+      cc: ccEmails,
+    });
+  }
+
+  /**
+   * Send mention notification email
+   */
+  static async sendMentionEmail(
+    recipientEmail: string,
+    recipientName: string,
+    ticketData: {
+      id: string;
+      ticketNumber: number;
+      title: string;
+      commentContent: string;
+      mentionedByName: string;
     }
+  ): Promise<boolean> {
+    const ticketUrl = `${APP_URL}/helpdesk/tickets/${ticketData.id}`;
+    // Truncate comment if too long
+    const truncatedComment = ticketData.commentContent.length > 500 
+      ? ticketData.commentContent.substring(0, 500) + '...' 
+      : ticketData.commentContent;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]>
+  <style type="text/css">
+    table { border-collapse: collapse; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #e5e7eb;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="#8b5cf6" style="padding:30px 40px;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                You Were Mentioned
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                Hello <strong>${recipientName}</strong>,
+              </p>
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:24px; font-family:Arial, Helvetica, sans-serif;">
+                <strong>${ticketData.mentionedByName}</strong> mentioned you in a comment on a ticket.
+              </p>
+              
+              <!-- Ticket Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f3ff; border:1px solid #ddd6fe; margin-bottom:25px;">
+                <!-- Ticket Number Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #ddd6fe;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td valign="middle">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#dbeafe" style="padding:6px 14px; border-radius:4px;">
+                                <span style="color:#1e40af; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">Ticket #${ticketData.ticketNumber}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Title Row -->
+                <tr>
+                  <td style="padding:20px;">
+                    <p style="margin:0 0 5px 0; font-size:11px; color:#7c3aed; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">TICKET TITLE</p>
+                    <p style="margin:0; font-size:16px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${ticketData.title}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Comment Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:25px;">
+                <tr>
+                  <td width="4" bgcolor="#8b5cf6"></td>
+                  <td bgcolor="#f5f3ff" style="padding:15px 20px;">
+                    <p style="margin:0 0 8px 0; font-size:11px; color:#7c3aed; text-transform:uppercase; letter-spacing:1px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">COMMENT</p>
+                    <p style="margin:0; font-size:14px; color:#374151; line-height:22px; font-family:Arial, Helvetica, sans-serif;">${truncatedComment.replace(/\n/g, '<br>')}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center" style="padding:10px 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ticketUrl}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="10%" strokecolor="#8b5cf6" fillcolor="#8b5cf6">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">View Ticket</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${ticketUrl}" style="display:inline-block; background-color:#8b5cf6; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold; font-family:Arial, Helvetica, sans-serif; border:1px solid #8b5cf6;">
+                      View Ticket
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0; font-size:13px; color:#6b7280; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                Click the button above to view the full conversation.
+              </p>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `
+You Were Mentioned
+
+Hello ${recipientName},
+
+${ticketData.mentionedByName} mentioned you in a comment on Ticket #${ticketData.ticketNumber}:
+
+Ticket: ${ticketData.title}
+
+Comment:
+${truncatedComment}
+
+View ticket: ${ticketUrl}
+${getEmailSignatureText()}`;
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject: `[Ticket #${ticketData.ticketNumber}] ${ticketData.mentionedByName} mentioned you`,
+      html,
+      text,
+    });
+  }
+
+  /**
+   * Send password reset confirmation email
+   */
+  static async sendPasswordResetConfirmation(
+    email: string,
+    userName?: string
+  ): Promise<boolean> {
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#16a34a; padding:30px 40px; text-align:center;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold;">
+                ✓ Password Reset Successful
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151;">
+                Hello${userName ? ` <strong>${userName}</strong>` : ''},
+              </p>
+              
+              <!-- Success Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
+                <tr>
+                  <td style="background-color:#f0fdf4; border:1px solid #bbf7d0; padding:20px; border-radius:8px; text-align:center;">
+                    <p style="margin:0; font-size:15px; color:#166534; font-weight:500;">
+                      ✓ Your password has been successfully reset
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:1.5;">
+                You can now log in to your account using your new password.
+              </p>
+              
+              <!-- Warning Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
+                <tr>
+                  <td style="background-color:#fef2f2; border-left:4px solid #ef4444; padding:15px 20px; border-radius:0 8px 8px 0;">
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#991b1b; font-weight:bold;">⚠️ Didn't make this change?</p>
+                    <p style="margin:0; font-size:13px; color:#991b1b; line-height:1.5;">
+                      If you did not reset your password, please contact our support team immediately.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding:10px 0;">
+                    <a href="${APP_URL}/login" style="display:inline-block; background-color:#2563eb; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold;">
+                      Login to Your Account →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `
+Password Reset Successful
+
+Hello${userName ? ` ${userName}` : ''},
+
+Your password has been successfully reset.
+
+You can now log in using your new password.
+
+If you did not make this change, contact support immediately.
+${getEmailSignatureText()}`;
+
+    return this.sendEmail({
+      to: email,
+      subject: 'Password Reset Successful - Cimcon Automation Helpdesk',
+      html,
+      text,
+    });
   }
 }

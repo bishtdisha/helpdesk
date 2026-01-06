@@ -529,11 +529,11 @@ export function TicketFilters() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value={TicketStatus.OPEN}>Open</SelectItem>
+                <SelectItem value={TicketStatus.OPEN}>New</SelectItem>
                 <SelectItem value={TicketStatus.IN_PROGRESS}>In Progress</SelectItem>
-                <SelectItem value={TicketStatus.PENDING}>Pending</SelectItem>
+                <SelectItem value={TicketStatus.WAITING_FOR_CUSTOMER}>On Hold</SelectItem>
                 <SelectItem value={TicketStatus.RESOLVED}>Resolved</SelectItem>
-                <SelectItem value={TicketStatus.CLOSED}>Closed</SelectItem>
+                <SelectItem value={TicketStatus.CLOSED}>Cancelled</SelectItem>
               </SelectContent>
             </Select>
 

@@ -68,10 +68,11 @@ export function BulkActionToolbar({
               <SelectValue placeholder="Update Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="OPEN">Open</SelectItem>
+              <SelectItem value="OPEN">New</SelectItem>
               <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="WAITING_FOR_CUSTOMER">On Hold</SelectItem>
               <SelectItem value="RESOLVED">Resolved</SelectItem>
-              <SelectItem value="CLOSED">Closed</SelectItem>
+              <SelectItem value="CLOSED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
 

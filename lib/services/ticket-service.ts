@@ -837,6 +837,42 @@ export class TicketService {
       }
     }
 
+    // Send email notification if ticket was resolved or closed
+    if (
+      (data.status === TicketStatus.RESOLVED && currentTicket.status !== TicketStatus.RESOLVED) ||
+      (data.status === TicketStatus.CLOSED && currentTicket.status !== TicketStatus.CLOSED)
+    ) {
+      const resolvedByUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+      this.sendTicketClosedEmail(ticket, resolvedByUser?.name || 'System').catch(() => {});
+    }
+
+    // Send email notification if ticket was reopened (from RESOLVED/CLOSED to OPEN/IN_PROGRESS)
+    if (
+      (currentTicket.status === TicketStatus.RESOLVED || currentTicket.status === TicketStatus.CLOSED) &&
+      (data.status === TicketStatus.OPEN || data.status === TicketStatus.IN_PROGRESS)
+    ) {
+      const reopenedByUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+      this.sendTicketReopenedEmail(ticket, reopenedByUser?.name || 'System').catch(() => {});
+    }
+
+    // Send email notification if ticket status changed to On Hold (WAITING_FOR_CUSTOMER)
+    if (
+      data.status === TicketStatus.WAITING_FOR_CUSTOMER &&
+      currentTicket.status !== TicketStatus.WAITING_FOR_CUSTOMER
+    ) {
+      const changedByUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+      this.sendTicketOnHoldEmail(ticket, changedByUser?.name || 'System').catch(() => {});
+    }
+
     return ticket;
   }
 
@@ -936,10 +972,180 @@ export class TicketService {
       TicketStatus.CLOSED
     );
 
-    // Send notification
-    await notificationService.sendTicketStatusChangedNotification(ticket, currentTicket.status);
+    // Get the user who closed the ticket
+    const closedByUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    // Send email notification to assignee and customer
+    this.sendTicketClosedEmail(ticket, closedByUser?.name || 'System').catch(() => {});
 
     return ticket;
+  }
+
+  /**
+   * Send ticket closed email notification (non-blocking)
+   */
+  private async sendTicketClosedEmail(ticket: any, closedByName: string): Promise<void> {
+    try {
+      const recipients: Array<{ email: string; name: string }> = [];
+      
+      // Add assignee if exists
+      if (ticket.assignedUser?.email) {
+        recipients.push({
+          email: ticket.assignedUser.email,
+          name: ticket.assignedUser.name || 'Team Member',
+        });
+      }
+      
+      // Add customer if exists and has email
+      if (ticket.customer?.email && ticket.customer.email !== ticket.assignedUser?.email) {
+        recipients.push({
+          email: ticket.customer.email,
+          name: ticket.customer.name || 'Customer',
+        });
+      }
+
+      // Get followers for CC
+      const followers = await prisma.ticketFollower.findMany({
+        where: { ticketId: ticket.id },
+        include: { user: { select: { email: true } } },
+      });
+      const ccEmails = followers
+        .map(f => f.user.email)
+        .filter((email): email is string => 
+          email !== null && 
+          !recipients.some(r => r.email === email)
+        );
+
+      // Send email to each recipient
+      for (const recipient of recipients) {
+        await EmailService.sendTicketClosedEmail(
+          recipient.email,
+          recipient.name,
+          {
+            id: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            title: ticket.title,
+            priority: ticket.priority,
+            status: ticket.status, // Pass the status (RESOLVED or CLOSED)
+            category: ticket.category || undefined,
+            customerName: ticket.customer?.name || undefined,
+            closedByName,
+          },
+          ccEmails.length > 0 ? ccEmails : undefined
+        );
+      }
+    } catch {
+      // Silently fail - email is not critical
+    }
+  }
+
+  /**
+   * Send ticket reopened email notification (non-blocking)
+   */
+  private async sendTicketReopenedEmail(ticket: any, reopenedByName: string): Promise<void> {
+    try {
+      const recipients: Array<{ email: string; name: string }> = [];
+      
+      // Add assignee if exists
+      if (ticket.assignedUser?.email) {
+        recipients.push({
+          email: ticket.assignedUser.email,
+          name: ticket.assignedUser.name || 'Team Member',
+        });
+      }
+
+      // Get followers for CC
+      const followers = await prisma.ticketFollower.findMany({
+        where: { ticketId: ticket.id },
+        include: { user: { select: { email: true } } },
+      });
+      const ccEmails = followers
+        .map(f => f.user.email)
+        .filter((email): email is string => 
+          email !== null && 
+          !recipients.some(r => r.email === email)
+        );
+
+      // Send email to each recipient
+      for (const recipient of recipients) {
+        await EmailService.sendTicketReopenedEmail(
+          recipient.email,
+          recipient.name,
+          {
+            id: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            title: ticket.title,
+            priority: ticket.priority,
+            category: ticket.category || undefined,
+            customerName: ticket.customer?.name || undefined,
+            reopenedByName,
+          },
+          ccEmails.length > 0 ? ccEmails : undefined
+        );
+      }
+    } catch {
+      // Silently fail - email is not critical
+    }
+  }
+
+  /**
+   * Send ticket on hold email notification (non-blocking)
+   */
+  private async sendTicketOnHoldEmail(ticket: any, changedByName: string): Promise<void> {
+    try {
+      const recipients: Array<{ email: string; name: string }> = [];
+      
+      // Add assignee if exists
+      if (ticket.assignedUser?.email) {
+        recipients.push({
+          email: ticket.assignedUser.email,
+          name: ticket.assignedUser.name || 'Team Member',
+        });
+      }
+      
+      // Add customer if exists and has email
+      if (ticket.customer?.email && ticket.customer.email !== ticket.assignedUser?.email) {
+        recipients.push({
+          email: ticket.customer.email,
+          name: ticket.customer.name || 'Customer',
+        });
+      }
+
+      // Get followers for CC
+      const followers = await prisma.ticketFollower.findMany({
+        where: { ticketId: ticket.id },
+        include: { user: { select: { email: true } } },
+      });
+      const ccEmails = followers
+        .map(f => f.user.email)
+        .filter((email): email is string => 
+          email !== null && 
+          !recipients.some(r => r.email === email)
+        );
+
+      // Send email to each recipient
+      for (const recipient of recipients) {
+        await EmailService.sendTicketOnHoldEmail(
+          recipient.email,
+          recipient.name,
+          {
+            id: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            title: ticket.title,
+            priority: ticket.priority,
+            category: ticket.category || undefined,
+            customerName: ticket.customer?.name || undefined,
+            changedByName,
+          },
+          ccEmails.length > 0 ? ccEmails : undefined
+        );
+      }
+    } catch {
+      // Silently fail - email is not critical
+    }
   }
 
   /**

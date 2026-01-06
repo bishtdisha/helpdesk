@@ -260,11 +260,11 @@ export function ReportFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="OPEN">Open</SelectItem>
+                  <SelectItem value="OPEN">New</SelectItem>
                   <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="WAITING_FOR_CUSTOMER">Waiting for Customer</SelectItem>
+                  <SelectItem value="WAITING_FOR_CUSTOMER">On Hold</SelectItem>
                   <SelectItem value="RESOLVED">Resolved</SelectItem>
-                  <SelectItem value="CLOSED">Closed</SelectItem>
+                  <SelectItem value="CLOSED">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -504,7 +504,7 @@ export function EnhancedTicketCreateForm({
                           <SelectItem value={TicketStatus.OPEN}>New</SelectItem>
                           <SelectItem value={TicketStatus.IN_PROGRESS}>In Progress</SelectItem>
                           <SelectItem value={TicketStatus.WAITING_FOR_CUSTOMER}>On Hold</SelectItem>
-                          <SelectItem value={TicketStatus.RESOLVED}>Solved</SelectItem>
+                          <SelectItem value={TicketStatus.RESOLVED}>Resolved</SelectItem>
                           <SelectItem value={TicketStatus.CLOSED}>Cancelled</SelectItem>
                         </SelectContent>
                       </Select>
