@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useMemo, Suspense } from "react"
+import { useState, useMemo, Suspense, useEffect } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { NavigationHeader } from "@/components/layout/navigation-header"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/hooks/use-auth"
+import { prewarmRoutes } from "@/lib/utils/route-prewarmer"
 
 // Lightweight skeleton for initial render
 function LayoutSkeleton() {
@@ -79,6 +80,13 @@ export function HelpdeskClientLayout({
       default: return "Helpdesk"
     }
   }, [activeModule])
+
+  // Pre-warm routes on initial load to reduce first-time navigation lag
+  useEffect(() => {
+    if (user) {
+      prewarmRoutes()
+    }
+  }, [user])
 
   // Show skeleton while loading - much faster than full loading screen
   if (isLoading && !user) {

@@ -3,14 +3,11 @@
 import { useAuth } from "@/lib/hooks/use-auth"
 import { ROLE_TYPES } from "@/lib/rbac/permissions"
 import { DashboardSkeleton } from "@/lib/performance/lazy-components"
-import { OptimizedDashboard } from "@/components/dashboard/optimized-dashboard"
+import { CustomizableDashboard } from "@/components/dashboard/customizable-dashboard"
 
 /**
  * DashboardRouter component that routes users to role-specific dashboards
  * Requirements: 18.5, 24.1, 24.3
- * 
- * Performance optimized: Uses OptimizedDashboard which fetches all data
- * in a single batch API call instead of multiple individual requests.
  * 
  * - Admin/Manager: Organization Dashboard (Analytics)
  * - Team Leader: Team Dashboard (Analytics)
@@ -24,10 +21,8 @@ export function DashboardRouter() {
     return <DashboardSkeleton />
   }
 
-  // All roles now use the optimized dashboard for better performance
-  // The OptimizedDashboard component handles role-based data filtering
-  // via the /api/dashboard/all endpoint
-  return <OptimizedDashboard />
+  // Use the customizable dashboard with widgets layout
+  return <CustomizableDashboard />
 }
 
 /**

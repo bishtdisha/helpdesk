@@ -1,46 +1,28 @@
 'use client';
 
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, Clock, Users, User } from "lucide-react";
-import useSWR from 'swr';
 
-// Lazy load chart components
-const WeeklyActivityChart = lazy(() => import('./charts/weekly-activity-chart').then(mod => ({ default: mod.WeeklyActivityChart })));
-const StatusDistributionChart = lazy(() => import('./charts/status-distribution-chart').then(mod => ({ default: mod.StatusDistributionChart })));
-
-// Lazy load KPI widgets for better performance
-const TotalTicketsKPI = lazy(() => import('./widgets/total-tickets-kpi').then(mod => ({ default: mod.TotalTicketsKPI })));
-const SLAComplianceKPI = lazy(() => import('./widgets/sla-compliance-kpi').then(mod => ({ default: mod.SLAComplianceKPI })));
-const AvgResolutionKPI = lazy(() => import('./widgets/avg-resolution-kpi').then(mod => ({ default: mod.AvgResolutionKPI })));
-const PriorityMixKPI = lazy(() => import('./widgets/priority-mix-kpi').then(mod => ({ default: mod.PriorityMixKPI })));
-
-const MyTicketsSummary = lazy(() => import('./widgets/my-tickets-summary').then(mod => ({ default: mod.MyTicketsSummary })));
-const SLABreachAlerts = lazy(() => import('./widgets/sla-breach-alerts').then(mod => ({ default: mod.SLABreachAlerts })));
-const TodayPerformance = lazy(() => import('./widgets/today-performance').then(mod => ({ default: mod.TodayPerformance })));
-const DailyTarget = lazy(() => import('./widgets/daily-target').then(mod => ({ default: mod.DailyTarget })));
-const TicketTrendChart = lazy(() => import('./widgets/ticket-trend-chart').then(mod => ({ default: mod.TicketTrendChart })));
-const ResolutionTrendChart = lazy(() => import('./widgets/resolution-trend-chart').then(mod => ({ default: mod.ResolutionTrendChart })));
-const SLATrendChart = lazy(() => import('./widgets/sla-trend-chart').then(mod => ({ default: mod.SLATrendChart })));
-const WorkloadByStatus = lazy(() => import('./widgets/workload-by-status').then(mod => ({ default: mod.WorkloadByStatus })));
-const AssignedTicketsList = lazy(() => import('./widgets/assigned-tickets-list').then(mod => ({ default: mod.AssignedTicketsList })));
-const TopCategories = lazy(() => import('./widgets/top-categories').then(mod => ({ default: mod.TopCategories })));
-const FollowingTicketsWidget = lazy(() => import('./widgets/following-tickets-widget').then(mod => ({ default: mod.FollowingTicketsWidget })));
-
-// Widget skeleton component for lazy loading fallback
-const WidgetSkeleton = ({ height = "h-28" }: { height?: string }) => (
-  <Card className="hover:shadow-md transition-shadow h-full">
-    <CardHeader className="pb-3">
-      <div className="flex items-center gap-3">
-        <div className={`w-full ${height} bg-muted animate-pulse rounded`} />
-      </div>
-    </CardHeader>
-  </Card>
-);
-
-
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+// Direct imports instead of lazy loading for better performance
+import { WeeklyActivityChart } from './charts/weekly-activity-chart';
+import { StatusDistributionChart } from './charts/status-distribution-chart';
+import { TotalTicketsKPI } from './widgets/total-tickets-kpi';
+import { SLAComplianceKPI } from './widgets/sla-compliance-kpi';
+import { AvgResolutionKPI } from './widgets/avg-resolution-kpi';
+import { PriorityMixKPI } from './widgets/priority-mix-kpi';
+import { MyTicketsSummary } from './widgets/my-tickets-summary';
+import { SLABreachAlerts } from './widgets/sla-breach-alerts';
+import { TodayPerformance } from './widgets/today-performance';
+import { DailyTarget } from './widgets/daily-target';
+import { TicketTrendChart } from './widgets/ticket-trend-chart';
+import { ResolutionTrendChart } from './widgets/resolution-trend-chart';
+import { SLATrendChart } from './widgets/sla-trend-chart';
+import { WorkloadByStatus } from './widgets/workload-by-status';
+import { AssignedTicketsList } from './widgets/assigned-tickets-list';
+import { TopCategories } from './widgets/top-categories';
+import { FollowingTicketsWidget } from './widgets/following-tickets-widget';
 
 interface DashboardWidgetProps {
   id: string;
@@ -245,17 +227,7 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
             </Card>
           );
         }
-        return (
-          <Suspense fallback={
-            <Card className="hover:shadow-md transition-shadow h-full flex flex-col !py-4 !gap-3 min-h-[380px]">
-              <CardContent className="flex-1 flex items-center justify-center">
-                <div className="w-full h-40 bg-muted animate-pulse rounded" />
-              </CardContent>
-            </Card>
-          }>
-            <WeeklyActivityChart data={activityData} />
-          </Suspense>
-        );
+        return <WeeklyActivityChart data={activityData} />;
 
       case 'StatusDistributionChart':
         if (statusLoading || !statusData) {
@@ -271,17 +243,7 @@ export function DashboardWidget({ id, title, component, user }: DashboardWidgetP
             </Card>
           );
         }
-        return (
-          <Suspense fallback={
-            <Card className="hover:shadow-md transition-shadow h-full flex flex-col !py-4 !gap-3 min-h-[380px]">
-              <CardContent className="flex-1 flex items-center justify-center">
-                <div className="w-48 h-48 rounded-full bg-muted animate-pulse" />
-              </CardContent>
-            </Card>
-          }>
-            <StatusDistributionChart data={statusData} />
-          </Suspense>
-        );
+        return <StatusDistributionChart data={statusData} />;
 
       case 'RecentActivityWidget':
         const activities = recentActivity || [];
