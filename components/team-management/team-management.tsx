@@ -208,8 +208,8 @@ export function TeamManagement() {
           
           {/* Show member count warning if team has members */}
           {dialogs.deleteConfirm.team && dialogs.deleteConfirm.team.members && dialogs.deleteConfirm.team.members.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-              <p className="text-yellow-800 text-sm">
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md p-3">
+              <p className="text-yellow-800 dark:text-yellow-300 text-sm">
                 <strong>Important:</strong> This team has {dialogs.deleteConfirm.team.members.length} member(s). 
                 They will be automatically unassigned from this team when it&apos;s deleted.
               </p>
