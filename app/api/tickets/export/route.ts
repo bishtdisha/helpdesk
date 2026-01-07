@@ -75,17 +75,16 @@ export async function GET(request: NextRequest) {
         },
         comments: {
           orderBy: { createdAt: 'desc' },
-          take: 1,
-          select: { createdAt: true },
+          select: { createdAt: true, content: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { ticketNumber: 'desc' },
     });
 
     // Transform data for Excel
     const excelData = tickets.map((ticket) => {
-      const resolutionTime = ticket.closedAt && ticket.createdAt
-        ? calculateResolutionTime(ticket.createdAt, ticket.closedAt)
+      const resolutionTime = ticket.resolvedAt && ticket.createdAt
+        ? calculateResolutionTime(ticket.createdAt, ticket.resolvedAt)
         : '';
 
       const followers = ticket.followers
@@ -97,18 +96,25 @@ export async function GET(request: NextRequest) {
         ? formatDate(ticket.comments[0].createdAt)
         : '';
 
+      // Combine all comments into a single string
+      const commentsText = ticket.comments.length > 0
+        ? ticket.comments.map((c) => c.content).join(' | ')
+        : '';
+
       return {
         'Ticket No.': ticket.ticketNumber,
+        'Title': ticket.title,
         'Status': formatStatus(ticket.status),
-        'Assigned Date': formatDate(ticket.createdAt),
-        'Assigned Person': ticket.assignedUser?.name || 'Unassigned',
-        'Team': ticket.team?.name || '',
+        'Priority': formatPriority(ticket.priority),
         'Customer': ticket.customer?.name || '-',
-        'Title/Short Description': ticket.title,
-        'Last Comment Date': lastCommentDate,
-        'Close Date': ticket.closedAt ? formatDate(ticket.closedAt) : '',
+        'Assigned To': ticket.assignedUser?.name || 'Unassigned',
+        'Team': ticket.team?.name || '',
         'Followers': followers || '-',
+        'Created Date': formatDate(ticket.createdAt),
+        'Resolved Date': ticket.resolvedAt ? formatDate(ticket.resolvedAt) : '',
         'Resolution Time': resolutionTime,
+        'Last Comment Date': lastCommentDate,
+        'Comments': commentsText,
       };
     });
 
@@ -119,16 +125,18 @@ export async function GET(request: NextRequest) {
     // Set column widths
     ws['!cols'] = [
       { wch: 12 },  // Ticket No.
-      { wch: 18 },  // Status
-      { wch: 18 },  // Assigned Date
-      { wch: 20 },  // Assigned Person
-      { wch: 20 },  // Team
-      { wch: 25 },  // Customer
       { wch: 50 },  // Title
-      { wch: 18 },  // Last Comment Date
-      { wch: 18 },  // Close Date
+      { wch: 15 },  // Status
+      { wch: 12 },  // Priority
+      { wch: 25 },  // Customer
+      { wch: 20 },  // Assigned To
+      { wch: 20 },  // Team
       { wch: 30 },  // Followers
+      { wch: 18 },  // Created Date
+      { wch: 18 },  // Resolved Date
       { wch: 15 },  // Resolution Time
+      { wch: 18 },  // Last Comment Date
+      { wch: 60 },  // Comments
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, 'Tickets Report');
@@ -163,6 +171,10 @@ function formatDate(date: Date): string {
 
 function formatStatus(status: TicketStatus): string {
   return status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+function formatPriority(priority: TicketPriority): string {
+  return priority.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 function calculateResolutionTime(createdAt: Date, closedAt: Date): string {

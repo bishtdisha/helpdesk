@@ -98,11 +98,11 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
   const getTrendColor = (trend: 'improving' | 'declining' | 'stable') => {
     switch (trend) {
       case 'improving':
-        return 'text-green-600 bg-green-50 border-green-200';
+        return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800';
       case 'declining':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800';
       case 'stable':
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -110,8 +110,8 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading comparative analysis...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading comparative analysis...</p>
         </div>
       </div>
     );
@@ -119,9 +119,9 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50">
+      <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-red-600">
+          <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
             <AlertCircle className="h-5 w-5" />
             <p>{error}</p>
           </div>
@@ -160,61 +160,61 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
       </div>
 
       {/* Executive Summary */}
-      <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+      <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 dark:from-blue-950/30 to-white dark:to-background">
         <CardHeader>
-          <CardTitle className="text-gray-700">Executive Summary</CardTitle>
-          <CardDescription className="text-gray-500">
+          <CardTitle className="text-gray-700 dark:text-gray-200">Executive Summary</CardTitle>
+          <CardDescription className="text-gray-500 dark:text-gray-400">
             Key insights and overall performance metrics
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <p className="text-sm text-gray-600">Total Tickets</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Tickets</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {analysis.executiveSummary.totalTickets}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-gray-600">Avg Resolution Time</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Avg Resolution Time</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {analysis.executiveSummary.overallResolutionTime.toFixed(1)}h
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-gray-600">SLA Compliance</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-gray-400">SLA Compliance</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {analysis.executiveSummary.overallSLACompliance.toFixed(1)}%
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-gray-600">Customer Satisfaction</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Customer Satisfaction</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {analysis.executiveSummary.overallCustomerSatisfaction.toFixed(1)}/5
               </p>
             </div>
           </div>
 
-          <div className="mt-6 pt-6 border-t">
+          <div className="mt-6 pt-6 border-t dark:border-gray-700">
             <div className="flex items-center gap-2 mb-3">
-              <Award className="h-5 w-5 text-yellow-600" />
-              <h4 className="font-semibold text-gray-900">Top Performing Team</h4>
+              <Award className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Top Performing Team</h4>
             </div>
-            <p className="text-lg font-medium text-blue-600">
+            <p className="text-lg font-medium text-blue-600 dark:text-blue-400">
               {analysis.executiveSummary.topPerformingTeam}
             </p>
           </div>
 
           {analysis.executiveSummary.areasForImprovement.length > 0 && (
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 pt-4 border-t dark:border-gray-700">
               <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
-                <h4 className="font-semibold text-gray-900">Areas for Improvement</h4>
+                <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100">Areas for Improvement</h4>
               </div>
               <ul className="space-y-2">
                 {analysis.executiveSummary.areasForImprovement.map((area, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-orange-600 mt-0.5">•</span>
+                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <span className="text-orange-600 dark:text-orange-500 mt-0.5">•</span>
                     <span>{area}</span>
                   </li>
                 ))}
@@ -227,8 +227,8 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
       {/* Team Rankings */}
       <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
-          <CardTitle className="text-gray-700">Team Rankings</CardTitle>
-          <CardDescription className="text-gray-500">
+          <CardTitle className="text-gray-700 dark:text-gray-200">Team Rankings</CardTitle>
+          <CardDescription className="text-gray-500 dark:text-gray-400">
             Teams ranked by composite performance score
           </CardDescription>
         </CardHeader>
@@ -236,19 +236,19 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Rank</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Team</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Score</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Resolution Time</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">SLA Compliance</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Customer Sat.</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Tickets</th>
+                <tr className="border-b dark:border-gray-700">
+                  <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Rank</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Team</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Score</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Resolution Time</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">SLA Compliance</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Customer Sat.</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Tickets</th>
                 </tr>
               </thead>
               <tbody>
                 {analysis.teamRankings.map((team) => (
-                  <tr key={team.teamId} className="border-b hover:bg-gray-50">
+                  <tr key={team.teamId} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="py-3 px-4">
                       <Badge 
                         variant={team.rank <= 3 ? "default" : "outline"}
@@ -257,11 +257,11 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
                         #{team.rank}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 font-medium">{team.teamName}</td>
+                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{team.teamName}</td>
                     <td className="text-right py-3 px-4">
-                      <span className="font-semibold text-blue-600">{team.score.toFixed(1)}</span>
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">{team.score.toFixed(1)}</span>
                     </td>
-                    <td className="text-right py-3 px-4">{team.metrics.resolutionTime.toFixed(1)}h</td>
+                    <td className="text-right py-3 px-4 text-gray-700 dark:text-gray-300">{team.metrics.resolutionTime.toFixed(1)}h</td>
                     <td className="text-right py-3 px-4">
                       <Badge 
                         variant={
@@ -273,8 +273,8 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
                         {team.metrics.slaCompliance.toFixed(1)}%
                       </Badge>
                     </td>
-                    <td className="text-right py-3 px-4">{team.metrics.customerSatisfaction.toFixed(1)}/5</td>
-                    <td className="text-right py-3 px-4">{team.metrics.ticketVolume}</td>
+                    <td className="text-right py-3 px-4 text-gray-700 dark:text-gray-300">{team.metrics.customerSatisfaction.toFixed(1)}/5</td>
+                    <td className="text-right py-3 px-4 text-gray-700 dark:text-gray-300">{team.metrics.ticketVolume}</td>
                   </tr>
                 ))}
               </tbody>
@@ -286,23 +286,25 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
       {/* Performance Radar Chart */}
       <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
-          <CardTitle className="text-gray-700">Multi-Dimensional Performance</CardTitle>
-          <CardDescription className="text-gray-500">
+          <CardTitle className="text-gray-700 dark:text-gray-200">Multi-Dimensional Performance</CardTitle>
+          <CardDescription className="text-gray-500 dark:text-gray-400">
             Top 5 teams across key performance indicators
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <RadarChart data={radarData}>
-              <PolarGrid stroke="#e5e7eb" />
+              <PolarGrid stroke="#e5e7eb" className="dark:stroke-gray-700" />
               <PolarAngleAxis 
                 dataKey="team" 
                 tick={{ fontSize: 12, fill: '#6b7280' }}
+                className="dark:[&_text]:fill-gray-400"
               />
               <PolarRadiusAxis 
                 angle={90} 
                 domain={[0, 100]}
                 tick={{ fontSize: 10, fill: '#6b7280' }}
+                className="dark:[&_text]:fill-gray-400"
               />
               <Radar 
                 name="Performance" 
@@ -320,8 +322,8 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
       {/* Performance Trends */}
       <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
-          <CardTitle className="text-gray-700">Performance Trends</CardTitle>
-          <CardDescription className="text-gray-500">
+          <CardTitle className="text-gray-700 dark:text-gray-200">Performance Trends</CardTitle>
+          <CardDescription className="text-gray-500 dark:text-gray-400">
             Team performance changes compared to previous period
           </CardDescription>
         </CardHeader>
@@ -356,13 +358,13 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
       {/* Outliers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* High Performers */}
-        <Card className="border-green-200 bg-green-50/50 hover:shadow-md transition-shadow">
+        <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30 hover:shadow-md transition-shadow">
           <CardHeader>
-            <CardTitle className="text-gray-700 flex items-center gap-2">
-              <Award className="h-5 w-5 text-green-600" />
+            <CardTitle className="text-gray-700 dark:text-gray-200 flex items-center gap-2">
+              <Award className="h-5 w-5 text-green-600 dark:text-green-500" />
               High Performers
             </CardTitle>
-            <CardDescription className="text-gray-500">
+            <CardDescription className="text-gray-500 dark:text-gray-400">
               Teams and agents exceeding expectations
             </CardDescription>
           </CardHeader>
@@ -371,29 +373,29 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
               {analysis.outliers
                 .filter(o => o.type === 'high_performer')
                 .map((outlier, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
+                  <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-800">
                     <div>
-                      <p className="font-medium text-gray-900">{outlier.entityName}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{outlier.entityName}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {outlier.metric === 'resolutionTime' ? 'Resolution Time' : 
                          outlier.metric === 'slaCompliance' ? 'SLA Compliance' : 
                          outlier.metric}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-green-600">
+                      <p className="font-semibold text-green-600 dark:text-green-400">
                         {outlier.metric === 'slaCompliance' ? `${outlier.value.toFixed(1)}%` : 
                          outlier.metric === 'resolutionTime' ? `${outlier.value.toFixed(1)}h` :
                          outlier.value.toFixed(1)}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {outlier.deviation.toFixed(1)}σ above avg
                       </p>
                     </div>
                   </div>
                 ))}
               {analysis.outliers.filter(o => o.type === 'high_performer').length === 0 && (
-                <p className="text-sm text-gray-600 text-center py-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center py-4">
                   No significant high performers identified
                 </p>
               )}
@@ -402,13 +404,13 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
         </Card>
 
         {/* Needs Attention */}
-        <Card className="border-orange-200 bg-orange-50/50 hover:shadow-md transition-shadow">
+        <Card className="border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/30 hover:shadow-md transition-shadow">
           <CardHeader>
-            <CardTitle className="text-gray-700 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <CardTitle className="text-gray-700 dark:text-gray-200 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
               Needs Attention
             </CardTitle>
-            <CardDescription className="text-gray-500">
+            <CardDescription className="text-gray-500 dark:text-gray-400">
               Teams and agents requiring support
             </CardDescription>
           </CardHeader>
@@ -417,29 +419,29 @@ export function ComparativeAnalysisComponent({ dateRange }: ComparativeAnalysisP
               {analysis.outliers
                 .filter(o => o.type === 'needs_attention')
                 .map((outlier, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                  <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800">
                     <div>
-                      <p className="font-medium text-gray-900">{outlier.entityName}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{outlier.entityName}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {outlier.metric === 'resolutionTime' ? 'Resolution Time' : 
                          outlier.metric === 'slaCompliance' ? 'SLA Compliance' : 
                          outlier.metric}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-orange-600">
+                      <p className="font-semibold text-orange-600 dark:text-orange-400">
                         {outlier.metric === 'slaCompliance' ? `${outlier.value.toFixed(1)}%` : 
                          outlier.metric === 'resolutionTime' ? `${outlier.value.toFixed(1)}h` :
                          outlier.value.toFixed(1)}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {outlier.deviation.toFixed(1)}σ {outlier.metric === 'resolutionTime' ? 'above' : 'below'} avg
                       </p>
                     </div>
                   </div>
                 ))}
               {analysis.outliers.filter(o => o.type === 'needs_attention').length === 0 && (
-                <p className="text-sm text-gray-600 text-center py-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center py-4">
                   All teams performing within expected range
                 </p>
               )}

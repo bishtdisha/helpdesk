@@ -104,6 +104,17 @@ export async function GET(request: NextRequest) {
 
       const wb = XLSX.utils.book_new()
       const ws = XLSX.utils.json_to_sheet(exportData)
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 25 },  // Agent
+        { wch: 20 },  // Team
+        { wch: 15 },  // Open Tickets
+        { wch: 12 },  // Capacity
+        { wch: 15 },  // Utilization %
+        { wch: 15 },  // Status
+      ]
+      
       XLSX.utils.book_append_sheet(wb, ws, 'Workload Distribution')
       const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 

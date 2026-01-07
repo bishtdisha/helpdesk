@@ -103,6 +103,20 @@ export async function GET(request: NextRequest) {
 
       const wb = XLSX.utils.book_new()
       const ws = XLSX.utils.json_to_sheet(exportData)
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 12 },  // Ticket #
+        { wch: 50 },  // Title
+        { wch: 12 },  // Priority
+        { wch: 18 },  // Status
+        { wch: 20 },  // Assignee
+        { wch: 20 },  // Team
+        { wch: 22 },  // Created
+        { wch: 18 },  // Age
+        { wch: 14 },  // Age (Hours)
+      ]
+      
       XLSX.utils.book_append_sheet(wb, ws, 'Aging Report')
       const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 

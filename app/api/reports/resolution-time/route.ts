@@ -158,6 +158,19 @@ export async function GET(request: NextRequest) {
 
       const wb = XLSX.utils.book_new()
       const ws = XLSX.utils.json_to_sheet(exportData)
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 12 },  // Ticket #
+        { wch: 12 },  // Priority
+        { wch: 20 },  // Team
+        { wch: 20 },  // Category
+        { wch: 20 },  // Created
+        { wch: 20 },  // Resolved
+        { wch: 18 },  // Resolution Time
+        { wch: 18 },  // Resolution Hours
+      ]
+      
       XLSX.utils.book_append_sheet(wb, ws, 'Resolution Time')
       
       // Add summary sheet
@@ -168,6 +181,13 @@ export async function GET(request: NextRequest) {
         { Metric: 'Slowest Resolution', Value: slowestTicket?.resolutionTimeFormatted || 'N/A' },
       ]
       const summaryWs = XLSX.utils.json_to_sheet(summaryData)
+      
+      // Set summary column widths
+      summaryWs['!cols'] = [
+        { wch: 25 },  // Metric
+        { wch: 20 },  // Value
+      ]
+      
       XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary')
 
       const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })

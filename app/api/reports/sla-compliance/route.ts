@@ -120,6 +120,18 @@ export async function GET(request: NextRequest) {
 
       const wb = XLSX.utils.book_new()
       const ws = XLSX.utils.json_to_sheet(exportData)
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 12 },  // Ticket #
+        { wch: 50 },  // Title
+        { wch: 12 },  // Priority
+        { wch: 20 },  // Team
+        { wch: 22 },  // SLA Due
+        { wch: 15 },  // Status
+        { wch: 22 },  // Resolved
+      ]
+      
       XLSX.utils.book_append_sheet(wb, ws, 'SLA Compliance')
       const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 

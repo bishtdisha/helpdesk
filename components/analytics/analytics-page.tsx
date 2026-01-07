@@ -59,7 +59,7 @@ export function AnalyticsPage() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-center text-gray-600">Please log in to view analytics.</p>
+          <p className="text-center text-gray-600 dark:text-gray-400">Please log in to view analytics.</p>
         </CardContent>
       </Card>
     );
@@ -69,7 +69,7 @@ export function AnalyticsPage() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-center text-gray-600">
+          <p className="text-center text-gray-600 dark:text-gray-400">
             You do not have permission to view analytics.
           </p>
         </CardContent>
@@ -84,9 +84,9 @@ export function AnalyticsPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-gray-600" />
-              <span className="font-medium text-gray-700">Date Range:</span>
-              <span className="text-gray-600">
+              <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <span className="font-medium text-gray-700 dark:text-gray-300">Date Range:</span>
+              <span className="text-gray-600 dark:text-gray-400">
                 {dateRange.startDate.toLocaleDateString()} - {dateRange.endDate.toLocaleDateString()}
               </span>
             </div>
@@ -138,14 +138,14 @@ export function AnalyticsPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <label htmlFor="team-select" className="font-medium text-gray-700">
+                  <label htmlFor="team-select" className="font-medium text-gray-700 dark:text-gray-300">
                     Select Team:
                   </label>
                   <select
                     id="team-select"
                     value={selectedTeamId}
                     onChange={(e) => setSelectedTeamId(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     {teams.map((team) => (
                       <option key={team.id} value={team.id}>

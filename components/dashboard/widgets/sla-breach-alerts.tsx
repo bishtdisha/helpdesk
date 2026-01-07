@@ -17,10 +17,10 @@ export function SLABreachAlerts() {
 
   if (error) {
     return (
-      <Card className="hover:shadow-md transition-shadow h-full border-red-200 bg-red-50/50">
+      <Card className="hover:shadow-md transition-shadow h-full border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30">
         <CardHeader>
           <CardTitle className="text-base font-semibold">SLA / Priority Breakdown</CardTitle>
-          <CardDescription className="text-sm text-red-600">Failed to load alerts</CardDescription>
+          <CardDescription className="text-sm text-red-600 dark:text-red-400">Failed to load alerts</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -87,13 +87,13 @@ export function SLABreachAlerts() {
               {nearBreach.map((ticket: any) => (
                 <div
                   key={ticket.id}
-                  className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/dashboard/tickets/${ticket.id}`}
-                        className="text-sm font-medium text-red-900 hover:underline truncate"
+                        className="text-sm font-medium text-red-900 dark:text-red-300 hover:underline truncate"
                       >
                         #{ticket.ticketNumber} - {ticket.title}
                       </Link>
@@ -102,8 +102,8 @@ export function SLABreachAlerts() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Clock className="h-3 w-3 text-red-600" />
-                      <span className="text-xs text-red-700 font-medium">
+                      <Clock className="h-3 w-3 text-red-600 dark:text-red-400" />
+                      <span className="text-xs text-red-700 dark:text-red-300 font-medium">
                         {formatTimeLeft(ticket.timeLeftMinutes)} left
                       </span>
                     </div>
@@ -117,8 +117,8 @@ export function SLABreachAlerts() {
               ))}
             </div>
           ) : (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-              <p className="text-sm text-green-700">No tickets near breach 🎉</p>
+            <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-center">
+              <p className="text-sm text-green-700 dark:text-green-300">No tickets near breach 🎉</p>
             </div>
           )}
         </div>
@@ -127,7 +127,7 @@ export function SLABreachAlerts() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-red-600" />
+              <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
               Breached Tickets
             </h3>
             <Badge variant="destructive" className="text-xs">
@@ -136,16 +136,16 @@ export function SLABreachAlerts() {
           </div>
           {breached > 0 ? (
             <Link href="/dashboard/tickets?status=breached">
-              <Button variant="outline" size="sm" className="w-full text-red-600 border-red-200 hover:bg-red-50">
+              <Button variant="outline" size="sm" className="w-full text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30">
                 View All Breached Tickets
                 <ExternalLink className="h-4 w-4 ml-2" />
               </Button>
             </Link>
           ) : (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-              <p className="text-sm text-green-700">No breached tickets 🎉</p>
+            <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-center">
+              <p className="text-sm text-green-700 dark:text-green-300">No breached tickets 🎉</p>
             </div>
-          )}
+          )}}
         </div>
 
         {/* Priority vs SLA Matrix */}

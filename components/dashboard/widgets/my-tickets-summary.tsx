@@ -45,10 +45,10 @@ export function MyTicketsSummary() {
 
   if (error) {
     return (
-      <Card className="hover:shadow-md transition-shadow h-full border-red-200 bg-red-50/50">
+      <Card className="hover:shadow-md transition-shadow h-full border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30">
         <CardHeader>
           <CardTitle className="text-base font-semibold">My Tickets</CardTitle>
-          <CardDescription className="text-sm text-red-600">Failed to load data</CardDescription>
+          <CardDescription className="text-sm text-red-600 dark:text-red-400">Failed to load data</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -79,22 +79,22 @@ export function MyTicketsSummary() {
       label: 'Open Tickets',
       value: open || 0,
       icon: AlertCircle,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      borderColor: 'border-blue-200',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/50',
+      borderColor: 'border-blue-200 dark:border-blue-800',
       tooltip: 'Total tickets currently assigned to you',
       details: `${inProgress || 0} in progress`,
       popoverContent: (
         <div className="space-y-2">
           <h4 className="font-semibold text-sm">Open Tickets Breakdown</h4>
           <div className="space-y-2">
-            <div className="flex items-center justify-between p-2 rounded bg-blue-50 dark:bg-blue-950/20">
+            <div className="flex items-center justify-between p-2 rounded bg-blue-50 dark:bg-blue-950/30">
               <span className="text-xs">In Progress</span>
-              <span className="font-bold text-blue-600">{inProgress || 0}</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400">{inProgress || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-950/20">
+            <div className="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-800/50">
               <span className="text-xs">Waiting</span>
-              <span className="font-bold text-gray-600">{(open || 0) - (inProgress || 0)}</span>
+              <span className="font-bold text-gray-600 dark:text-gray-400">{(open || 0) - (inProgress || 0)}</span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground pt-2 border-t">
@@ -107,17 +107,17 @@ export function MyTicketsSummary() {
       label: 'High Priority',
       value: highPriority || 0,
       icon: AlertTriangle,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      borderColor: 'border-orange-200',
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-100 dark:bg-orange-900/50',
+      borderColor: 'border-orange-200 dark:border-orange-800',
       tooltip: 'High priority tickets requiring attention',
       details: 'Needs quick response',
       popoverContent: (
         <div className="space-y-2">
           <h4 className="font-semibold text-sm">High Priority Details</h4>
-          <div className="p-3 rounded bg-orange-50 dark:bg-orange-950/20 border border-orange-200">
+          <div className="p-3 rounded bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               <span className="text-sm font-medium">Action Required</span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -134,24 +134,24 @@ export function MyTicketsSummary() {
       label: 'Urgent',
       value: urgent || 0,
       icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-100',
-      borderColor: 'border-red-200',
+      color: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-red-100 dark:bg-red-900/50',
+      borderColor: 'border-red-200 dark:border-red-800',
       tooltip: 'Critical tickets requiring immediate action',
       details: 'Immediate action needed',
       popoverContent: (
         <div className="space-y-2">
-          <h4 className="font-semibold text-sm text-red-600">🚨 Urgent Tickets</h4>
-          <div className="p-3 rounded bg-red-50 dark:bg-red-950/20 border border-red-200">
+          <h4 className="font-semibold text-sm text-red-600 dark:text-red-400">🚨 Urgent Tickets</h4>
+          <div className="p-3 rounded bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-4 w-4 text-red-600 animate-pulse" />
-              <span className="text-sm font-medium text-red-700">Critical Priority</span>
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 animate-pulse" />
+              <span className="text-sm font-medium text-red-700 dark:text-red-300">Critical Priority</span>
             </div>
             <p className="text-xs text-muted-foreground">
               These tickets require immediate attention and should be addressed first.
             </p>
           </div>
-          <div className="text-xs text-red-600 font-semibold">
+          <div className="text-xs text-red-600 dark:text-red-400 font-semibold">
             ⚡ Respond immediately!
           </div>
         </div>
@@ -161,21 +161,21 @@ export function MyTicketsSummary() {
       label: 'Avg Open Hours',
       value: avgOpenHours ? `${avgOpenHours.toFixed(1)}h` : '0h',
       icon: Clock,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      borderColor: 'border-purple-200',
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/50',
+      borderColor: 'border-purple-200 dark:border-purple-800',
       tooltip: 'Average time tickets have been open',
       details: 'Time management metric',
       popoverContent: (
         <div className="space-y-2">
           <h4 className="font-semibold text-sm">Time Management</h4>
           <div className="space-y-2">
-            <div className="p-2 rounded bg-purple-50 dark:bg-purple-950/20">
+            <div className="p-2 rounded bg-purple-50 dark:bg-purple-950/30">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs">Average Open Time</span>
-                <span className="font-bold text-purple-600">{avgOpenHours ? `${avgOpenHours.toFixed(1)}h` : '0h'}</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">{avgOpenHours ? `${avgOpenHours.toFixed(1)}h` : '0h'}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                 <div 
                   className="bg-purple-600 h-1.5 rounded-full transition-all"
                   style={{ width: `${Math.min((avgOpenHours || 0) / 48 * 100, 100)}%` }}
@@ -197,17 +197,17 @@ export function MyTicketsSummary() {
       label: 'Failed/Escalated',
       value: failedEscalated || 0,
       icon: XCircle,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-100',
-      borderColor: 'border-gray-200',
+      color: 'text-gray-600 dark:text-gray-400',
+      bgColor: 'bg-gray-100 dark:bg-gray-800/50',
+      borderColor: 'border-gray-200 dark:border-gray-700',
       tooltip: 'Tickets that were escalated or failed',
       details: 'Requires review',
       popoverContent: (
         <div className="space-y-2">
           <h4 className="font-semibold text-sm">Escalated Tickets</h4>
-          <div className="p-3 rounded bg-gray-50 dark:bg-gray-950/20 border border-gray-200">
+          <div className="p-3 rounded bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-2">
-              <XCircle className="h-4 w-4 text-gray-600" />
+              <XCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               <span className="text-sm font-medium">Review Required</span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -215,7 +215,7 @@ export function MyTicketsSummary() {
             </p>
           </div>
           {failedEscalated === 0 && (
-            <div className="flex items-center gap-2 text-xs text-green-600">
+            <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
               <CheckCircle2 className="h-3 w-3" />
               <span>Great job! No escalations</span>
             </div>
@@ -289,13 +289,13 @@ export function MyTicketsSummary() {
           })}
         </div>
         {resolved !== undefined && (
-          <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+          <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-bold text-green-700">Resolved Today</span>
+                <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <span className="text-sm font-bold text-green-700 dark:text-green-300">Resolved Today</span>
               </div>
-              <span className="text-xl font-extrabold text-green-600">{resolved || 0}</span>
+              <span className="text-xl font-extrabold text-green-600 dark:text-green-400">{resolved || 0}</span>
             </div>
           </div>
         )}

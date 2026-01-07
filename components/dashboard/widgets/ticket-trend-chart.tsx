@@ -107,13 +107,13 @@ export function TicketTrendChart() {
       </CardHeader>
       <CardContent>
         <div className="mb-3 grid grid-cols-2 gap-2">
-          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200">
-            <div className="text-xs text-blue-600 mb-1">Total Created</div>
-            <div className="text-xl font-bold text-blue-600">{totalCreated}</div>
+          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+            <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">Total Created</div>
+            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{totalCreated}</div>
           </div>
-          <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200">
-            <div className="text-xs text-green-600 mb-1">Total Resolved</div>
-            <div className="text-xl font-bold text-green-600">{totalResolved}</div>
+          <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+            <div className="text-xs text-green-600 dark:text-green-400 mb-1">Total Resolved</div>
+            <div className="text-xl font-bold text-green-600 dark:text-green-400">{totalResolved}</div>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={240}>

@@ -24,25 +24,10 @@ const EMAIL_SIGNATURE = {
 const transporter = nodemailer.createTransport(SMTP_CONFIG);
 
 /**
- * Generate HTML email footer with signature
+ * Generate HTML email footer (inside the main box)
  */
 function getEmailFooterHtml(): string {
   return `
-          <!-- Signature -->
-          <tr>
-            <td style="padding:20px 40px 10px 40px;">
-              <p style="margin:0 0 5px 0; font-size:14px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
-                Best Regards,
-              </p>
-              <p style="margin:0 0 3px 0; font-size:14px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
-                ${EMAIL_SIGNATURE.name}
-              </p>
-              <p style="margin:0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">
-                ${EMAIL_SIGNATURE.title}
-              </p>
-            </td>
-          </tr>
-          
           <!-- Footer -->
           <tr>
             <td bgcolor="#f9fafb" style="padding:20px 40px; border-top:1px solid #e5e7eb;">
@@ -54,6 +39,33 @@ function getEmailFooterHtml(): string {
               </p>
             </td>
           </tr>`;
+}
+
+/**
+ * Generate HTML signature (outside the main box)
+ */
+function getEmailSignatureHtml(): string {
+  return `
+      <!-- Signature (outside the main box) -->
+      <tr>
+        <td align="center" style="padding:25px 20px 10px 20px;">
+          <table width="600" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="padding:0;">
+                <p style="margin:0 0 5px 0; font-size:14px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                  Best Regards,
+                </p>
+                <p style="margin:0 0 3px 0; font-size:14px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                  ${EMAIL_SIGNATURE.name}
+                </p>
+                <p style="margin:0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">
+                  ${EMAIL_SIGNATURE.title}
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>`;
 }
 
 /**
@@ -290,6 +302,9 @@ export class EmailService {
         </table>
       </td>
     </tr>
+    
+    ${getEmailSignatureHtml()}
+    
   </table>
 </body>
 </html>`;
@@ -491,6 +506,9 @@ ${getEmailSignatureText()}`;
         </table>
       </td>
     </tr>
+    
+    ${getEmailSignatureHtml()}
+    
   </table>
 </body>
 </html>`;
@@ -601,6 +619,9 @@ ${getEmailSignatureText()}`;
         </table>
       </td>
     </tr>
+    
+    ${getEmailSignatureHtml()}
+    
   </table>
 </body>
 </html>`;
@@ -783,6 +804,9 @@ ${getEmailSignatureText()}`;
         </table>
       </td>
     </tr>
+    
+    ${getEmailSignatureHtml()}
+    
   </table>
 </body>
 </html>`;
@@ -1257,6 +1281,236 @@ ${getEmailSignatureText()}`;
       subject: 'Password Reset Successful - Cimcon Automation Helpdesk',
       html,
       text,
+    });
+  }
+
+  /**
+   * Send ticket status change notification email
+   */
+  static async sendTicketStatusChangeEmail(
+    recipientEmail: string,
+    recipientName: string,
+    ticketData: {
+      id: string;
+      ticketNumber: number;
+      title: string;
+      priority: string;
+      oldStatus: string;
+      newStatus: string;
+      category?: string;
+      customerName?: string;
+      changedByName?: string;
+    },
+    ccEmails?: string[]
+  ): Promise<boolean> {
+    const ticketUrl = `${APP_URL}/helpdesk/tickets/${ticketData.id}`;
+    
+    // Format status for display
+    const formatStatus = (status: string) => status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const oldStatusFormatted = formatStatus(ticketData.oldStatus);
+    const newStatusFormatted = formatStatus(ticketData.newStatus);
+    
+    // Determine color based on new status
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'OPEN': return { bg: '#dbeafe', text: '#1e40af', header: '#3b82f6' };
+        case 'IN_PROGRESS': return { bg: '#fef3c7', text: '#92400e', header: '#f59e0b' };
+        case 'WAITING_FOR_CUSTOMER': return { bg: '#fce7f3', text: '#9d174d', header: '#ec4899' };
+        case 'RESOLVED': return { bg: '#dcfce7', text: '#166534', header: '#16a34a' };
+        case 'CLOSED': return { bg: '#e5e7eb', text: '#374151', header: '#6b7280' };
+        default: return { bg: '#dbeafe', text: '#1e40af', header: '#3b82f6' };
+      }
+    };
+    const statusColor = getStatusColor(ticketData.newStatus);
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]>
+  <style type="text/css">
+    table { border-collapse: collapse; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #e5e7eb;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="${statusColor.header}" style="padding:30px 40px;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">
+                Ticket Status Updated
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px 40px;">
+              <p style="margin:0 0 20px 0; font-size:16px; color:#374151; font-family:Arial, Helvetica, sans-serif;">
+                Hello <strong>${recipientName}</strong>,
+              </p>
+              <p style="margin:0 0 25px 0; font-size:15px; color:#4b5563; line-height:24px; font-family:Arial, Helvetica, sans-serif;">
+                The status of the following ticket has been updated.
+              </p>
+              
+              <!-- Status Change Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f9fafb; border:1px solid #e5e7eb; margin-bottom:25px;">
+                <tr>
+                  <td style="padding:20px; text-align:center;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="45%" align="center" valign="middle">
+                          <p style="margin:0 0 8px 0; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">Previous Status</p>
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#e5e7eb" style="padding:8px 16px; border-radius:4px;">
+                                <span style="color:#374151; font-size:14px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${oldStatusFormatted}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="10%" align="center" valign="middle">
+                          <span style="font-size:24px; color:#9ca3af;">→</span>
+                        </td>
+                        <td width="45%" align="center" valign="middle">
+                          <p style="margin:0 0 8px 0; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">New Status</p>
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="${statusColor.bg}" style="padding:8px 16px; border-radius:4px;">
+                                <span style="color:${statusColor.text}; font-size:14px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${newStatusFormatted}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Ticket Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f9ff; border:1px solid #bae6fd; margin-bottom:25px;">
+                <!-- Ticket Number Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #bae6fd;">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td bgcolor="#dbeafe" style="padding:6px 14px; border-radius:4px;">
+                          <span style="color:#1e40af; font-size:13px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">Ticket #${ticketData.ticketNumber}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Title Row -->
+                <tr>
+                  <td style="padding:20px; border-bottom:1px solid #bae6fd;">
+                    <p style="margin:0 0 5px 0; font-size:11px; color:#0369a1; text-transform:uppercase; letter-spacing:1px; font-family:Arial, Helvetica, sans-serif;">TITLE</p>
+                    <p style="margin:0; font-size:16px; color:#111827; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">${ticketData.title}</p>
+                  </td>
+                </tr>
+                
+                <!-- Details Row -->
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Priority:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.priority}</td>
+                      </tr>
+                      ${ticketData.category ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Category:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.category}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.customerName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Customer:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.customerName}</td>
+                      </tr>
+                      ` : ''}
+                      ${ticketData.changedByName ? `
+                      <tr>
+                        <td width="120" style="padding:8px 0; font-size:13px; color:#6b7280; font-family:Arial, Helvetica, sans-serif;">Changed By:</td>
+                        <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:500; font-family:Arial, Helvetica, sans-serif;">${ticketData.changedByName}</td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center" style="padding:10px 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ticketUrl}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="10%" strokecolor="${statusColor.header}" fillcolor="${statusColor.header}">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">View Ticket Details</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${ticketUrl}" style="display:inline-block; background-color:${statusColor.header}; color:#ffffff; text-decoration:none; padding:14px 30px; border-radius:6px; font-size:15px; font-weight:bold; font-family:Arial, Helvetica, sans-serif; border:1px solid ${statusColor.header};">
+                      View Ticket Details
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0; font-size:13px; color:#6b7280; text-align:center; font-family:Arial, Helvetica, sans-serif;">
+                If you have any questions, please contact our support team.
+              </p>
+            </td>
+          </tr>
+          
+          ${getEmailFooterHtml()}
+          
+        </table>
+      </td>
+    </tr>
+    
+    ${getEmailSignatureHtml()}
+    
+  </table>
+</body>
+</html>`;
+
+    const text = `
+Ticket Status Updated
+
+Hello ${recipientName},
+
+The status of the following ticket has been updated:
+
+Status Change: ${oldStatusFormatted} → ${newStatusFormatted}
+
+Ticket #${ticketData.ticketNumber}
+Title: ${ticketData.title}
+Priority: ${ticketData.priority}
+${ticketData.category ? `Category: ${ticketData.category}` : ''}
+${ticketData.customerName ? `Customer: ${ticketData.customerName}` : ''}
+${ticketData.changedByName ? `Changed By: ${ticketData.changedByName}` : ''}
+
+View ticket: ${ticketUrl}
+${getEmailSignatureText()}`;
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject: `[Ticket #${ticketData.ticketNumber}] Status Changed to ${newStatusFormatted}: ${ticketData.title}`,
+      html,
+      text,
+      cc: ccEmails,
     });
   }
 }

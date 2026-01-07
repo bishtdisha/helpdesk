@@ -16,12 +16,12 @@ export function DailyTarget() {
 
   if (error) {
     return (
-      <Card className="hover:shadow-md transition-shadow h-full border-red-200 bg-red-50/50">
+      <Card className="hover:shadow-md transition-shadow h-full border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30">
         <CardHeader>
           <CardTitle className="text-base font-semibold">Daily Target</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-red-600">Failed to load</p>
+          <p className="text-sm text-red-600 dark:text-red-400">Failed to load</p>
         </CardContent>
       </Card>
     );
@@ -48,7 +48,7 @@ export function DailyTarget() {
   const isOnTrack = percentage >= 75;
 
   return (
-    <Card className={`hover:shadow-md transition-shadow h-full ${isComplete ? 'border-green-200 bg-gradient-to-br from-green-50/50 to-background' : ''}`}>
+    <Card className={`hover:shadow-md transition-shadow h-full ${isComplete ? 'border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50/50 dark:from-green-950/30 to-background' : ''}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">Daily Target</CardTitle>
@@ -63,8 +63,8 @@ export function DailyTarget() {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`p-3 rounded-lg ${isComplete ? 'bg-green-100' : 'bg-blue-100'}`}>
-              <Target className={`h-6 w-6 ${isComplete ? 'text-green-600' : 'text-blue-600'}`} />
+            <div className={`p-3 rounded-lg ${isComplete ? 'bg-green-100 dark:bg-green-900/50' : 'bg-blue-100 dark:bg-blue-900/50'}`}>
+              <Target className={`h-6 w-6 ${isComplete ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Target</p>
@@ -73,7 +73,7 @@ export function DailyTarget() {
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Achieved</p>
-            <p className={`text-3xl font-bold ${isComplete ? 'text-green-600' : 'text-blue-600'}`}>
+            <p className={`text-3xl font-bold ${isComplete ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
               {achieved}
             </p>
           </div>
@@ -82,7 +82,7 @@ export function DailyTarget() {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progress</span>
-            <span className={`font-bold ${isComplete ? 'text-green-600' : isOnTrack ? 'text-blue-600' : 'text-orange-600'}`}>
+            <span className={`font-bold ${isComplete ? 'text-green-600 dark:text-green-400' : isOnTrack ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
               {percentage.toFixed(0)}%
             </span>
           </div>
@@ -97,16 +97,16 @@ export function DailyTarget() {
         </div>
 
         {isComplete ? (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-            <p className="text-sm font-medium text-green-700">🎉 Target achieved! Great work!</p>
+          <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-center">
+            <p className="text-sm font-medium text-green-700 dark:text-green-300">🎉 Target achieved! Great work!</p>
           </div>
         ) : isOnTrack ? (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
-            <p className="text-sm font-medium text-blue-700">On track to meet target</p>
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
+            <p className="text-sm font-medium text-blue-700 dark:text-blue-300">On track to meet target</p>
           </div>
         ) : (
-          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-center">
-            <p className="text-sm font-medium text-orange-700">
+          <div className="p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg text-center">
+            <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
               {target - achieved} more to reach target
             </p>
           </div>
