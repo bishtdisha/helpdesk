@@ -10,6 +10,27 @@ import type {
   SessionOptions,
 } from './types/auth';
 
+// Extended safe user with relations
+interface SafeUserWithRelations extends SafeUser {
+  role?: {
+    id: string;
+    name: string;
+    description: string | null;
+  } | null;
+  team?: {
+    id: string;
+    name: string;
+  } | null;
+  teamLeaderships?: Array<{
+    id: string;
+    teamId: string;
+    team: {
+      id: string;
+      name: string;
+    };
+  }>;
+}
+
 export class AuthService {
   /**
    * Register a new user
@@ -47,6 +68,9 @@ export class AuthService {
           roleId: true,
           teamId: true,
           isActive: true,
+          isDeleted: true,
+          deletedAt: true,
+          deletedBy: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -125,6 +149,9 @@ export class AuthService {
         roleId: user.roleId,
         teamId: user.teamId,
         isActive: user.isActive,
+        isDeleted: user.isDeleted,
+        deletedAt: user.deletedAt,
+        deletedBy: user.deletedBy,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       };
@@ -148,7 +175,7 @@ export class AuthService {
   /**
    * Logout a user by invalidating their session
    */
-  static async logout(token: string, ipAddress?: string, userAgent?: string): Promise<boolean> {
+  static async logout(token: string): Promise<boolean> {
     const result = await SessionUtils.invalidateSession(token);
     return result;
   }
@@ -163,9 +190,10 @@ export class AuthService {
       return { valid: false };
     }
 
+    // The user from validateSession now includes all SafeUser fields
     return {
       valid: true,
-      user: result.user,
+      user: result.user as SafeUser,
       session: result.session,
     };
   }
@@ -192,7 +220,7 @@ export class AuthService {
   /**
    * Get user by ID (safe version without password)
    */
-  static async getUserById(id: string): Promise<SafeUser | null> {
+  static async getUserById(id: string): Promise<SafeUserWithRelations | null> {
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -202,6 +230,9 @@ export class AuthService {
         roleId: true,
         teamId: true,
         isActive: true,
+        isDeleted: true,
+        deletedAt: true,
+        deletedBy: true,
         createdAt: true,
         updatedAt: true,
         role: {
@@ -253,6 +284,9 @@ export class AuthService {
           roleId: true,
           teamId: true,
           isActive: true,
+          isDeleted: true,
+          deletedAt: true,
+          deletedBy: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -274,9 +308,7 @@ export class AuthService {
   static async changePassword(
     userId: string,
     currentPassword: string,
-    newPassword: string,
-    ipAddress?: string,
-    userAgent?: string
+    newPassword: string
   ): Promise<boolean> {
     try {
       // Get user with password

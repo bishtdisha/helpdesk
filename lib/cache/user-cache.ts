@@ -10,6 +10,9 @@ interface CachedUser {
   roleId: string | null;
   teamId: string | null;
   isActive: boolean;
+  isDeleted: boolean;
+  deletedAt: Date | null;
+  deletedBy: string | null;
   createdAt: Date;
   updatedAt: Date;
   role: {

@@ -14,7 +14,13 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force && npm run db:seed",
     "db:cleanup": "tsx scripts/cleanup-database.ts",
-    "db:check-users": "tsx scripts/check-users.ts"
+    "db:check-users": "tsx scripts/check-users.ts",
+    "db:export": "tsx scripts/export-data.ts",
+    "db:import": "tsx scripts/import-data.ts",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "debug:login": "tsx scripts/debug-login.ts",
+    "reset:password": "tsx scripts/reset-user-password.ts",
+    "reset:all-passwords": "tsx scripts/reset-all-passwords.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

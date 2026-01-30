@@ -138,6 +138,9 @@ export class SessionUtils {
       user_role_id: string | null;
       user_team_id: string | null;
       user_is_active: boolean;
+      user_is_deleted: boolean;
+      user_deleted_at: Date | null;
+      user_deleted_by: string | null;
       user_created_at: Date;
       user_updated_at: Date;
       role_id: string | null;
@@ -160,6 +163,9 @@ export class SessionUtils {
         u."roleId" as user_role_id,
         u."teamId" as user_team_id,
         u."isActive" as user_is_active,
+        u."isDeleted" as user_is_deleted,
+        u."deletedAt" as user_deleted_at,
+        u."deletedBy" as user_deleted_by,
         u."createdAt" as user_created_at,
         u."updatedAt" as user_updated_at,
         r.id as role_id,
@@ -211,6 +217,9 @@ export class SessionUtils {
       roleId: row.user_role_id,
       teamId: row.user_team_id,
       isActive: row.user_is_active,
+      isDeleted: row.user_is_deleted,
+      deletedAt: row.user_deleted_at,
+      deletedBy: row.user_deleted_by,
       createdAt: row.user_created_at,
       updatedAt: row.user_updated_at,
       role: row.role_id ? {

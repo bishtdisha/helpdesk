@@ -38,19 +38,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the default "Employee" role
-    const userRole = await prisma.role.findUnique({
+    // Get the default "Employee" role, fallback to any available role
+    let userRole = await prisma.role.findUnique({
       where: { name: 'Employee' },
     });
 
+    // If Employee role doesn't exist, try to get any role as fallback
     if (!userRole) {
-      return NextResponse.json(
-        {
-          error: 'Configuration error',
-          message: 'Default user role not found. Please contact support.',
+      userRole = await prisma.role.findFirst({
+        orderBy: { createdAt: 'asc' },
+      });
+    }
+
+    // If still no role exists, create a default Employee role
+    if (!userRole) {
+      userRole = await prisma.role.create({
+        data: {
+          name: 'Employee',
+          description: 'Default employee role',
+          permissions: {},
         },
-        { status: 500 }
-      );
+      });
     }
 
     // Validate team if provided
@@ -70,12 +78,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Register the user with default role and optional team
+    // Register the user with role and optional team
     const result = await AuthService.register({
       email: email.toLowerCase().trim(),
       password,
       name: name?.trim(),
-      roleId: userRole.id,
+      roleId: userRole.id, // Now guaranteed to have a role
       teamId: teamId || undefined,
     });
 

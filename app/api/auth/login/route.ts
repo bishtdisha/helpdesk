@@ -63,26 +63,44 @@ export async function POST(request: NextRequest) {
     );
 
     // Set secure httpOnly cookies with both session token and JWT
+    // For HTTP servers (development/staging), secure must be false
+    // For HTTPS servers (production), secure should be true
+    const isProduction = process.env.NODE_ENV === 'production';
+    const useSecureCookies = process.env.USE_SECURE_COOKIES === 'true' || (isProduction && process.env.USE_SECURE_COOKIES !== 'false');
+    
+    console.log('🍪 Cookie settings:', { 
+      isProduction, 
+      useSecureCookies, 
+      NODE_ENV: process.env.NODE_ENV,
+      USE_SECURE_COOKIES: process.env.USE_SECURE_COOKIES 
+    });
+    
     if (result.session) {
       // Legacy session token (for backward compatibility)
       response.cookies.set('session-token', result.session.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: useSecureCookies, // false for HTTP, true for HTTPS
         sameSite: 'lax',
         maxAge: 24 * 60 * 60, // 24 hours in seconds
         path: '/',
       });
+      console.log('✅ Set session-token cookie');
 
       // JWT token for fast validation (primary method)
-      if (result.session.jwtToken) {
-        response.cookies.set('auth-token', result.session.jwtToken, {
+      if ((result.session as any).jwtToken) {
+        response.cookies.set('auth-token', (result.session as any).jwtToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: useSecureCookies, // false for HTTP, true for HTTPS
           sameSite: 'lax',
           maxAge: 24 * 60 * 60, // 24 hours in seconds
           path: '/',
         });
+        console.log('✅ Set auth-token cookie');
+      } else {
+        console.warn('⚠️ No JWT token in session');
       }
+    } else {
+      console.error('❌ No session in result');
     }
 
     return response;

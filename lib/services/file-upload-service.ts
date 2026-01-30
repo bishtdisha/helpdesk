@@ -31,7 +31,7 @@ const ALLOWED_MIME_TYPES = [
   // Text files
   'text/plain',
   'text/csv',
-  'text/html',
+  'text/html',    
   'text/xml',
   'text/markdown',
   'text/rtf',

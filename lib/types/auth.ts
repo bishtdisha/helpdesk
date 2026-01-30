@@ -4,16 +4,27 @@ import { User, UserSession } from '@prisma/client';
 export type { User, UserSession } from '@prisma/client';
 
 // Safe User type (without password) for client-side use
-export type SafeUser = Omit<User, 'password'> & {
+export type SafeUser = Omit<User, 'password'>;
+
+// Safe User with relations
+export type SafeUserWithRelations = Omit<User, 'password'> & {
   role?: {
     id: string;
     name: string;
-    description?: string;
+    description: string | null;
   } | null;
   team?: {
     id: string;
     name: string;
   } | null;
+  teamLeaderships?: Array<{
+    id: string;
+    teamId: string;
+    team: {
+      id: string;
+      name: string;
+    };
+  }>;
 };
 
 // User registration data
