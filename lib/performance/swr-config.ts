@@ -29,16 +29,6 @@ export const swrConfig: SWRConfiguration = {
   
   // Fallback data
   fallbackData: undefined,
-  
-  // Success callback - disabled in production for performance
-  onSuccess: process.env.NODE_ENV === 'development' 
-    ? (data, key) => CachePerformance.recordCacheHit(key)
-    : undefined,
-  
-  // Error callback - minimal logging
-  onError: process.env.NODE_ENV === 'development'
-    ? (error, key) => CachePerformance.recordCacheMiss(key)
-    : undefined,
 };
 
 // Get cache configuration for specific data type

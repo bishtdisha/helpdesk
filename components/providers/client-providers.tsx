@@ -6,7 +6,6 @@ import { KeyboardShortcutsProvider } from "@/lib/contexts/keyboard-shortcuts-con
 import { SkipLinks } from "@/components/accessibility/skip-links"
 import { GlobalAriaLiveRegion } from "@/components/accessibility/aria-live-announcer"
 import { Toaster } from "@/components/ui/sonner"
-import { Analytics } from "@vercel/analytics/next"
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -25,7 +24,6 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       </ThemeProvider>
 
       <Toaster />
-      <Analytics />
     </>
   )
 }

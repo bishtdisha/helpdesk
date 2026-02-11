@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { TeamWithMembers, TeamListResponse } from '@/lib/types/rbac';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,8 @@ interface TeamListProps {
 }
 
 export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers, onViewTeamBoard }: TeamListProps) {
-  const { user: currentUser } = useAuth();
+  const auth = useAuth();
+  const currentUser = auth?.user;
   const [teams, setTeams] = useState<TeamWithMembers[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
   const limit = 10;
 
   // Load teams
-  const loadTeams = async () => {
+  const loadTeams = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -75,25 +76,27 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Failed to load teams' }));
         throw new Error(errorData.message || 'Failed to load teams');
       }
       
       const data: TeamListResponse = await response.json();
-      setTeams(data.teams);
-      setTotal(data.total);
+      setTeams(data.teams || []);
+      setTotal(data.total || 0);
     } catch (err) {
+      console.error('Error loading teams:', err);
       setError(err instanceof Error ? err.message : 'Failed to load teams');
       setTeams([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm, limit]);
 
   // Load teams on mount and when dependencies change
   useEffect(() => {
     loadTeams();
-  }, [page, searchTerm]);
+  }, [loadTeams]);
 
   // Handle search
   const handleSearch = (value: string) => {
@@ -110,10 +113,14 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
 
   // Get team leader names
   const getTeamLeaderNames = (team: TeamWithMembers): string => {
-    if (!team.teamLeaders || team.teamLeaders.length === 0) {
+    if (!Array.isArray(team.teamLeaders) || team.teamLeaders.length === 0) {
       return 'No leader assigned';
     }
-    return team.teamLeaders.map(tl => tl.user.name).join(', ');
+    
+    return team.teamLeaders
+      .map(tl => tl?.user?.name)
+      .filter(Boolean)
+      .join(', ');
   };
 
   // Check if current user can manage a specific team
@@ -123,8 +130,13 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
     }
     
     if (currentUser?.role?.name === 'Team Leader') {
-      // Team leaders can only manage teams they lead
-      return team.teamLeaders.some(tl => tl.user.id === currentUser.id);
+      if (!Array.isArray(team.teamLeaders)) {
+        return false;
+      }
+      
+      return team.teamLeaders.some(
+        tl => tl?.user?.id === currentUser?.id
+      );
     }
     
     return false;
@@ -349,7 +361,7 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
               <TableBody>
                 {teams.map((team, index) => {
                   // Check if current user leads this team
-                  const isLeader = currentUser && team.teamLeaders?.some(tl => tl.user.id === currentUser.id);
+                  const isLeader = currentUser && Array.isArray(team.teamLeaders) && team.teamLeaders.some(tl => tl?.user?.id === currentUser?.id);
                   const serialNumber = (page - 1) * limit + index + 1;
                   
                   return (
@@ -359,7 +371,7 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                         "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors group",
                         isLeader ? 'bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40' : ''
                       )}
-                      onClick={() => onViewTeamBoard && onViewTeamBoard(team)}
+                      onClick={() => onViewTeamBoard?.(team)}
                     >
                       <TableCell>
                         <div className="text-sm font-medium text-muted-foreground">{serialNumber}</div>
@@ -429,7 +441,7 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => onViewTeamBoard && onViewTeamBoard(team)}
+                          onClick={() => onViewTeamBoard?.(team)}
                           className="hover:bg-blue-50 dark:hover:bg-blue-950"
                         >
                           <Eye className="w-4 h-4" />
