@@ -7,8 +7,9 @@ import { TicketList } from "./ticket-list"
 import { TicketFilters } from "./ticket-filters"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Ticket, User, Clock, AlertTriangle } from "lucide-react"
+import { Plus, Ticket, User, Clock, AlertTriangle, Upload } from "lucide-react"
 import { usePermissions } from "@/lib/hooks/use-permissions"
+import { BulkImportDialog } from "@/components/tickets/bulk-import-dialog"
 
 interface TicketStats {
   total: number
@@ -61,6 +62,8 @@ export function TicketManagementPage() {
   const permissions = usePermissions()
   const [stats, setStats] = useState<TicketStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Fetch ticket stats with useCallback
   const fetchStats = useCallback(async () => {
@@ -90,6 +93,12 @@ export function TicketManagementPage() {
     router.push(`/helpdesk/tickets/${ticketId}`)
   }
 
+  const handleImportComplete = () => {
+    // Refresh the ticket list and stats
+    setRefreshKey(prev => prev + 1)
+    fetchStats()
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
@@ -108,12 +117,23 @@ export function TicketManagementPage() {
           </div>
           
           {permissions.canCreateTicket() && (
-            <Link href="/helpdesk/tickets/new">
-              <Button size="lg" className="shadow-md">
-                <Plus className="h-5 w-5 mr-2" />
-                New Ticket
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setIsBulkImportOpen(true)} 
+                size="lg" 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-5 w-5" />
+                Bulk Import
               </Button>
-            </Link>
+              <Link href="/helpdesk/tickets/new">
+                <Button size="lg" className="shadow-md">
+                  <Plus className="h-5 w-5 mr-2" />
+                  New Ticket
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
       </div>
@@ -212,7 +232,15 @@ export function TicketManagementPage() {
 
       {/* Ticket List */}
       <TicketList
+        key={refreshKey}
         onTicketClick={handleViewTicket}
+      />
+
+      {/* Bulk Import Dialog */}
+      <BulkImportDialog 
+        open={isBulkImportOpen}
+        onOpenChange={setIsBulkImportOpen}
+        onImportComplete={handleImportComplete}
       />
     </div>
   )

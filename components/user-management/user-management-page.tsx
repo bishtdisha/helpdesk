@@ -968,4 +968,3 @@ export function UserManagementPage() {
     </>
   )
 }
-

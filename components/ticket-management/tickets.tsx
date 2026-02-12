@@ -1,9 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, Upload } from "lucide-react"
 import { TicketList } from "@/components/ticket-management/ticket-list"
+import { BulkImportDialog } from "@/components/tickets/bulk-import-dialog"
 import { KeyboardShortcutsHelp } from "@/components/onboarding/keyboard-shortcuts-help"
 import { useKeyboardShortcutsContext } from "@/lib/contexts/keyboard-shortcuts-context"
 import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts"
@@ -13,6 +15,8 @@ export function Tickets() {
   const router = useRouter()
   const { isHelpDialogOpen, setIsHelpDialogOpen } = useKeyboardShortcutsContext()
   const permissions = usePermissions()
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Register keyboard shortcuts
   useKeyboardShortcuts([
@@ -41,6 +45,11 @@ export function Tickets() {
     router.push('/helpdesk/tickets/new')
   }
 
+  const handleImportComplete = () => {
+    // Refresh the ticket list by changing the key
+    setRefreshKey(prev => prev + 1)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
@@ -61,16 +70,34 @@ export function Tickets() {
           </div>
           
           {permissions.canCreateTicket() && (
-            <Button onClick={handleCreateTicket} size="lg" className="flex items-center gap-2 shadow-md">
-              <Plus className="h-5 w-5" />
-              New Ticket
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setIsBulkImportOpen(true)} 
+                size="lg" 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-5 w-5" />
+                Bulk Import
+              </Button>
+              <Button onClick={handleCreateTicket} size="lg" className="flex items-center gap-2 shadow-md">
+                <Plus className="h-5 w-5" />
+                New Ticket
+              </Button>
+            </div>
           )}
         </div>
       </div>
 
       {/* Ticket List - Now using real API data */}
-      <TicketList />
+      <TicketList key={refreshKey} />
+      
+      {/* Bulk Import Dialog */}
+      <BulkImportDialog 
+        open={isBulkImportOpen}
+        onOpenChange={setIsBulkImportOpen}
+        onImportComplete={handleImportComplete}
+      />
       
       {/* Keyboard Shortcuts Help Dialog */}
       <KeyboardShortcutsHelp 
