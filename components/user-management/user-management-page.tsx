@@ -31,6 +31,7 @@ import {
   Search, Filter, X, Eye, EyeOff, Shield
 } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
+import { UserBulkImportDialog } from "./user-bulk-import-dialog"
 
 interface User {
   id: string
@@ -369,14 +370,16 @@ export function UserManagementPage() {
                 </p>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="lg" className="shadow-md">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Add User
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
+            <div className="flex gap-2">
+              <UserBulkImportDialog onImportComplete={fetchUsers} />
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="shadow-md">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Add User
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
                 <form onSubmit={handleCreateUser}>
                   <DialogHeader>
                     <DialogTitle>Add New User</DialogTitle>
@@ -508,6 +511,7 @@ export function UserManagementPage() {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </div>
 

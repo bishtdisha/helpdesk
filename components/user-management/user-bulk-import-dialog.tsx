@@ -1,39 +1,37 @@
-'use client';
+"use client"
 
 import { useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle2, XCircle, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-interface BulkImportDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onImportComplete?: () => void;
-}
-
 interface ImportResult {
   success: number;
   failed: number;
   errors: Array<{ row: number; error: string; data?: any }>;
-  tickets: Array<{ ticketNumber: number; title: string; assignedTo: string }>;
+  users: Array<{ name: string; email: string; role: string; team: string }>;
   failedRows?: any[];
 }
 
-export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkImportDialogProps) {
+interface UserBulkImportDialogProps {
+  onImportComplete?: () => void;
+}
+
+export function UserBulkImportDialog({ onImportComplete }: UserBulkImportDialogProps) {
+  const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,13 +43,6 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
         toast.error('Invalid file type. Please upload an Excel file (.xlsx or .xls)');
         return;
       }
-
-      // Validate file size (max 10MB)
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        toast.error('File size too large. Maximum size is 10MB');
-        return;
-      }
-
       setFile(selectedFile);
       setResult(null);
     }
@@ -59,21 +50,19 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch('/api/tickets/bulk-import');
-      if (!response.ok) {
-        throw new Error('Failed to download template');
-      }
-
+      const response = await fetch('/api/users/bulk-import');
+      if (!response.ok) throw new Error('Failed to download template');
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ticket-import-template.xlsx';
+      a.download = 'user-import-template.xlsx';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-
+      
       toast.success('Template downloaded successfully');
     } catch (error) {
       console.error('Error downloading template:', error);
@@ -87,58 +76,50 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
       return;
     }
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    setUploading(true);
     setResult(null);
 
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
-
-      const response = await fetch('/api/tickets/bulk-import', {
+      const response = await fetch('/api/users/bulk-import', {
         method: 'POST',
         body: formData,
       });
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || 'Upload failed');
+        throw new Error(data.message || 'Failed to import users');
       }
 
       setResult(data.result);
-
+      
       if (data.result.success > 0) {
-        toast.success(`Successfully imported ${data.result.success} ticket(s)`);
+        toast.success(`Successfully imported ${data.result.success} user(s)`);
         if (onImportComplete) {
           onImportComplete();
         }
       }
-
+      
       if (data.result.failed > 0) {
-        toast.warning(`${data.result.failed} ticket(s) failed to import. Check the results below.`);
+        toast.error(`Failed to import ${data.result.failed} user(s)`);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload file');
+      toast.error(error instanceof Error ? error.message : 'Failed to import users');
     } finally {
-      setIsUploading(false);
+      setUploading(false);
     }
   };
 
-  const handleClose = () => {
+  const handleReset = () => {
     setFile(null);
     setResult(null);
-    setUploadProgress(0);
-    onOpenChange(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleExportErrors = async () => {
@@ -148,7 +129,7 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
     }
 
     try {
-      const response = await fetch('/api/tickets/bulk-import/export-errors', {
+      const response = await fetch('/api/users/bulk-import/export-errors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,7 +145,7 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ticket-import-errors-${Date.now()}.xlsx`;
+      a.download = `user-import-errors-${Date.now()}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -177,36 +158,45 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
     }
   };
 
+  const handleClose = () => {
+    handleReset();
+    setOpen(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Upload className="mr-2 h-4 w-4" />
+          Import Users
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Bulk Import Tickets</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Bulk Import Users
+          </DialogTitle>
           <DialogDescription>
-            Upload an Excel file to import multiple tickets at once
+            Import multiple users from an Excel file. Download the template to get started.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col gap-4">
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
           {/* Template Download */}
           <Alert>
             <FileSpreadsheet className="h-4 w-4" />
             <AlertDescription className="flex items-center justify-between">
               <span>Download the Excel template to get started</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadTemplate}
-                className="ml-4"
-              >
-                <Download className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+                <Download className="mr-2 h-4 w-4" />
                 Download Template
               </Button>
             </AlertDescription>
           </Alert>
 
           {/* File Upload */}
-          <div className="border-2 border-dashed rounded-lg p-8 text-center">
+          <div className="space-y-2">
             <input
               ref={fileInputRef}
               type="file"
@@ -214,21 +204,17 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
               onChange={handleFileSelect}
               className="hidden"
             />
-
+            
             {!file ? (
-              <div className="space-y-4">
-                <div className="flex justify-center">
-                  <Upload className="h-12 w-12 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Excel files only (.xlsx, .xls) - Maximum 1000 tickets
-                  </p>
-                </div>
-                <Button onClick={() => fileInputRef.current?.click()}>
-                  Select File
-                </Button>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+              >
+                <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Excel files only (.xlsx, .xls) - Maximum 500 users
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -240,56 +226,57 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
                       {(file.size / 1024).toFixed(2)} KB
                     </p>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleReset}
+                    disabled={uploading}
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setFile(null);
-                    setResult(null);
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = '';
-                    }
-                  }}
-                >
-                  Change File
-                </Button>
+
+                {uploading && (
+                  <div className="space-y-2">
+                    <Progress value={undefined} className="w-full" />
+                    <p className="text-sm text-center text-muted-foreground">
+                      Importing users...
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Upload Progress */}
-          {isUploading && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Uploading and processing...</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <Progress value={uploadProgress} />
-            </div>
-          )}
-
-          {/* Results */}
+          {/* Import Results */}
           {result && (
             <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                   <div>
-                    <p className="text-sm font-medium">Success</p>
-                    <p className="text-2xl font-bold text-green-600">{result.success}</p>
+                    <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                      Success
+                    </p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {result.success}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg">
-                  <XCircle className="h-5 w-5 text-red-600" />
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                   <div>
-                    <p className="text-sm font-medium">Failed</p>
-                    <p className="text-2xl font-bold text-red-600">{result.failed}</p>
+                    <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                      Failed
+                    </p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                      {result.failed}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Successful Tickets - Removed detailed list */}
+              {/* Successfully Imported Users - Removed detailed list */}
 
               {/* Errors */}
               {result.errors.length > 0 && (
@@ -318,18 +305,47 @@ export function BulkImportDialog({ open, onOpenChange, onImportComplete }: BulkI
               )}
             </div>
           )}
+
+          {/* Instructions */}
+          {!result && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <p className="font-medium mb-2">Excel Format Requirements:</p>
+                <ul className="text-xs space-y-1 list-disc list-inside">
+                  <li><strong>Name</strong> (required): Full name of the user</li>
+                  <li><strong>Email</strong> (required): Valid email address</li>
+                  <li><strong>Password</strong> (required): Minimum 8 characters</li>
+                  <li><strong>Role Name</strong> (optional): Must match existing role name exactly</li>
+                  <li><strong>Team Name</strong> (optional): Must match existing team name exactly</li>
+                  <li><strong>Is Active</strong> (optional): YES or NO (default: YES)</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isUploading}>
+        {/* Actions */}
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={handleClose}>
             {result ? 'Close' : 'Cancel'}
           </Button>
-          {!result && (
-            <Button onClick={handleUpload} disabled={!file || isUploading}>
-              {isUploading ? 'Uploading...' : 'Upload & Import'}
+          {!result && file && (
+            <Button onClick={handleUpload} disabled={uploading}>
+              {uploading ? (
+                <>
+                  <Upload className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import Users
+                </>
+              )}
             </Button>
           )}
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -6,7 +6,7 @@ import "./globals.css"
 import "./tiptap.css"
 
 export const metadata: Metadata = {
-  title: "Odoo Helpdesk",
+  title: "CSIPL Helpdesk",
   description: "Modern helpdesk management system",
 }
 

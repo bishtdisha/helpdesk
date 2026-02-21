@@ -13,7 +13,7 @@ export default function WelcomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Odoo Helpdesk</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">CSIPL Helpdesk</h1>
             </div>
             <div className="flex items-center gap-4">
               <Button variant="outline" asChild>
@@ -119,7 +119,7 @@ export default function WelcomePage() {
             Ready to Transform Your Customer Support?
           </h3>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join thousands of companies that trust Odoo Helpdesk to deliver exceptional customer experiences.
+            Join thousands of companies that trust CSIPL Helpdesk to deliver exceptional customer experiences.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
@@ -140,7 +140,7 @@ export default function WelcomePage() {
       <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600 dark:text-gray-400">
-            <p>&copy; 2024 Odoo Helpdesk. All rights reserved.</p>
+            <p>&copy; 2024 CSIPL Helpdesk. All rights reserved.</p>
           </div>
         </div>
       </footer>

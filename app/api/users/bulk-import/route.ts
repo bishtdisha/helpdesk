@@ -1,44 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/server-auth';
-import { ticketService } from '@/lib/services/ticket-service';
-import { auditService } from '@/lib/services/audit-service';
-import { TicketPriority, TicketStatus } from '@prisma/client';
+import { prisma } from '@/lib/db';
+import { permissionEngine } from '@/lib/rbac/permission-engine';
+import { PERMISSION_ACTIONS, RESOURCE_TYPES } from '@/lib/rbac/permissions';
 import * as XLSX from 'xlsx';
+import bcrypt from 'bcryptjs';
 
 interface BulkImportRow {
-  title: string;
-  description: string;
-  priority: string;
-  status?: string;
-  category?: string;
-  assignedToEmail: string;
-  customerEmail?: string;
+  name: string;
+  email: string;
+  password: string;
+  roleName?: string;
   teamName?: string;
-  phone?: string;
+  isActive?: string;
 }
 
 interface ImportResult {
   success: number;
   failed: number;
   errors: Array<{ row: number; error: string; data?: any }>;
-  tickets: any[];
+  users: any[];
   failedRows?: any[]; // Original row data with error messages for export
 }
 
 /**
- * POST /api/tickets/bulk-import - Import tickets from Excel file
+ * POST /api/users/bulk-import - Import users from Excel file
  * 
  * Accepts multipart/form-data with an Excel file
  * Expected columns:
- * - Title (required)
- * - Description (required)
- * - Priority (required: LOW, MEDIUM, HIGH, URGENT)
- * - Status (optional: OPEN, IN_PROGRESS, WAITING_FOR_CUSTOMER, RESOLVED, CLOSED)
- * - Category (optional)
- * - Assigned To Email (required)
- * - Customer Email (optional)
- * - Team Name (optional)
- * - Phone (optional)
+ * - Name (required)
+ * - Email (required)
+ * - Password (required, min 8 characters)
+ * - Role Name (optional, must match existing role name)
+ * - Team Name (optional, must match existing team name)
+ * - Is Active (optional: YES/NO, default: YES)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -50,8 +45,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has permission to create tickets (basic check)
-    // You might want to add more specific permission checks here
+    // Check if user has permission to create users (Admin only)
+    const hasPermission = await permissionEngine.checkPermission(
+      currentUser.id,
+      PERMISSION_ACTIONS.CREATE,
+      RESOURCE_TYPES.USERS
+    );
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        {
+          error: 'Insufficient permissions',
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'Only administrators can import users',
+          requiredPermission: 'users:create'
+        },
+        { status: 403 }
+      );
+    }
 
     // Parse form data
     const formData = await request.formData();
@@ -128,38 +139,45 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate maximum rows
-    if (rows.length > 1000) {
+    if (rows.length > 500) {
       return NextResponse.json(
         {
           error: 'Validation error',
           code: 'VALIDATION_ERROR',
-          message: 'Maximum 1000 tickets can be imported at once',
+          message: 'Maximum 500 users can be imported at once',
         },
         { status: 400 }
       );
     }
 
-    // Get all users and teams for lookup
-    const { prisma } = await import('@/lib/db');
-    const users = await prisma.user.findMany({
-      select: { id: true, email: true, name: true },
+    // Get all roles and teams for lookup
+    const roles = await prisma.role.findMany({
+      select: { id: true, name: true },
     });
     const teams = await prisma.team.findMany({
       select: { id: true, name: true },
     });
 
-    // Create lookup maps
-    const userByEmail = new Map(users.map(u => [u.email.toLowerCase(), u]));
+    // Create lookup maps (case-insensitive)
+    const roleByName = new Map(roles.map(r => [r.name.toLowerCase(), r]));
     const teamByName = new Map(teams.map(t => [t.name.toLowerCase(), t]));
+
+    // Get existing users to check for duplicates
+    const existingUsers = await prisma.user.findMany({
+      select: { email: true },
+    });
+    const existingEmails = new Set(existingUsers.map(u => u.email.toLowerCase()));
 
     // Process rows
     const result: ImportResult = {
       success: 0,
       failed: 0,
       errors: [],
-      tickets: [],
+      users: [],
       failedRows: [],
     };
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -168,24 +186,21 @@ export async function POST(request: NextRequest) {
       try {
         // Map Excel columns to our format (case-insensitive)
         const data: BulkImportRow = {
-          title: row['Title'] || row['title'] || '',
-          description: row['Description'] || row['description'] || '',
-          priority: (row['Priority'] || row['priority'] || '').toUpperCase(),
-          status: row['Status'] || row['status'] || undefined,
-          category: row['Category'] || row['category'] || undefined,
-          assignedToEmail: (row['Assigned To Email'] || row['assigned to email'] || row['AssignedToEmail'] || '').toLowerCase(),
-          customerEmail: (row['Customer Email'] || row['customer email'] || row['CustomerEmail'] || '').toLowerCase() || undefined,
-          teamName: row['Team Name'] || row['team name'] || row['TeamName'] || undefined,
-          phone: row['Phone'] || row['phone'] || undefined,
+          name: (row['Name'] || row['name'] || '').trim(),
+          email: (row['Email'] || row['email'] || '').trim().toLowerCase(),
+          password: (row['Password'] || row['password'] || '').trim(),
+          roleName: (row['Role Name'] || row['role name'] || row['RoleName'] || '').trim(),
+          teamName: (row['Team Name'] || row['team name'] || row['TeamName'] || '').trim(),
+          isActive: (row['Is Active'] || row['is active'] || row['IsActive'] || 'YES').toString().toUpperCase(),
         };
 
         // Validate required fields
-        if (!data.title || data.title.trim().length === 0) {
-          const errorMsg = 'Title is required';
+        if (!data.name) {
+          const errorMsg = 'Name is required';
           result.errors.push({
             row: rowNumber,
             error: errorMsg,
-            data: { title: data.title },
+            data: { email: data.email },
           });
           result.failedRows?.push({
             ...row,
@@ -196,12 +211,12 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        if (!data.description || data.description.trim().length === 0) {
-          const errorMsg = 'Description is required';
+        if (!data.email) {
+          const errorMsg = 'Email is required';
           result.errors.push({
             row: rowNumber,
             error: errorMsg,
-            data: { title: data.title },
+            data: { name: data.name },
           });
           result.failedRows?.push({
             ...row,
@@ -212,12 +227,13 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        if (!data.priority) {
-          const errorMsg = 'Priority is required';
+        // Validate email format
+        if (!emailRegex.test(data.email)) {
+          const errorMsg = `Invalid email format: ${data.email}`;
           result.errors.push({
             row: rowNumber,
             error: errorMsg,
-            data: { title: data.title },
+            data: { name: data.name, email: data.email },
           });
           result.failedRows?.push({
             ...row,
@@ -228,12 +244,13 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        if (!data.assignedToEmail) {
-          const errorMsg = 'Assigned To Email is required';
+        // Check for duplicate email
+        if (existingEmails.has(data.email)) {
+          const errorMsg = `Email already exists: ${data.email}`;
           result.errors.push({
             row: rowNumber,
             error: errorMsg,
-            data: { title: data.title },
+            data: { name: data.name, email: data.email },
           });
           result.failedRows?.push({
             ...row,
@@ -244,13 +261,12 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Validate priority
-        if (!Object.values(TicketPriority).includes(data.priority as TicketPriority)) {
-          const errorMsg = `Invalid priority "${data.priority}". Must be one of: LOW, MEDIUM, HIGH, URGENT`;
+        if (!data.password) {
+          const errorMsg = 'Password is required';
           result.errors.push({
             row: rowNumber,
             error: errorMsg,
-            data: { title: data.title, priority: data.priority },
+            data: { name: data.name, email: data.email },
           });
           result.failedRows?.push({
             ...row,
@@ -261,15 +277,33 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Validate status if provided
-        if (data.status) {
-          const statusUpper = data.status.toUpperCase();
-          if (!Object.values(TicketStatus).includes(statusUpper as TicketStatus)) {
-            const errorMsg = `Invalid status "${data.status}". Must be one of: OPEN, IN_PROGRESS, WAITING_FOR_CUSTOMER, RESOLVED, CLOSED`;
+        // Validate password length
+        if (data.password.length < 8) {
+          const errorMsg = 'Password must be at least 8 characters';
+          result.errors.push({
+            row: rowNumber,
+            error: errorMsg,
+            data: { name: data.name, email: data.email },
+          });
+          result.failedRows?.push({
+            ...row,
+            'Row Number': rowNumber,
+            'Error Message': errorMsg,
+          });
+          result.failed++;
+          continue;
+        }
+
+        // Lookup role if provided
+        let roleId: string | undefined;
+        if (data.roleName) {
+          const role = roleByName.get(data.roleName.toLowerCase());
+          if (!role) {
+            const errorMsg = `Role not found: ${data.roleName}`;
             result.errors.push({
               row: rowNumber,
               error: errorMsg,
-              data: { title: data.title, status: data.status },
+              data: { name: data.name, email: data.email, roleName: data.roleName },
             });
             result.failedRows?.push({
               ...row,
@@ -279,47 +313,7 @@ export async function POST(request: NextRequest) {
             result.failed++;
             continue;
           }
-          data.status = statusUpper;
-        }
-
-        // Lookup assigned user
-        const assignedUser = userByEmail.get(data.assignedToEmail);
-        if (!assignedUser) {
-          const errorMsg = `Assigned user not found: ${data.assignedToEmail}`;
-          result.errors.push({
-            row: rowNumber,
-            error: errorMsg,
-            data: { title: data.title, assignedToEmail: data.assignedToEmail },
-          });
-          result.failedRows?.push({
-            ...row,
-            'Row Number': rowNumber,
-            'Error Message': errorMsg,
-          });
-          result.failed++;
-          continue;
-        }
-
-        // Lookup customer if provided
-        let customerId: string | undefined;
-        if (data.customerEmail) {
-          const customer = userByEmail.get(data.customerEmail);
-          if (!customer) {
-            const errorMsg = `Customer not found: ${data.customerEmail}`;
-            result.errors.push({
-              row: rowNumber,
-              error: errorMsg,
-              data: { title: data.title, customerEmail: data.customerEmail },
-            });
-            result.failedRows?.push({
-              ...row,
-              'Row Number': rowNumber,
-              'Error Message': errorMsg,
-            });
-            result.failed++;
-            continue;
-          }
-          customerId = customer.id;
+          roleId = role.id;
         }
 
         // Lookup team if provided
@@ -331,7 +325,7 @@ export async function POST(request: NextRequest) {
             result.errors.push({
               row: rowNumber,
               error: errorMsg,
-              data: { title: data.title, teamName: data.teamName },
+              data: { name: data.name, email: data.email, teamName: data.teamName },
             });
             result.failedRows?.push({
               ...row,
@@ -344,26 +338,36 @@ export async function POST(request: NextRequest) {
           teamId = team.id;
         }
 
-        // Create ticket
-        const ticket = await ticketService.createTicket(
-          {
-            title: data.title.trim(),
-            description: data.description.trim(),
-            priority: data.priority as TicketPriority,
-            status: data.status as TicketStatus | undefined,
-            category: data.category?.trim(),
-            assignedTo: assignedUser.id,
-            customerId,
-            teamId,
-            phone: data.phone?.trim(),
-          },
-          currentUser.id
-        );
+        // Parse isActive
+        const isActive = data.isActive === 'YES' || data.isActive === 'TRUE' || data.isActive === '1';
 
-        result.tickets.push({
-          ticketNumber: ticket.ticketNumber,
-          title: ticket.title,
-          assignedTo: assignedUser.name,
+        // Hash password
+        const hashedPassword = await bcrypt.hash(data.password, 12);
+
+        // Create user
+        const newUser = await prisma.user.create({
+          data: {
+            name: data.name,
+            email: data.email,
+            password: hashedPassword,
+            roleId,
+            teamId,
+            isActive,
+          },
+          include: {
+            role: true,
+            team: true,
+          },
+        });
+
+        // Add to existing emails set to prevent duplicates within the same import
+        existingEmails.add(data.email);
+
+        result.users.push({
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role?.name || 'No role',
+          team: newUser.team?.name || 'No team',
         });
         result.success++;
       } catch (error) {
@@ -372,7 +376,7 @@ export async function POST(request: NextRequest) {
         result.errors.push({
           row: rowNumber,
           error: errorMsg,
-          data: { title: row['Title'] || row['title'] },
+          data: { name: row['Name'] || row['name'], email: row['Email'] || row['email'] },
         });
         result.failedRows?.push({
           ...row,
@@ -383,21 +387,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Log audit entry
-    await auditService.logTicketOperation(
-      currentUser.id,
-      'tickets_bulk_imported',
-      'bulk',
-      { 
-        fileName: file.name,
-        totalRows: rows.length,
-        success: result.success,
-        failed: result.failed,
-      },
-      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
-      request.headers.get('user-agent') || undefined
-    );
-
     return NextResponse.json({
       message: `Import completed: ${result.success} succeeded, ${result.failed} failed`,
       result,
@@ -405,7 +394,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error in bulk import:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
@@ -415,52 +404,51 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/tickets/bulk-import - Download Excel template
+ * GET /api/users/bulk-import - Download Excel template
  */
 export async function GET() {
   try {
-    // Create sample data
+    // Create sample data with instructions
     const sampleData = [
       {
-        'Title': 'Sample Ticket 1',
-        'Description': 'This is a sample ticket description',
-        'Priority': 'HIGH',
-        'Status': 'OPEN',
-        'Category': 'Technical Support',
-        'Assigned To Email': 'agent@example.com',
-        'Customer Email': 'customer@example.com',
+        'Name': 'John Doe',
+        'Email': 'john.doe@example.com',
+        'Password': 'SecurePass123',
+        'Role Name': 'Admin/Manager',
         'Team Name': 'Support Team',
-        'Phone': '+1234567890',
+        'Is Active': 'YES',
       },
       {
-        'Title': 'Sample Ticket 2',
-        'Description': 'Another sample ticket',
-        'Priority': 'MEDIUM',
-        'Status': 'IN_PROGRESS',
-        'Category': 'Billing',
-        'Assigned To Email': 'agent@example.com',
-        'Customer Email': '',
+        'Name': 'Jane Smith',
+        'Email': 'jane.smith@example.com',
+        'Password': 'SecurePass456',
+        'Role Name': 'Team Leader',
+        'Team Name': 'Technical Team',
+        'Is Active': 'YES',
+      },
+      {
+        'Name': 'Bob Johnson',
+        'Email': 'bob.johnson@example.com',
+        'Password': 'SecurePass789',
+        'Role Name': 'User/Employee',
         'Team Name': '',
-        'Phone': '',
+        'Is Active': 'NO',
       },
     ];
 
     // Create workbook
     const worksheet = XLSX.utils.json_to_sheet(sampleData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tickets');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
 
     // Set column widths
     worksheet['!cols'] = [
-      { wch: 30 }, // Title
-      { wch: 50 }, // Description
-      { wch: 12 }, // Priority
-      { wch: 20 }, // Status
-      { wch: 20 }, // Category
-      { wch: 30 }, // Assigned To Email
-      { wch: 30 }, // Customer Email
-      { wch: 20 }, // Team Name
-      { wch: 15 }, // Phone
+      { wch: 25 }, // Name
+      { wch: 35 }, // Email
+      { wch: 20 }, // Password
+      { wch: 20 }, // Role Name
+      { wch: 25 }, // Team Name
+      { wch: 12 }, // Is Active
     ];
 
     // Generate buffer
@@ -470,7 +458,7 @@ export async function GET() {
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="ticket-import-template.xlsx"',
+        'Content-Disposition': 'attachment; filename="user-import-template.xlsx"',
       },
     });
   } catch (error) {

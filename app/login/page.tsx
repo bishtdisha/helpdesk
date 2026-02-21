@@ -126,7 +126,7 @@ function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Sign In to Odoo Helpdesk</CardTitle>
+        <CardTitle className="text-2xl font-bold">Sign In to CSIPL Helpdesk</CardTitle>
         <CardDescription>
           Enter your credentials to access your dashboard
         </CardDescription>
