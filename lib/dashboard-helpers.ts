@@ -115,11 +115,12 @@ export async function getTicketFilterForUser(userId: string) {
       };
 
     default:
-      // Employee can only see their own tickets
+      // Employee can see tickets they created, are assigned to, or are following
       return {
         OR: [
+          { createdBy: userId },
           { assignedTo: userId },
-          { customerId: userId },
+          { followers: { some: { userId } } },
         ],
       };
   }

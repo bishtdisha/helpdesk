@@ -13,17 +13,27 @@ export async function GET(request: NextRequest) {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
+    // Build where clause based on user role
+    // For employees: show tickets they created, are assigned to, or are following
+    const ticketWhere = {
+      OR: [
+        { createdBy: currentUser.id },
+        { assignedTo: currentUser.id },
+        { followers: { some: { userId: currentUser.id } } },
+      ],
+    };
+
     // Run all queries in parallel for better performance
     const [myTickets, failedEscalated, resolved] = await Promise.all([
-      // Get tickets assigned to current user
+      // Get tickets for current user (created, assigned, or following)
       prisma.ticket.findMany({
-        where: { assignedTo: currentUser.id },
-        select: { id: true, status: true, priority: true, createdAt: true },
+        where: ticketWhere,
+        select: { id: true, status: true, priority: true, createdAt: true, assignedTo: true },
       }),
       // Failed/Escalated (overdue tickets)
       prisma.ticket.count({
         where: {
-          assignedTo: currentUser.id,
+          ...ticketWhere,
           status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'] },
           slaDueAt: { lt: now },
         },
@@ -31,7 +41,7 @@ export async function GET(request: NextRequest) {
       // Resolved tickets today
       prisma.ticket.count({
         where: {
-          assignedTo: currentUser.id,
+          ...ticketWhere,
           status: { in: ['RESOLVED', 'CLOSED'] },
           resolvedAt: { gte: startOfDay },
         },
@@ -42,17 +52,20 @@ export async function GET(request: NextRequest) {
     const openStatuses = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'];
     const openTickets = myTickets.filter(t => openStatuses.includes(t.status));
     
-    const open = openTickets.length;
-    const highPriority = openTickets.filter(t => t.priority === 'HIGH').length;
-    const urgent = openTickets.filter(t => t.priority === 'URGENT').length;
-    const inProgress = myTickets.filter(t => t.status === 'IN_PROGRESS').length;
+    // For "My Tickets" - show only tickets assigned to the user
+    const assignedOpenTickets = openTickets.filter(t => t.assignedTo === currentUser.id);
+    
+    const open = assignedOpenTickets.length;
+    const highPriority = assignedOpenTickets.filter(t => t.priority === 'HIGH').length;
+    const urgent = assignedOpenTickets.filter(t => t.priority === 'URGENT').length;
+    const inProgress = myTickets.filter(t => t.status === 'IN_PROGRESS' && t.assignedTo === currentUser.id).length;
 
-    // Calculate average open hours
-    const avgOpenHours = openTickets.length > 0
-      ? openTickets.reduce((sum, t) => {
+    // Calculate average open hours for assigned tickets
+    const avgOpenHours = assignedOpenTickets.length > 0
+      ? assignedOpenTickets.reduce((sum, t) => {
           const hours = (Date.now() - t.createdAt.getTime()) / (1000 * 60 * 60);
           return sum + hours;
-        }, 0) / openTickets.length
+        }, 0) / assignedOpenTickets.length
       : 0;
 
     return NextResponse.json({

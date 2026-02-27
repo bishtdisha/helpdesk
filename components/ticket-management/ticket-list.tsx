@@ -38,8 +38,16 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
   const permissions = usePermissions();
 
   // Get page from URL or default to 1
-  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const urlPage = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '20', 10);
+  
+  // Use state to track current page for immediate UI updates
+  const [currentPage, setCurrentPage] = useState(urlPage);
+  
+  // Sync state with URL changes
+  useEffect(() => {
+    setCurrentPage(urlPage);
+  }, [urlPage]);
 
   // Get filter values from URL
   const search = searchParams.get('search') || undefined;
@@ -66,6 +74,10 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
 
   // Update URL when page changes
   const handlePageChange = (newPage: number) => {
+    // Update state immediately for responsive UI
+    setCurrentPage(newPage);
+    
+    // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', newPage.toString());
     router.push(`${pathname}?${params.toString()}`);

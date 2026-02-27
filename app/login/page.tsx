@@ -130,13 +130,6 @@ function LoginForm() {
         <CardDescription>
           Enter your credentials to access your dashboard
         </CardDescription>
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            <strong>Demo Admin Account:</strong><br />
-            Email: disha.bisht@cimconautomation.com<br />
-            Password: cimcon@123
-          </p>
-        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

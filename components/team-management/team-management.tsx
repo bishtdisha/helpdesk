@@ -7,6 +7,7 @@ import { TeamList } from './team-list';
 import { TeamForm } from './team-form';
 import { TeamMembersList } from './team-members-list';
 import { TeamAssignment } from './team-assignment';
+import { EditTeamNameDialog } from './edit-team-name-dialog';
 import { Button } from '@/components/ui/button';
 import { 
   Dialog,
@@ -23,6 +24,7 @@ type DialogState = {
   teamMembers: { isOpen: boolean; team?: TeamWithMembers };
   teamAssignment: { isOpen: boolean; user?: SafeUserWithRole };
   deleteConfirm: { isOpen: boolean; team?: TeamWithMembers };
+  editTeamName: { isOpen: boolean; team?: TeamWithMembers | null };
 };
 
 export function TeamManagement() {
@@ -35,6 +37,7 @@ export function TeamManagement() {
     teamMembers: { isOpen: false, team: undefined },
     teamAssignment: { isOpen: false, user: undefined },
     deleteConfirm: { isOpen: false, team: undefined },
+    editTeamName: { isOpen: false, team: null },
   });
   
   // Helper function to update dialog state
@@ -55,6 +58,7 @@ export function TeamManagement() {
       teamMembers: { isOpen: false, team: undefined },
       teamAssignment: { isOpen: false, user: undefined },
       deleteConfirm: { isOpen: false, team: undefined },
+      editTeamName: { isOpen: false, team: null },
     });
   };
   
@@ -75,7 +79,7 @@ export function TeamManagement() {
   };
   
   const handleEditTeam = (team: TeamWithMembers) => {
-    updateDialog('teamForm', { isOpen: true, team, mode: 'edit' });
+    updateDialog('editTeamName', { isOpen: true, team });
   };
   
   const handleDeleteTeam = (team: TeamWithMembers) => {
@@ -174,6 +178,14 @@ export function TeamManagement() {
           }}
         />
       )}
+      
+      {/* Edit Team Name Dialog */}
+      <EditTeamNameDialog
+        open={dialogs.editTeamName.isOpen}
+        onOpenChange={(open) => updateDialog('editTeamName', { isOpen: open })}
+        team={dialogs.editTeamName.team}
+        onSuccess={handleSuccess}
+      />
       
       {/* Delete Confirmation Dialog */}
       <Dialog 

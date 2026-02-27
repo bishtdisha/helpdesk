@@ -32,6 +32,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 import { UserBulkImportDialog } from "./user-bulk-import-dialog"
+import { PaginationControls } from "@/components/ui/pagination-controls"
 
 interface User {
   id: string
@@ -96,6 +97,8 @@ export function UserManagementPage() {
     teamId: "all",
     status: "all",
   })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(20)
   const { toast } = useToast()
 
   // Fetch users
@@ -158,6 +161,8 @@ export function UserManagementPage() {
     }
 
     setFilteredUsers(filtered)
+    // Reset to page 1 when filters change
+    setCurrentPage(1)
   }, [filters, users])
 
   // Clear all filters
@@ -722,19 +727,22 @@ export function UserManagementPage() {
                 )}
               </div>
             ) : (
-              <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold">User</TableHead>
-                  <TableHead className="font-semibold">Role</TableHead>
-                  <TableHead className="font-semibold">Team</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold">Joined</TableHead>
-                  <TableHead className="font-semibold text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="font-semibold">User</TableHead>
+                      <TableHead className="font-semibold">Role</TableHead>
+                      <TableHead className="font-semibold">Team</TableHead>
+                      <TableHead className="font-semibold">Status</TableHead>
+                      <TableHead className="font-semibold">Joined</TableHead>
+                      <TableHead className="font-semibold text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers
+                      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      .map((user) => (
                   <TableRow key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -808,7 +816,20 @@ export function UserManagementPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
+
+            {/* Pagination */}
+            {filteredUsers.length > itemsPerPage && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredUsers.length / itemsPerPage)}
+                total={filteredUsers.length}
+                limit={itemsPerPage}
+                onPageChange={setCurrentPage}
+                loading={loading}
+              />
+            )}
+          </>
+        )}
           </CardContent>
         </Card>
       </div>

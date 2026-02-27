@@ -36,6 +36,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 
 interface TeamListProps {
   onCreateTeam: () => void;
@@ -427,7 +428,7 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                             variant="secondary"
                             className="bg-green-100 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-400 dark:border-green-800 text-base font-semibold"
                           >
-                            {team._count?.tickets || 0}
+                            {(team as any)._count?.tickets || 0}
                           </Badge>
                         </div>
                       </TableCell>
@@ -437,12 +438,24 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
                         </div>
                       </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-center">
+                      <div className="flex justify-center gap-2">
+                        {canEditTeams && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => onEditTeam(team)}
+                            className="hover:bg-amber-50 dark:hover:bg-amber-950"
+                            title="Edit team"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => onViewTeamBoard?.(team)}
                           className="hover:bg-blue-50 dark:hover:bg-blue-950"
+                          title="View team board"
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -457,29 +470,14 @@ export function TeamList({ onCreateTeam, onEditTeam, onDeleteTeam, onViewMembers
 
           {/* Pagination */}
           {total > limit && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">
-                Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total} teams
-              </p>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1 || loading}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={page * limit >= total || loading}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+            <PaginationControls
+              currentPage={page}
+              totalPages={Math.ceil(total / limit)}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+              loading={loading}
+            />
           )}
         </CardContent>
       </Card>
