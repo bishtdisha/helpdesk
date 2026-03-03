@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTickets } from '@/lib/hooks/use-tickets';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { TicketFilters } from '@/lib/types/ticket';
@@ -17,7 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit } from 'lucide-react';
 import { format } from 'date-fns';
-import { Pagination } from './pagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { TicketListSkeleton } from './ticket-list-skeleton';
 import { TicketListEmpty } from './ticket-list-empty';
 import { TicketListError } from './ticket-list-error';
@@ -33,63 +33,47 @@ interface TicketListProps {
 
 export function TicketList({ filters: externalFilters = {}, onTicketClick, onCreateTicket }: TicketListProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const permissions = usePermissions();
 
-  // Get page from URL or default to 1
-  const urlPage = parseInt(searchParams.get('page') || '1', 10);
-  const limit = parseInt(searchParams.get('limit') || '20', 10);
-  
-  // Use state to track current page for immediate UI updates
-  const [currentPage, setCurrentPage] = useState(urlPage);
-  
-  // Sync state with URL changes
-  useEffect(() => {
-    setCurrentPage(urlPage);
-  }, [urlPage]);
+  // Simple state-based pagination (like Users and Teams modules)
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 10;
 
-  // Get filter values from URL
-  const search = searchParams.get('search') || undefined;
-  const statusParam = searchParams.get('status');
-  const priorityParam = searchParams.get('priority');
-  const teamId = searchParams.get('teamId') || undefined;
-  const assignedTo = searchParams.get('assignedTo') || undefined;
-  const month = searchParams.get('month') || undefined;
+  // Get filter values from external filters only (no URL params)
+  const search = externalFilters.search;
+  const statusParam = externalFilters.status;
+  const priorityParam = externalFilters.priority;
+  const teamId = externalFilters.teamId;
+  const assignedTo = externalFilters.assignedTo;
+  const month = externalFilters.month;
 
-  // Merge external filters with URL params and pagination
+  // Merge external filters with pagination
   const filters: TicketFilters = {
     ...externalFilters,
     page: currentPage,
     limit,
-    ...(search && { search }),
-    ...(statusParam && statusParam !== 'all' && { status: statusParam }),
-    ...(priorityParam && priorityParam !== 'all' && { priority: priorityParam }),
-    ...(teamId && teamId !== 'all' && { teamId }),
-    ...(assignedTo && assignedTo !== 'all' && { assignedTo }),
-    ...(month && month !== 'all' && { month }),
   };
 
   const { tickets, pagination, isLoading, isError, error, refresh } = useTickets(filters);
 
-  // Update URL when page changes
+  // Reset to page 1 when filters change (like Teams module)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusParam, priorityParam, teamId, assignedTo, month]);
+
+  // Simple page change handler (like Users and Teams modules)
   const handlePageChange = (newPage: number) => {
-    // Update state immediately for responsive UI
     setCurrentPage(newPage);
-    
-    // Update URL
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', newPage.toString());
-    router.push(`${pathname}?${params.toString()}`);
   };
 
   // Clear all filters
   const handleClearFilters = () => {
-    router.push(pathname);
+    // Reset page when clearing filters
+    setCurrentPage(1);
   };
 
   // Check if any filters are applied
-  const hasFilters = searchParams.toString().length > 0;
+  const hasFilters = !!(search || statusParam || priorityParam || teamId || assignedTo || month);
 
   const handleTicketClick = (ticketId: string) => {
     if (onTicketClick) {
@@ -317,14 +301,13 @@ export function TicketList({ filters: externalFilters = {}, onTicketClick, onCre
       
       {/* Pagination */}
       {pagination.totalPages > 0 && (
-        <Pagination
-          currentPage={pagination.page}
+        <PaginationControls
+          currentPage={currentPage}
           totalPages={pagination.totalPages}
-          hasNext={pagination.hasNext}
-          hasPrev={pagination.hasPrev}
           total={pagination.total}
           limit={pagination.limit}
           onPageChange={handlePageChange}
+          loading={isLoading}
         />
       )}
     </div>

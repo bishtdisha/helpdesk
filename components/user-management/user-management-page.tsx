@@ -98,7 +98,7 @@ export function UserManagementPage() {
     status: "all",
   })
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(20)
+  const [itemsPerPage] = useState(10)
   const { toast } = useToast()
 
   // Fetch users
