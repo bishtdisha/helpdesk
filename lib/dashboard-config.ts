@@ -10,7 +10,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Total tickets with open/resolved breakdown',
   },
   {
@@ -20,7 +20,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'SLA compliance percentage with status',
   },
   {
@@ -30,7 +30,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Average resolution and response time',
   },
   {
@@ -40,7 +40,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     category: 'kpi',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Distribution of tickets by priority level',
   },
   // ⭐ Section 2: My Tickets (Personal Performance)
@@ -51,7 +51,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 12, h: 4 },
     minSize: { w: 6, h: 3 },
     category: 'personal',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Open, High Priority, Urgent, Avg Hours, Failed/Escalated',
   },
   {
@@ -61,7 +61,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 12, h: 4 },
     minSize: { w: 6, h: 3 },
     category: 'personal',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Tickets you are following but not assigned to',
   },
 
@@ -73,7 +73,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 12, h: 5 },
     minSize: { w: 6, h: 4 },
     category: 'sla',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Near breach, breached, and priority vs SLA matrix',
   },
 
@@ -85,7 +85,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 4 },
     minSize: { w: 3, h: 3 },
     category: 'performance',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Tickets resolved, assigned tickets, SLA success today',
   },
   // ⭐ Section 5: Trend Insights
@@ -96,7 +96,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 5 },
     minSize: { w: 3, h: 4 },
     category: 'trends',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Ticket volume trend showing peak days',
   },
   {
@@ -106,7 +106,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 5 },
     minSize: { w: 3, h: 4 },
     category: 'trends',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Resolution time efficiency trend',
   },
   // ⭐ Section 6: Helpful Extras
@@ -117,7 +117,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: { w: 4, h: 5 },
     minSize: { w: 3, h: 4 },
     category: 'extras',
-    roles: ['Admin/Manager', 'Team Leader', 'Employee'],
+    roles: ['Admin/Manager', 'Team Leader', 'User/Employee'],
     description: 'Tickets by status breakdown',
   },
 ];
@@ -243,7 +243,7 @@ export const DASHBOARD_PRESETS: DashboardPreset[] = [
     id: 'user-default',
     name: 'User Default',
     description: 'Personal performance dashboard',
-    role: 'Employee',
+    role: 'User/Employee',
     visibleWidgets: [
       'total-tickets-kpi',
       'sla-compliance-kpi',
@@ -296,9 +296,10 @@ export function getDefaultPresetForRole(role: string): DashboardPreset | undefin
   const roleToPresetId: Record<string, string> = {
     'Admin/Manager': 'admin-default',
     'Team Leader': 'team-leader-default',
-    'Employee': 'user-default',
+    'User/Employee': 'user-default',
   };
   
   const presetId = roleToPresetId[role];
   return presetId ? DASHBOARD_PRESETS.find(preset => preset.id === presetId) : undefined;
 }
+

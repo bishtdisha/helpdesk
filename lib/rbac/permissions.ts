@@ -35,7 +35,7 @@ export const PERMISSION_SCOPES = {
 export const ROLE_TYPES = {
   ADMIN_MANAGER: 'Admin/Manager' as RoleType,
   TEAM_LEADER: 'Team Leader' as RoleType,
-  USER_EMPLOYEE: 'Employee' as RoleType,
+  USER_EMPLOYEE: 'User/Employee' as RoleType,
 } as const;
 
 // Permission matrix - defines what each role can do
@@ -103,7 +103,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, RBACPermission[]> = {
     { action: PERMISSION_ACTIONS.UPDATE, resource: RESOURCE_TYPES.KNOWLEDGE_BASE, scope: PERMISSION_SCOPES.OWN },
   ],
   
-  'Employee': [
+  'User/Employee': [
     // User management - own profile only
     { action: PERMISSION_ACTIONS.READ, resource: RESOURCE_TYPES.USERS, scope: PERMISSION_SCOPES.OWN },
     { action: PERMISSION_ACTIONS.UPDATE, resource: RESOURCE_TYPES.USERS, scope: PERMISSION_SCOPES.OWN },
@@ -145,7 +145,7 @@ export const ROLE_ACCESS_SCOPES: Record<RoleType, AccessScope> = {
     organizationWide: false,
   },
   
-  'Employee': {
+  'User/Employee': {
     canViewUsers: false,
     canEditUsers: false,
     canCreateUsers: false,
@@ -297,7 +297,7 @@ export const TICKET_PERMISSIONS = {
       view: true,
     },
   },
-  'Employee': {
+  'User/Employee': {
     tickets: {
       create: true,
       read: 'own_and_following' as TicketAccessScope,
